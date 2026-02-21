@@ -50,7 +50,7 @@ export const Variables = {
     base: 16,
     md: 18,
     lg: 22,
-    xl: 30,
+    xl: 28,
   },
   
   fonts: {

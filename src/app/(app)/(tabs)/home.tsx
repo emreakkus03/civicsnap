@@ -2,8 +2,6 @@ import React from "react";
 import { View, StyleSheet, ScrollView, Text, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-// ---- Expo-Icons ---- //
-import Ionicons from "@expo/vector-icons/build/Ionicons";
 
 // ---- Components ---- //
 // --- Design ---
@@ -28,7 +26,6 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.headerRow}>
-            {/* Linker gedeelte: Avatar + Naam/Level */}
             <View style={styles.profileGroup}>
               <Image
                 source={
@@ -42,12 +39,12 @@ export default function HomeScreen() {
                 <ThemedText style={styles.greeting}>
                   Hoi, {displayName}
                 </ThemedText>
-                {/* Ik heb hier een aparte style voor gemaakt zodat Level iets kleiner/grijzer is */}
+           
                 <Text style={styles.levelText}>Level {currentLevel}</Text> 
               </View>
             </View>
 
-            {/* Rechter gedeelte: Punten + Diamant */}
+         
             <View style={styles.pointsGroup}>
               <Text style={styles.pointsValue}>{points}</Text>
               <Image

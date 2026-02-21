@@ -1,6 +1,7 @@
-import { API } from "../../networking/api";
+import { API } from "@/core/networking/api";
 import { ID, Models } from "react-native-appwrite";
 import {UserProfile} from "@core/networking/database.types";
+
 
 
 const filePreparingForUploadingFiles = (fileUri: string, fileName: string) => {

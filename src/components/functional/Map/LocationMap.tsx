@@ -15,11 +15,15 @@ import MapView, {
   PROVIDER_DEFAULT,
 } from "react-native-maps";
 import * as Location from "expo-location";
+import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 //--- Components ---
 import ReportPopupScreen from "@components/functional/Report/ReportPopupScreen";
+
+import { API } from "@core/networking/api";
 
 // --- Theme styling ---
 import { Variables } from "@/style/theme";
@@ -31,11 +35,11 @@ export default function LocationMap() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [reportPopupVisible, setReportPopupVisible] = useState(false);
+  const router = useRouter();
 
   const mapRef = React.useRef<MapView>(null);
 
   const insets = useSafeAreaInsets();
-
 
   const DEFAULT_REGION = {
     latitude: 51.0956,
@@ -67,10 +71,10 @@ export default function LocationMap() {
           accuracy: Location.Accuracy.Balanced,
         });
 
-        const currentLocation = await Promise.race([
+        const currentLocation = (await Promise.race([
           locationPromise,
           timeoutPromise,
-        ]) as Location.LocationObject;
+        ])) as Location.LocationObject;
 
         setLocation(currentLocation);
 
@@ -99,6 +103,101 @@ export default function LocationMap() {
     fetchLocation();
   }, []);
 
+  const handleAddNote = async (photoUri?: string) => {
+    if (!location) {
+      alert("We couldn't get your location. Please try again.");
+      return;
+    }
+
+    setReportPopupVisible(false);
+    let address = "Unknown address";
+    let city = "";
+    let zipcode = "";
+
+    try {
+      const APIKey = API.config.googleMapsApiKey;
+
+      if (APIKey) {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.coords.latitude},${location.coords.longitude}&key=${APIKey}`,
+        );
+        const data = await response.json();
+
+        if (data.results && data.results.length > 0) {
+          const addressComponents = data.results[0].address_components;
+          let street = "";
+          let number = "";
+
+          addressComponents.forEach((component: any) => {
+            if (component.types.includes("route")) street = component.long_name;
+            if (component.types.includes("street_number"))
+              number = component.long_name;
+            if (component.types.includes("locality"))
+              city = component.long_name;
+            if (component.types.includes("postal_code"))
+              zipcode = component.long_name;
+          });
+
+          address = `${street} ${number}`.trim();
+          if (!address) address = "Unknown street";
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching address from Google Maps API:", error);
+      address = "Unknown address";
+    }
+    router.push({
+      pathname: "/(app)/report/create" as any,
+      params: {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        address,
+        city,
+        zipcode,
+        photoUri: photoUri || "",
+        hasPhoto: photoUri ? "true" : "false",
+      },
+    });
+  };
+
+  const handleOpenCamera = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    if (permissionResult.granted === false) {
+      alert("Camera access is required to take a photo.");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      handleAddNote(result.assets[0].uri);
+    }
+  };
+
+  const handleOpenGallery = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      alert("Gallery access is required to select a photo.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      handleAddNote(result.assets[0].uri);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -112,11 +211,11 @@ export default function LocationMap() {
         showsUserLocation={true}
         showsMyLocationButton={true}
         toolbarEnabled={false}
-       mapPadding={{ 
-          top: 20, 
-          right: 0, 
+        mapPadding={{
+          top: 20,
+          right: 0,
           bottom: 0,
-          left: 0 
+          left: 0,
         }}
       >
         {location && (
@@ -134,23 +233,23 @@ export default function LocationMap() {
           </Marker>
         )}
       </MapView>
-      <TouchableOpacity 
-        style={[styles.plus, { bottom: insets.bottom +  0 }]} 
+      <TouchableOpacity
+        style={[styles.plus, { bottom: insets.bottom + 0 }]}
         onPress={() => setReportPopupVisible(true)}
         activeOpacity={0.8}
       >
-        <Image 
-          source={require("@assets/icons/Plus-Circle.png")} 
-          style={styles.plusImage} 
+        <Image
+          source={require("@assets/icons/Plus-Circle.png")}
+          style={styles.plusImage}
         />
       </TouchableOpacity>
 
       <ReportPopupScreen
         visible={reportPopupVisible}
         onClose={() => setReportPopupVisible(false)}
-        onCameraPress={() => console.log("Camera pressed")}
-        onGalleryPress={() => console.log("Gallery pressed")}
-        onNotePress={() => console.log("Note pressed")}
+        onCameraPress={handleOpenCamera}
+        onGalleryPress={handleOpenGallery}
+        onNotePress={() => handleAddNote()}
       />
       {loading && !location && (
         <View style={styles.overlayCenter}>
@@ -173,7 +272,7 @@ const styles = StyleSheet.create({
     width: "100%",
     overflow: "hidden",
     backgroundColor: "#f0f0f0",
-    borderTopLeftRadius: 16,  
+    borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
   },
   map: {
@@ -220,7 +319,7 @@ const styles = StyleSheet.create({
   plus: {
     position: "absolute",
     right: 10,
-    backgroundColor: "transparent", 
+    backgroundColor: "transparent",
     shadowColor: Variables.colors.text || "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -228,19 +327,19 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   plusImage: {
-    width: 60, 
+    width: 60,
     height: 60,
     resizeMode: "contain",
   },
   overlayCenter: {
-    position: 'absolute',
-    top: '40%',
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    position: "absolute",
+    top: "40%",
+    alignSelf: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     padding: 20,
     borderRadius: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

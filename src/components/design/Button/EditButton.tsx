@@ -3,20 +3,19 @@ import { useRouter } from 'expo-router';
 import { Variables } from '@style/theme';
 
 type Props = {
-  color?: string;
+  onPress: () => void;
 };
 
-export default function BackButton({ color }: Props) {
+export default function EditButton({ onPress }: Props) {
     const router = useRouter();
 
     return (
         <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={onPress}
             style={styles.container}
         >
             <Image 
-                source={require('@assets/icons/Arrow-left-circle.png')}
-                style={[styles.icon, { tintColor: color }]}
+                source={require('@assets/icons/Edit-Button.png')}
             />
         </TouchableOpacity>
     );
@@ -24,14 +23,11 @@ export default function BackButton({ color }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    
-    marginBottom: 20, 
-    alignSelf: 'flex-start', 
     padding: 5, 
+    top: 10,
+    bottom: 10,
+    left: 10,
+    right: 10,
   },
-  icon: {
-    width: 24,  
-    height: 24,
-    tintColor: Variables.colors.text,
-  },
+  
 });

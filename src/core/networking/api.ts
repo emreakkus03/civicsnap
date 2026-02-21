@@ -7,7 +7,10 @@ const CONFIG = {
     bundleId: process.env.EXPO_PUBLIC_APP_BUNDLE_ID || '',
     databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID || 'CivicSnapDB',
     storageBucketId: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID || 'avatars',
-    profilesCollectionId: 'profiles',
+    profilesCollectionId: process.env.EXPO_PUBLIC_APPWRITE_PROFILES_COLLECTION_ID|| 'profiles',
+    categoriesCollectionId: process.env.EXPO_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID || 'categories',
+    reportsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_REPORTS_COLLECTION_ID || 'reports',
+    google_maps_api_key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
 };
 
 
@@ -28,8 +31,12 @@ export const API = {
     
     
     config: {
+
         databaseId: CONFIG.databaseId, 
         storageBucketId: CONFIG.storageBucketId,
-        profilesCollectionId: CONFIG.profilesCollectionId
+        profilesCollectionId: CONFIG.profilesCollectionId,
+        categoriesCollectionId: CONFIG.categoriesCollectionId,
+        reportsCollectionId: CONFIG.reportsCollectionId,
+        googleMapsApiKey: CONFIG.google_maps_api_key,
     }
 };
