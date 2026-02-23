@@ -99,7 +99,7 @@ export const register = async ({ email, password, fullname, avatarUri }: Registe
             full_name: fullname,
             avatar_url: avatarUrl,
             current_points: 0,
-            lifetime_points: 0,
+            lifetime_points: 1,
             role: "citizen",
             is_banned: false
         }
