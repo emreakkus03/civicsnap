@@ -1,9 +1,18 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+// --- importing core ---
 import { AuthProvider, useAuth } from '@core/AuthProvider';
+
+// --- importing i18n ---
+import '@core/i18n/i18n';
+
+// --- importing pages ---
 import Login from '@pages/Login';
 import SuperAdminDashboard from '@pages/SuperAdminDashboard';
 import Dashboard from '@pages/city/Dashboard';
+
+
 
 function DashboardRouter() {
     const { profile } = useAuth();

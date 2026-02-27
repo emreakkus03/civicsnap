@@ -29,6 +29,13 @@ export default function SuperAdminDashboard() {
 
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
+    const [editingOrganization, setEditingOrganization] = useState<Organization | null>(null);
+    const [editName, setEditName] = useState('');
+    const [editContactEmail, setEditContactEmail] = useState('');
+    const [editZipCodes, setEditZipCodes] = useState('');
+    const [editLogoUrl, setEditLogoUrl] = useState('');
+    const [isUpdating, setIsUpdating] = useState(false);
+
     const closeDropdown = () => setActiveDropdown(null);
 
     const fetchOrganizations = async () => {
@@ -168,6 +175,46 @@ export default function SuperAdminDashboard() {
         closeDropdown();
     };
 
+    const openEditModal = (org: Organization) => {
+        setEditingOrganization(org);
+        setEditName(org.name);
+        setEditContactEmail(org.contact_email);
+        setEditZipCodes(org.zip_codes);
+        setEditLogoUrl(org.logo_url || '');
+        closeDropdown();
+    };
+
+    const handleUpdateOrganization = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingOrganization) return;
+        setIsUpdating(true);
+
+        try {
+            await databases.updateDocument(
+                appwriteConfig.databaseId,
+                appwriteConfig.organizationsCollectionId,
+                editingOrganization.$id,
+                {
+                    name: editName,
+                    contact_email: editContactEmail,
+                    zip_codes: editZipCodes,
+                    logo_url: editLogoUrl || null
+                }
+            );
+
+            await teams.updateName(editingOrganization.$id, editName);
+
+            setOrganizations(prevOrgs => prevOrgs.map(o => o.$id === editingOrganization.$id ? { ...o, name: editName, contact_email: editContactEmail, zip_codes: editZipCodes, logo_url: editLogoUrl } : o));
+            setMessage({ type: 'success', text: `Organization "${editName}" has been updated.` });
+            setEditingOrganization(null);
+        } catch (error) {
+            console.error('Error updating organization:', error);
+            setMessage({ type: 'error', text: 'Failed to update organization.' });
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#F5F7FA] font-inter" onClick={closeDropdown}>
         
@@ -200,9 +247,7 @@ export default function SuperAdminDashboard() {
                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-8 animate-in fade-in slide-in-from-top-4 duration-300">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-inter-bold text-gray-800">Gegevens Nieuwe Gemeente</h3>
-                            <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 transition">
-                                sluiten
-                            </button>
+                            
                         </div>
 
                         {message.text && (
@@ -230,10 +275,7 @@ export default function SuperAdminDashboard() {
                                 <p className="text-xs text-gray-500">Er wordt direct een uitnodiging gestuurd naar dit adres.</p>
                             </div>
 
-                            <div className="flex flex-col gap-2">
-                                <label className="font-inter-semibold text-gray-700 text-sm">Logo URL (Optioneel)</label>
-                                <input type="url" placeholder="https://link-naar-logo.com/logo.png" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4]" />
-                            </div>
+                            
 
                             <div className="flex gap-4 mt-4">
                                 <button type="submit" disabled={loading} className="flex-1 p-4 rounded-xl bg-[#0870C4] text-white font-inter-bold hover:bg-blue-700 transition-colors disabled:opacity-50">
@@ -315,7 +357,7 @@ export default function SuperAdminDashboard() {
                                                
                                                 {activeDropdown === org.$id && (
                                                     <div className="absolute right-12 top-10 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-10 text-left animate-in fade-in zoom-in-95 duration-200">
-                                                        <button className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-inter-medium">
+                                                        <button onClick={(e) => {e.stopPropagation(); openEditModal(org); }} className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-inter-medium">
                                                             <Edit size={16} /> Bewerken
                                                         </button>
                                                         <button onClick={(e) => { e.stopPropagation(); handleResendInvitation(org); }} className="w-full px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2 font-inter-medium">
@@ -337,6 +379,43 @@ export default function SuperAdminDashboard() {
                 )}
 
             </div>
+
+            {editingOrganization && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50">
+                                <h3 className="text-xl font-inter-bold text-gray-800">Organisatie Bewerken</h3>
+                                <button onClick={() => setEditingOrganization(null)} className="text-gray-400 hover:text-gray-600 transition">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            
+                            <form onSubmit={handleUpdateOrganization} className="p-6 flex flex-col gap-4">
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-inter-semibold text-gray-700 text-sm">Naam Gemeente</label>
+                                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4]" required />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-inter-semibold text-gray-700 text-sm">Postcodes</label>
+                                    <input type="text" value={editZipCodes} onChange={(e) => setEditZipCodes(e.target.value)} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4]" required />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-inter-semibold text-gray-700 text-sm">Contact E-mail</label>
+                                    <input type="email" value={editContactEmail} onChange={(e) => setEditContactEmail(e.target.value)} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4]" required />
+                                    <p className="text-xs text-orange-500 font-inter-medium">Let op: Als je de e-mail verandert, stuur hierna dan direct een nieuwe uitnodiging via de tabel!</p>
+                                </div>
+
+                                <div className="flex gap-4 mt-2">
+                                    <button type="submit" disabled={isUpdating} className="flex-1 p-3 rounded-xl bg-[#0870C4] text-white font-inter-bold hover:bg-blue-700 transition-colors disabled:opacity-50">
+                                        {isUpdating ? 'Opslaan...' : 'Wijzigingen Opslaan'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
         </div>
     );
 }

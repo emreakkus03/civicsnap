@@ -25,7 +25,8 @@
       "@core/*": ["src/core/*"],
       "@pages/*": ["src/pages/*"],
       "@components/*": ["src/components/*"],
-      "@assets/*": ["src/assets/*"]
+      "@assets/*": ["src/assets/*"],
+      "@lib/*": ["src/lib/*"]
     }
   },
   "include": [

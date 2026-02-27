@@ -307,6 +307,28 @@ export default function CreateReportForm({
         }
       }
 
+      let matchedOrgId = null;
+      try{
+        const orgsResponse = await API.database.listDocuments(
+          API.config.databaseId,
+          API.config.organizationsCollectionId,
+        );
+
+        const findOrg = orgsResponse.documents.find((org: any) => 
+          org.zip_codes && org.zip_codes.includes(currentZipcode)
+        );
+
+        if(findOrg) {
+          matchedOrgId = findOrg.$id;
+
+        } else {
+          console.log("No matching organization found for zipcode:", currentZipcode);
+        }
+      } catch(orgError) {
+        console.error("Error fetching organizations:", orgError);
+
+      }
+
       await API.database.createDocument(
         API.config.databaseId,
         API.config.reportsCollectionId,
@@ -325,6 +347,7 @@ export default function CreateReportForm({
           points_awarded: 0,
           ai_detected_category: aiDetectedLabel ? aiDetectedLabel.substring(0, 50) : null,
           ai_confidence: aiConfidence > 0 ? aiConfidence : null,
+          organization_id: matchedOrgId,
           ...(uploadedPhotoUri ? { photo_url: uploadedPhotoUri } : {}),
         },
       );

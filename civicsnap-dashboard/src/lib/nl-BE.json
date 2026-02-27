@@ -1,0 +1,13 @@
+{
+    "dashboard": {
+    "menu": {
+      "dashboard": "Dashboard",
+      "reports": "Meldingen",
+      "users": "Gebruikers",
+      "announcements": "Aankondigingen",
+      "settings": "Instellingen"
+    },
+    "title": "Dashboard",
+    "latest_reports": "Nieuwste meldingen"
+    }
+}

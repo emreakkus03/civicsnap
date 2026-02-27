@@ -11,6 +11,7 @@ const CONFIG = {
     categoriesCollectionId: process.env.EXPO_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID || 'categories',
     reportsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_REPORTS_COLLECTION_ID || 'reports',
     google_maps_api_key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+    organizationsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_ORGANIZATIONS_COLLECTION_ID || 'organizations',
 };
 
 
@@ -37,6 +38,7 @@ export const API = {
         profilesCollectionId: CONFIG.profilesCollectionId,
         categoriesCollectionId: CONFIG.categoriesCollectionId,
         reportsCollectionId: CONFIG.reportsCollectionId,
+        organizationsCollectionId: CONFIG.organizationsCollectionId,
         googleMapsApiKey: CONFIG.google_maps_api_key,
     }
 };
