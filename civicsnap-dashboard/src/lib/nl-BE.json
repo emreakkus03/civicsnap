@@ -1,5 +1,26 @@
 {
-    "dashboard": {
+  "general": {
+    "profileLoading": "Profiel laden...",
+    "loading": "Laden...",
+    "accesDeniedTitle": "Toegang geweigerd",
+    "accesDeniedMessage": "Dit web-portaal is uitsluitend voor ambtenaren en beheerders. Gebruik de mobiele app om meldingen te maken en je punten te bekijken.",
+    "buttonLogoutForNotPermitted": "Uitloggen & Terug"
+  },
+  "login": {
+    "titleNormal": "CivicSnap Admin",
+    "titleInviteFlow": "Welkom bij CivicSnap!",
+    "descriptionNormal": "Log in op je beheeraccount.",
+    "descriptionInviteFlow": "Vul je gegevens in om de uitnodiging te accepteren.",
+    "registerNamePlaceholder": "Jouw volledige naam",
+    "registerPasswordPlaceholder": "Kies een sterk wachtwoord",
+    "loginEmailPlaceholder": "E-mailadres",
+    "loginPasswordPlaceholder": "Wachtwoord",
+    "buttonAccept": "ACCEPTEREN...",
+    "buttonAccountMaking": "ACCOUNT AANMAKEN",
+    "buttonLogin": "INLOGGEN",
+    "buttonLoading": "Profiel laden..."
+  },
+  "dashboard": {
     "menu": {
       "dashboard": "Dashboard",
       "reports": "Meldingen",
@@ -9,5 +30,5 @@
     },
     "title": "Dashboard",
     "latest_reports": "Nieuwste meldingen"
-    }
+  }
 }

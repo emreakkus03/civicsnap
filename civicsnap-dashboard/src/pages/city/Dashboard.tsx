@@ -84,10 +84,10 @@ export default function Dashboard() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'New': return { text: 'text-red-600', dot: 'bg-red-500', bg: 'bg-red-50' };
-            case 'In Progress': return { text: 'text-orange-600', dot: 'bg-orange-500', bg: 'bg-orange-50' };
-            case 'Resolved': return { text: 'text-green-600', dot: 'bg-green-500', bg: 'bg-green-50' };
-            case 'Invalid': return { text: 'text-gray-600', dot: 'bg-gray-500', bg: 'bg-gray-50' };
+            case 'new': return { text: 'text-red-600', dot: 'bg-red-500', bg: 'bg-red-50' };
+            case 'in progress': return { text: 'text-orange-600', dot: 'bg-orange-500', bg: 'bg-orange-50' };
+            case 'resolved': return { text: 'text-green-600', dot: 'bg-green-500', bg: 'bg-green-50' };
+            case 'invalid': return { text: 'text-gray-600', dot: 'bg-gray-500', bg: 'bg-gray-50' };
             default: return { text: 'text-gray-600', dot: 'bg-gray-500', bg: 'bg-gray-50' };
         }
     };

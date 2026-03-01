@@ -3,6 +3,8 @@ import { account, teams, databases, appwriteConfig } from "@core/appwrite";
 import { useAuth } from "@core/AuthProvider";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+import { useTranslation } from "react-i18next";
+
 export default function Login() {
     const [searchParams] = useSearchParams();
     const teamId = searchParams.get("teamId");
@@ -20,6 +22,8 @@ export default function Login() {
 
     const { checkAuth } = useAuth();
     const navigate = useNavigate();
+
+    const { t } = useTranslation();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -76,10 +80,10 @@ export default function Login() {
    return (
         <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA] font-inter">
             <div className="bg-white p-10 rounded-2xl shadow-lg w-full max-w-md text-center">
-                <h1 className="text-3xl font-inter-bold text-gray-900 mb-2">{isInviteFlow ? 'Welkom bij CivicSnap!' : 'CivicSnap Admin'}</h1>
+                <h1 className="text-3xl font-inter-bold text-gray-900 mb-2">{isInviteFlow ? t('login.titleInviteFlow') : t('login.titleNormal')}</h1>
                 <p className="text-gray-500 mb-8 font-inter-regular">{isInviteFlow 
-                        ? 'Vul je gegevens in om de uitnodiging te accepteren.' 
-                        : 'Log in op je beheeraccount.'}</p>
+                        ? t('login.descriptionInviteFlow') 
+                        : t('login.descriptionNormal')}</p>
                 
                 {error && (
                     <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm font-inter-medium">
@@ -90,7 +94,7 @@ export default function Login() {
                <form onSubmit={handleAcceptInvite} className="flex flex-col gap-4">
                         <input 
                             type="text" 
-                            placeholder="Jouw volledige naam" 
+                            placeholder={t('login.registerNamePlaceholder')} 
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] font-inter-regular"
@@ -98,7 +102,7 @@ export default function Login() {
                         />
                         <input 
                             type="password" 
-                            placeholder="Kies een sterk wachtwoord" 
+                            placeholder={t('login.registerPasswordPlaceholder')} 
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] font-inter-regular"
@@ -106,14 +110,14 @@ export default function Login() {
                             minLength={8}
                         />
                         <button type="submit" disabled={loading} className="mt-4 p-4 rounded-xl bg-[#0870C4] text-white font-inter-bold hover:bg-blue-700 transition-colors disabled:opacity-50">
-                            {loading ? 'ACCEPTEREN...' : 'ACCOUNT AANMAKEN'}
+                            {loading ? t('login.buttonAccept') : t('login.buttonAccountMaking')}
                         </button>
                     </form>
 ) : (
     <form onSubmit={handleLogin} className="flex flex-col gap-4">
                         <input 
                             type="email" 
-                            placeholder="E-mailadres" 
+                            placeholder={t('login.loginEmailPlaceholder')} 
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] font-inter-regular"
@@ -121,14 +125,14 @@ export default function Login() {
                         />
                         <input 
                             type="password" 
-                            placeholder="Wachtwoord" 
+                            placeholder={t('login.loginPasswordPlaceholder')} 
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] font-inter-regular"
                             required
                         />
                         <button type="submit" disabled={loading} className="mt-4 p-4 rounded-xl bg-[#0870C4] text-white font-inter-bold hover:bg-blue-700 transition-colors disabled:opacity-50">
-                            {loading ? 'LADEN...' : 'INLOGGEN'}
+                            {loading ? t('login.buttonLoading') : t('login.buttonLogin')}
                         </button>
                     </form>
                 )}
