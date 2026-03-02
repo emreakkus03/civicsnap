@@ -7,6 +7,7 @@ export const appwriteConfig = {
     profilesCollectionId: process.env.REACT_APP_APPWRITE_PROFILES_COLLECTION_ID || "",
     organizationsCollectionId: process.env.REACT_APP_APPWRITE_ORGANIZATIONS_COLLECTION_ID || "",
     reportsCollectionId: process.env.REACT_APP_APPWRITE_REPORTS_COLLECTION_ID || "",
+    categoriesCollectionId: process.env.REACT_APP_APPWRITE_CATEGORIES_COLLECTION_ID || "",
 };
 
 

@@ -39,40 +39,74 @@
       "location": "Locatie",
       "status": "Status",
       "actions": "Acties"
-
     },
     "title": "Dashboard",
     "latest_reports": "Nieuwste meldingen"
   },
   "superAdminDashboard": {
-      "title": "Overzicht Organisaties",
-      "addOrganizatonButton": "Nieuwe Organisatie Aanmaken",
-      "form": {
-        "title": "Gegevens Nieuwe Organisatie",
-        "namePlaceholder": "bijv. Stad Gent",
-        "nameLabel": "Naam Organisatie *",
-        "zipcodePlaceholder": "bijv. 9000, 9050",
-        "zipcodeLabel": "Postcodes (met komma) *",
-        "emailPlaceholder": "bijv. admin@stad.gent",
-        "emailLabel": "E-mailadres Beheerder *",
-        "emailInfoText": "Er wordt direct een uitnodiging gestuurd naar dit adres.",
-        "submitLoadingButton": "Aanmaken & Uitnodigen...",
-        "submitButton": "Organisatie Aanmaken"
+    "title": "Overzicht Organisaties",
+    "addOrganizatonButton": "Nieuwe Organisatie Aanmaken",
+    "form": {
+      "title": "Gegevens Nieuwe Organisatie",
+      "namePlaceholder": "bijv. Stad Gent",
+      "nameLabel": "Naam Organisatie *",
+      "zipcodePlaceholder": "bijv. 9000, 9050",
+      "zipcodeLabel": "Postcodes (met komma) *",
+      "emailPlaceholder": "bijv. admin@stad.gent",
+      "emailLabel": "E-mailadres Beheerder *",
+      "emailInfoText": "Er wordt direct een uitnodiging gestuurd naar dit adres.",
+      "submitLoadingButton": "Aanmaken & Uitnodigen...",
+      "submitButton": "Organisatie Aanmaken"
+    },
+    "loadingOrganizations": "Organisaties laden...",
+    "NoOrganizations": "Nog geen organisaties gevonden.",
+    "table": {
+      "logo": "Logo",
+      "name": "Naam Organisatie",
+      "cityAdmin": "Hoofd Contactpersoon",
+      "totalMembers": "Aantal Leden",
+      "status": "Status",
+      "actions": "Beheer"
+    },
+    "organizationSettings": {
+      "editButton": "Bewerken",
+      "sendEmailButton": "Uitnodiging Sturen",
+      "deleteButton": "Verwijderen"
+    },
+    "editForm": {
+      "title": "Organisatie Bewerken",
+      "nameLabel": "Naam Organisatie",
+      "zipcodeLabel": "Postcodes (met komma)",
+      "emailLabel": "E-mailadres contactpersoon",
+      "emailWarningText": "Let op: Als je de e-mail verandert, stuur hierna dan direct een nieuwe uitnodiging via de tabel!",
+      "submitButton": "Wijzigingen Opslaan",
+      "submitLoading": "Opslaan..."
+    }
+  },
+  "reports": {
+    "title": "Meldingen Overzicht",
+    "filterSection": {
+      "filterLabel": "Filter",
+      "filterPlaceholder": "Zoek op straat...",
+      "statusLabel": "Status",
+      "statusOptions": {
+        "all": "Alle",
+        "new": "Nieuw",
+        "approved": "Goedgekeurd",
+        "in_progress": "In Behandeling",
+        "invalid": "Ongeldig",
+        "resolved": "Opgelost"
       },
-      "loadingOrganizations": "Organisaties laden...",
-      "NoOrganizations": "Nog geen organisaties gevonden.",
-      "table": {
-        "logo": "Logo",
-        "name": "Naam Organisatie",
-        "cityAdmin": "Hoofd Contactpersoon",
-        "totalMembers": "Aantal Leden",
-        "status": "Status",
-        "actions": "Beheer"
-      },
-      "organizationSettings": {
-        "editButton": "Bewerken",
-        "sendEmailButton": "Uitnodiging Sturen",
-        "deleteButton": "Verwijderen"
-      }
+      "categoryLabel": "Categorie",
+      "noResultsForFilters": "Geen meldingen gevonden voor deze filters."
+    },
+    "table": {
+      "photo": "Foto",
+      "date": "Datum",
+      "type": "Type",
+      "location": "Locatie",
+      "status": "Status",
+      "actions": "Actie"
+    }
   }
 }

@@ -12,6 +12,9 @@ import { useTranslation } from "react-i18next";
 import Login from '@pages/Login';
 import SuperAdminDashboard from '@pages/SuperAdminDashboard';
 import Dashboard from '@pages/city/Dashboard';
+import Reports from '@pages/city/reports/Reports';
+import ReportDetail from '@pages/city/reports/ReportDetail';
+
 
 
 
@@ -73,6 +76,18 @@ function AppRoutes() {
         </ProtectedRoute>
       }
       />
+      <Route path="/reports" element={
+        <ProtectedRoute>
+          <Reports />
+        </ProtectedRoute>
+      }
+      />
+      <Route path="/reports/:id" element={
+     <ProtectedRoute>
+          <ReportDetail />
+     </ProtectedRoute>
+   }
+   />
     </Routes>
   );
 }

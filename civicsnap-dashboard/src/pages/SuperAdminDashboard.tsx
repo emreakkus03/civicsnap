@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@core/AuthProvider';
 import { teams, databases, appwriteConfig } from '@core/appwrite';
 import { ID, Models } from 'appwrite';
-import { Plus, X, Settings, Edit, Mail, Trash2} from 'lucide-react';
+import {X, Settings, Edit, Mail, Trash2} from 'lucide-react';
 
 import Header from '@components/Header';
 import { useTranslation } from "react-i18next";
@@ -386,7 +385,7 @@ export default function SuperAdminDashboard() {
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                         <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
                             <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50">
-                                <h3 className="text-xl font-inter-bold text-gray-800">Organisatie Bewerken</h3>
+                                <h3 className="text-xl font-inter-bold text-gray-800">{t('superAdminDashboard.editForm.title')}</h3>
                                 <button onClick={() => setEditingOrganization(null)} className="text-gray-400 hover:text-gray-600 transition">
                                     <X size={24} />
                                 </button>
@@ -394,24 +393,24 @@ export default function SuperAdminDashboard() {
                             
                             <form onSubmit={handleUpdateOrganization} className="p-6 flex flex-col gap-4">
                                 <div className="flex flex-col gap-1">
-                                    <label className="font-inter-semibold text-gray-700 text-sm">Naam Gemeente</label>
+                                    <label className="font-inter-semibold text-gray-700 text-sm">{t('superAdminDashboard.editForm.nameLabel')}</label>
                                     <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4]" required />
                                 </div>
 
                                 <div className="flex flex-col gap-1">
-                                    <label className="font-inter-semibold text-gray-700 text-sm">Postcodes</label>
+                                    <label className="font-inter-semibold text-gray-700 text-sm">{t('superAdminDashboard.editForm.zipcodeLabel')}</label>
                                     <input type="text" value={editZipCodes} onChange={(e) => setEditZipCodes(e.target.value)} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4]" required />
                                 </div>
 
                                 <div className="flex flex-col gap-1">
-                                    <label className="font-inter-semibold text-gray-700 text-sm">Contact E-mail</label>
+                                    <label className="font-inter-semibold text-gray-700 text-sm">{t('superAdminDashboard.editForm.emailLabel')}</label>
                                     <input type="email" value={editContactEmail} onChange={(e) => setEditContactEmail(e.target.value)} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4]" required />
-                                    <p className="text-xs text-orange-500 font-inter-medium">Let op: Als je de e-mail verandert, stuur hierna dan direct een nieuwe uitnodiging via de tabel!</p>
+                                    <p className="text-xs text-orange-500 font-inter-medium">{t('superAdminDashboard.editForm.emailWarningText')}</p>
                                 </div>
 
                                 <div className="flex gap-4 mt-2">
                                     <button type="submit" disabled={isUpdating} className="flex-1 p-3 rounded-xl bg-[#0870C4] text-white font-inter-bold hover:bg-blue-700 transition-colors disabled:opacity-50">
-                                        {isUpdating ? 'Opslaan...' : 'Wijzigingen Opslaan'}
+                                        {isUpdating ? t('superAdminDashboard.editForm.submitLoading') : t('superAdminDashboard.editForm.submitButton')}
                                     </button>
                                 </div>
                             </form>

@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "@core/AuthProvider";
-import { databases, appwriteConfig, googleMapsApiKey } from "@core/appwrite";
 import { Query, Models } from "appwrite";
-import Header from "@components/Header";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
-import { LayoutDashboard, Bell, Users, Settings, MapPin, FileText, Megaphone } from "lucide-react";
+import { MapPin, FileText } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+// --- importing core ---
+import { useAuth } from "@core/AuthProvider";
+import { databases, appwriteConfig, googleMapsApiKey } from "@core/appwrite";
+// --- importing components ---
+import Header from "@components/Header";
+import Sidebar from "@components/Sidebar";
+
 interface Report extends Models.Document {
-    title: string;
     description: string;
+    address: string;
     location_lat: number;
     location_long: number;
-    status: 'New' | 'In Progress' | 'Resolved' | 'Invalid' | string;
+    status: 'New' |'Approved' | 'In Progress' | 'Resolved' | 'Invalid' | string;
     organization_id: string;
+    category_id: string;
+    category_name?: string;
+    created_at: string;
 }
 
 const mapContainerStyle = {
@@ -67,7 +74,32 @@ export default function Dashboard() {
                         Query.limit(10)
                     ]
                 );
-                setReports(response.documents as unknown as Report[]);
+
+                const categoryDictionary: Record<string, string> = {};
+                try {
+                    const categoriesResponse = await databases.listDocuments(
+                        appwriteConfig.databaseId,
+                        appwriteConfig.categoriesCollectionId
+                    );
+                    
+                    categoriesResponse.documents.forEach(category => {
+                        categoryDictionary[category.$id] = category.name;
+                    });
+                } catch (error) {
+                    console.error("Error fetching categories:", error);
+                }
+
+
+
+                const reportsWithCategoryName = response.documents.map((report: any) => ({
+                    ...report,
+                    category_name: categoryDictionary[report.category_id]
+                }));
+                
+
+                setReports(reportsWithCategoryName as unknown as Report[]);
+                    
+              
             } catch (error) {
                 console.error("Error fetching reports:", error);
             } finally {
@@ -85,6 +117,7 @@ export default function Dashboard() {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'new': return { text: 'text-red-600', dot: 'bg-red-500', bg: 'bg-red-50' };
+            case 'approved': return { text: 'text-blue-600', dot: 'bg-blue-500', bg: 'bg-blue-50' };
             case 'in progress': return { text: 'text-orange-600', dot: 'bg-orange-500', bg: 'bg-orange-50' };
             case 'resolved': return { text: 'text-green-600', dot: 'bg-green-500', bg: 'bg-green-50' };
             case 'invalid': return { text: 'text-gray-600', dot: 'bg-gray-500', bg: 'bg-gray-50' };
@@ -92,40 +125,26 @@ export default function Dashboard() {
         }
     };
 
-    const menuItems = [
-        { label: t('dashboard.menu.dashboard'), icon: LayoutDashboard, href: '/', active: true },
-        { label: t('dashboard.menu.reports'), icon: FileText, href: '/', active: false },
-        { label: t('dashboard.menu.users'), icon: Users, href: '/', active: false },
-        { label: t('dashboard.menu.announcements'), icon: Megaphone, href: '/', active: false },
-        { label: t('dashboard.menu.settings'), icon: Settings, href: '/', active: false },
-    ];
+ 
+    const formatDate = (dateString: string) => {
+        if(!dateString) return '';
+        const date = new Date(dateString);
+
+        return date.toLocaleDateString('nl-BE', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        });
+
+
+    };
 
     return (
         <div className="min-h-screen bg-[#F5F7FA] font-inter">
             <Header />
 
             <div className="flex">
-                <aside className="w-64 min-h-[calc(100vh-64px)] bg-white border-r border-gray-200 px-4 py-6 flex-shrink-0">
-                    <nav>
-                        <ul className="space-y-1">
-                            {menuItems.map((item) => (
-                                <li key={item.label}>
-                                    <a
-                                        href={item.href}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                                            item.active
-                                                ? 'bg-[#0870C4] text-white shadow-md shadow-blue-200'
-                                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                                        }`}
-                                    >
-                                        <item.icon size={18} />
-                                        <span>{item.label}</span>
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    </nav>
-                </aside>
+               <Sidebar activeItem="dashboard"/>
 
                 <section className="flex-1 flex flex-col min-w-0 overflow-hidden p-8">
                     <div className="max-w-6xl w-full mx-auto space-y-8">
@@ -196,13 +215,12 @@ export default function Dashboard() {
                                                 const statusColors = getStatusColor(report.status);
                                                 return (
                                                     <tr key={report.$id} className="hover:bg-gray-50 transition-colors duration-150">
-                                                        <td className="py-4 px-6 text-sm text-gray-600"></td>
-                                                        <td className="py-4 px-6 text-sm text-gray-600"></td>
+                                                        <td className="py-4 px-6 text-sm text-gray-600">{formatDate(report.$createdAt)}</td>
+                                                        <td className="py-4 px-6 text-sm text-gray-600">{report.category_name}</td>
                                                         <td className="py-4 px-6">
                                                             <div className="flex items-center gap-2">
-                                                                <MapPin size={14} className="text-gray-400" />
                                                                 <span className="text-sm text-gray-600">
-                                                                    {report.location_lat.toFixed(4)}, {report.location_long.toFixed(4)}
+                                                                    {report.address}
                                                                 </span>
                                                             </div>
                                                         </td>
