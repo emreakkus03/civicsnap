@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from '@core/AuthProvider';
 import '@core/i18n/i18n';
 import { useTranslation } from "react-i18next";
 
+import { Toaster } from 'react-hot-toast';
+
 // --- importing pages ---
 import Login from '@pages/Login';
 import SuperAdminDashboard from '@pages/SuperAdminDashboard';
@@ -98,6 +100,7 @@ export default function App() {
       <BrowserRouter>
         <AppRoutes />
       </BrowserRouter>
+      <Toaster position="top-right" toastOptions={{ duration: 5000 }} />
     </AuthProvider>
   );
 }

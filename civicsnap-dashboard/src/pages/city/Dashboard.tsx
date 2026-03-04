@@ -16,7 +16,7 @@ interface Report extends Models.Document {
     address: string;
     location_lat: number;
     location_long: number;
-    status: 'New' |'Approved' | 'In Progress' | 'Resolved' | 'Invalid' | string;
+    status: 'new' | 'approved' | 'in_progress' | 'resolved' | 'invalid' | string;
     organization_id: string;
     category_id: string;
     category_name?: string;

@@ -143,7 +143,7 @@ export default function Reports() {
         return { text: "text-red-600", dot: "bg-red-500", bg: "bg-red-50" };
         case "approved":
         return { text: "text-blue-600", dot: "bg-blue-500", bg: "bg-blue-50" };
-      case "in progress":
+      case "in_progress":
         return {
           text: "text-orange-600",
           dot: "bg-orange-500",

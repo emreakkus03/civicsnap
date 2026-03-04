@@ -9,7 +9,8 @@
     "buttonLogoutForNotPermitted": "Uitloggen & Terug",
     "logoutButton": "Uitloggen",
     "reportActionButtonTitle": "Bekijk",
-    "cancelButton": "Annuleren"
+    "cancelButton": "Annuleren",
+    "saveButton": "Opslaan"
   },
   "login": {
     "titleNormal": "CivicSnap Admin",
@@ -108,5 +109,28 @@
       "status": "Status",
       "actions": "Actie"
     }
+  },
+  "reportsDetail": {
+    "title": "Melding Detail",
+    "recognized": "herkend",
+    "noPhoto": "Geen foto beschikbaar",
+    "descriptionLabel": "Beschrijving",
+    "actionPanel": {
+      "title": "Actiepaneel",
+      "statusLabel": "Status",
+      "statusOptions": {
+        "new": "Nieuw",
+        "approved": "Goedgekeurd",
+        "in_progress": "In Behandeling",
+        "invalid": "Ongeldig",
+        "resolved": "Opgelost"
+      },
+      "internNotesLabel": "Interne Notities",
+      "internNotesPlaceholder": "Voeg hier interne notities toe...",
+      "viewRights": "Je hebt alleen leesrechten."
+    },
+    "updateSuccess": "Melding succesvol bijgewerkt!",
+    "notFound": "Melding niet gevonden.",
+    "pointsAwardedSuccess": "Succes! De melder heeft {{pointsAwardedNow}} punten gekregen. 🏆"
   }
 }

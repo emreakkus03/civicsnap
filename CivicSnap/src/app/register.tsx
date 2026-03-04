@@ -15,6 +15,8 @@ import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+
 import Button from "@components/design/Button/PrimaryButton";
 import BackButton from "@components/design/Button/BackButton";
 import ThemedText from "@components/design/Typography/ThemedText";
@@ -92,9 +94,10 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
+    <KeyboardAwareScrollView contentContainerStyle={styles.container} enableOnAndroid={true} 
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          extraScrollHeight={50}>
         <View style={styles.headerRow}>
             <View style={styles.backButtonWrapper}>
                 <BackButton />
@@ -229,8 +232,8 @@ export default function RegisterScreen() {
             </Text>
         </View>
 
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
+    
   );
 }
 

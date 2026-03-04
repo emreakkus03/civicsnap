@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, KeyboardAvoidingView, ScrollView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 import Button from "@components/design/Button/PrimaryButton";
 import BackButton from "@components/design/Button/BackButton";
@@ -44,8 +45,10 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.container}>
+   
+      <KeyboardAwareScrollView contentContainerStyle={styles.container} enableOnAndroid={true} 
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}>
         
         <View style={styles.headerRow}>
 
@@ -137,8 +140,8 @@ export default function LoginScreen() {
             </Text>
         </View>
 
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
+    
   );
 }
 
@@ -228,7 +231,7 @@ const styles = StyleSheet.create({
 
   footer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 50,
   },
   footerText: {
     textAlign: 'center',

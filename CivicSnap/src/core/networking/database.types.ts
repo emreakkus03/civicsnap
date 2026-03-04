@@ -42,7 +42,7 @@ export interface Report extends Models.Document {
     zip_code?: string;
     location_lat: number;
     location_long: number;
-    status: 'New' | 'Approved' | 'In Progress' | 'Resolved' | 'Invalid';
+    status: 'new' | 'approved' | 'in_progress' | 'resolved' | 'invalid';
     admin_notes?: string;
     is_duplicate: boolean;
     original_report_id?: string; 

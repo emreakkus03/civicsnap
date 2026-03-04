@@ -10,6 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ID } from "react-native-appwrite";
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 import { API } from "@/core/networking/api";
 import { useAuthContext } from "@components/functional/Auth/authProvider";
@@ -25,7 +26,7 @@ import LocationSearchModal from "@components/functional/Report/LocationSearchMod
 
 import * as ImagePicker from "expo-image-picker";
 import { File, Paths } from "expo-file-system/next";
-import * as FileSystem from "expo-file-system";
+
 import { Image } from "expo-image";
 
 type Props = {
@@ -328,6 +329,7 @@ export default function CreateReportForm({
         console.error("Error fetching organizations:", orgError);
 
       }
+      
 
       await API.database.createDocument(
         API.config.databaseId,
@@ -368,7 +370,7 @@ export default function CreateReportForm({
   };
 
  return (
-    <View style={styles.formCard}>
+    <View  style={styles.formCard}>
       {(hasPhoto || localPhotoUri) &&
         (localPhotoUri ? (
           <View style={styles.photoPreviewContainer}>
