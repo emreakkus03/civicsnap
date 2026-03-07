@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { teams, databases, appwriteConfig } from '@core/appwrite';
-import { ID, Models } from 'appwrite';
+import { ID, Models, Permission, Role } from 'appwrite';
 import {X, Settings, Edit, Mail, Trash2} from 'lucide-react';
 
 import Header from '@components/Header';
@@ -76,7 +76,11 @@ export default function SuperAdminDashboard() {
                     zip_codes: zipCodes,
                     logo_url: logoUrl || null,
                     status: 'active'
-                }
+                },
+                [
+                    Permission.read(Role.team(team.$id)),
+                    Permission.update(Role.team(team.$id))
+                ]
             );
 
             const loginUrl = `${window.location.origin}/login`;

@@ -43,6 +43,12 @@ export default function Reports() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
+  const [activeTab, setActiveTab] = useState<'active' | 'archive'>('active');
+
+  useEffect(() => {
+    setStatusFilter('all');
+  }, [activeTab]);
+
   useEffect(() => {
     const fetchAllReports = async () => {
       if (!profile?.organization_id) return;
@@ -111,11 +117,20 @@ export default function Reports() {
   }, [profile?.organization_id]);
 
   const filteredReports = reports.filter((report) => {
+    const normalizedStatus = report.status.toLowerCase().trim();
+
+    const isActiveTab = activeTab === 'active';
+    const isReportActive = ['new', 'approved', 'in_progress'].includes(normalizedStatus);
+    const isReportArchived = ['resolved', 'invalid'].includes(normalizedStatus);
+
+    if (isActiveTab && !isReportActive) return false;
+    if (!isActiveTab && !isReportArchived) return false;
+
+
     const matchesSearch = report.address
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
 
-    const normalizedStatus = report.status.toLowerCase().trim();
 
     const matchesStatus =
       statusFilter === "all" || normalizedStatus === statusFilter;
@@ -193,6 +208,30 @@ export default function Reports() {
               {t("reports.title")}
             </h1>
 
+            <div className="flex border-b border-gray-200 mb-6">
+              <button onClick={()=> setActiveTab('active')} className={`pb-4 px-6 text-sm font-semibold transition-colors relative ${
+                        activeTab === 'active' ? "text-[#0870C4]" : "text-gray-500 hover:text-gray-700"
+                    }`}>
+
+                      {t('reports.pages.active')}
+                      {activeTab === 'active' && (
+                        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0870C4] rounded-t-full"></span>
+                    )}
+
+              </button>
+              <button onClick={() => setActiveTab('archive')}
+                className={`pb-4 px-6 text-sm font-semibold transition-colors relative ${
+                        activeTab === 'archive' ? "text-[#0870C4]" : "text-gray-500 hover:text-gray-700"
+                    }`}>
+
+                      {t('reports.pages.archive')}
+                      {activeTab === 'archive' && (
+                        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0870C4] rounded-t-full"></span>
+                    )}
+
+              </button>
+            </div>
+
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-6 items-end">
               <div className="flex-1 min-w-[200px]">
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -222,21 +261,29 @@ export default function Reports() {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#0870C4] cursor-pointer"
                 >
                   <option value="all">{t("reports.filterSection.statusOptions.all")}</option>
-                  <option value="new">
-                    {t("reports.filterSection.statusOptions.new")}
-                  </option>
-                  <option value="approved">
-                    {t("reports.filterSection.statusOptions.approved")}
-                  </option>
-                  <option value="in_progress">
-                    {t("reports.filterSection.statusOptions.in_progress")}
-                  </option>
-                  <option value="resolved">
-                    {t("reports.filterSection.statusOptions.resolved")}
-                  </option>
-                  <option value="invalid">
-                    {t("reports.filterSection.statusOptions.invalid")}
-                  </option>
+                  {activeTab === 'active' ? (
+                    <>
+
+                      <option value="new">
+                        {t("reports.filterSection.statusOptions.new")}
+                      </option>
+                      <option value="approved">
+                        {t("reports.filterSection.statusOptions.approved")}
+                      </option>
+                      <option value="in_progress">
+                        {t("reports.filterSection.statusOptions.in_progress")}
+                      </option>
+                    </>
+                  ): (
+                    <>
+                      <option value="resolved">
+                        {t("reports.filterSection.statusOptions.resolved")}
+                      </option>
+                      <option value="invalid">
+                        {t("reports.filterSection.statusOptions.invalid")}
+                      </option>
+                    </>
+                  )}
                 </select>
               </div>
 

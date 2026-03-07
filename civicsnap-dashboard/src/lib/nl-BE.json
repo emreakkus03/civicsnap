@@ -108,6 +108,10 @@
       "location": "Locatie",
       "status": "Status",
       "actions": "Actie"
+    },
+    "pages": {
+      "active": "Actieve Meldingen",
+      "archive": "Archief"
     }
   },
   "reportsDetail": {

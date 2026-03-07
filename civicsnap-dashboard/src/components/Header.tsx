@@ -1,7 +1,9 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 
 import { useAuth } from "@core/AuthProvider";
 import { useTranslation } from "react-i18next";
+
+import { databases, appwriteConfig } from "@core/appwrite";
 
 
 export default function Header() {
@@ -11,6 +13,25 @@ export default function Header() {
     const isSuperAdmin = profile?.role === 'super_admin';
         const { t } = useTranslation();
 
+        const [orgLogo, setOrgLogo] = useState<string | null>(null);
+        useEffect(() => {
+        if (profile?.organization_id && !isSuperAdmin) {
+            const fetchLogo = async () => {
+                try {
+                    const orgData = await databases.getDocument(
+                        appwriteConfig.databaseId,
+                        appwriteConfig.organizationsCollectionId,
+                        profile.organization_id
+                    );
+                    if (orgData.logo_url) setOrgLogo(orgData.logo_url);
+                } catch (error) {
+                    console.error("Error fetching logo:", error);
+                }
+            };
+            fetchLogo();
+        }
+    }, [profile?.organization_id, isSuperAdmin]);
+
     return (
         <header className="bg-[#0870C4] text-white px-6 py-4 flex justify-between items-center shadow-md relative z-50">
 <div className="flex items-center">
@@ -18,10 +39,17 @@ export default function Header() {
                     <h1 className="text-xl font-bold tracking-wide">CivicSnap Master Admin</h1>
                 ) : (
                    
-                    <div className="bg-[#1DA1F2] bg-opacity-90 px-3 py-2 rounded-md font-bold text-white text-lg flex items-center shadow-sm">
-                       
-                        {profile?.organization_id ? 'gemeente:' : 'stad:'}
-                    </div>
+                    orgLogo ? (
+                        <img 
+                            src={orgLogo} 
+                            alt="Gemeente Logo" 
+                            className="w-10 h-10 rounded-full border-2 border-white object-cover bg-white shadow-sm"
+                        />
+                    ) : (
+                        <div className="bg-[#1DA1F2] bg-opacity-90 px-3 py-2 rounded-md font-bold text-white text-lg flex items-center shadow-sm">
+                            {profile?.organization_id ? 'gemeente:' : 'stad:'}
+                        </div>
+                    )
                 )}
             </div>
 

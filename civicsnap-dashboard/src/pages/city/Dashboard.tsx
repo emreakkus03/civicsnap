@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Query, Models } from "appwrite";
-import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from "@react-google-maps/api";
 import { MapPin, FileText } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 // --- importing core ---
 import { useAuth } from "@core/AuthProvider";
@@ -21,6 +22,7 @@ interface Report extends Models.Document {
     category_id: string;
     category_name?: string;
     created_at: string;
+    photo_url?: string;
 }
 
 const mapContainerStyle = {
@@ -32,9 +34,13 @@ const mapContainerStyle = {
 export default function Dashboard() {
     const { profile } = useAuth();
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+
+    
 
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
@@ -70,6 +76,7 @@ export default function Dashboard() {
                     appwriteConfig.reportsCollectionId,
                     [
                         Query.equal('zip_code', zipCodesArray),
+                        Query.equal('status', 'new'),
                         Query.orderDesc('$createdAt'),
                         Query.limit(10)
                     ]
@@ -166,9 +173,38 @@ export default function Dashboard() {
                                         <Marker
                                             key={report.$id}
                                             position={{ lat: report.location_lat, lng: report.location_long }}
-                                            title="Report Location"
+                                            onClick={() => setSelectedReport(report)}
                                         />
                                     ))}
+                                    {selectedReport && (
+                                        <InfoWindow
+                                            position={{ lat: selectedReport.location_lat, lng: selectedReport.location_long }}
+                                            onCloseClick={() => setSelectedReport(null)}
+                                            >
+                                                <div className="p-1 max-w-[200px]">
+                                                    {selectedReport.photo_url ? (
+                                                        <img src={selectedReport.photo_url} alt="Report" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full h-full flex items-center justify-center">
+                                                            <FileText className="text-gray-300" size={24} />
+                                                        </div>
+                                                    )}
+                                                    <h3 className="font-bold text-sm text-gray-900 mb-1 truncate">
+                                                    {selectedReport.category_name }
+                                                </h3>
+                                                <p className="text-xs text-gray-500 truncate mb-3">
+                                                    {selectedReport.address}
+                                                </p>
+                                                <button 
+                                                    onClick={() => navigate(`/reports/${selectedReport.$id}`)}
+                                                    className="w-full bg-[#0870C4] text-white text-xs font-bold py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                                                >
+                                                    {t('general.reportActionButtonTitle')}
+                                                </button>
+                                                </div>
+
+                                            </InfoWindow>
+                                    )}
                                 </GoogleMap>
                             ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 rounded-xl">
@@ -231,7 +267,7 @@ export default function Dashboard() {
                                                             </span>
                                                         </td>
                                                         <td className="py-4 px-6">
-                                                            <button className="inline-flex items-center px-4 py-2 text-sm font-semibold text-[#0870C4] bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200">
+                                                            <button onClick={() => navigate(`/reports/${report.$id}`)} className="inline-flex items-center px-4 py-2 text-sm font-semibold text-[#0870C4] bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200">
                                                                 {t('general.reportActionButtonTitle')}
                                                             </button>
                                                         </td>
