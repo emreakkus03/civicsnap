@@ -12,6 +12,8 @@ import {
   MoreHorizontal,
   Image as ImageIcon,
   FileText,
+  ArrowDown,
+  ArrowUp
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -44,6 +46,8 @@ export default function Reports() {
   const [categoryFilter, setCategoryFilter] = useState("all");
 
   const [activeTab, setActiveTab] = useState<'active' | 'archive'>('active');
+
+  const [sortOrderDirection, setSortOrderDirection] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     setStatusFilter('all');
@@ -139,6 +143,16 @@ export default function Reports() {
       categoryFilter === "all" || report.category_name === categoryFilter;
 
     return matchesSearch && matchesStatus && matchesCategory;
+  }).sort((a, b) => {
+    const dateA = new Date(a.$createdAt).getTime();
+    const dateB = new Date(b.$createdAt).getTime();
+
+    if (sortOrderDirection === 'desc'){
+      return dateB - dateA; 
+    } else {
+      return dateA - dateB;
+    }
+
   });
 
   const formatDate = (dateString: string) => {
@@ -328,8 +342,14 @@ export default function Reports() {
                         <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider w-20">
                           {t('reports.table.photo')}
                         </th>
-                        <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider hover:cursor-pointer"
+                        onClick={()=> setSortOrderDirection(sortOrderDirection === 'desc' ? 'asc' : 'desc')}>
                           {t('reports.table.date')}
+                          {sortOrderDirection === 'desc' ? (
+                            <ArrowDown size={14} className="inline-block ml-1 text-gray-400" />
+                          ) : (
+                            <ArrowUp size={14} className="inline-block ml-1 text-gray-400" />
+                          )}
                         </th>
                         <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">
                           {t('reports.table.type')}

@@ -43,7 +43,7 @@ export default function Header() {
                         <img 
                             src={orgLogo} 
                             alt="Gemeente Logo" 
-                            className="w-10 h-10 rounded-full border-2 border-white object-cover bg-white shadow-sm"
+                            className="h-10 w-auto max-w-[200px] object-contain bg-white px-3 py-1 rounded-md shadow-sm"
                         />
                     ) : (
                         <div className="bg-[#1DA1F2] bg-opacity-90 px-3 py-2 rounded-md font-bold text-white text-lg flex items-center shadow-sm">
