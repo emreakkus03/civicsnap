@@ -1,6 +1,8 @@
 import { Redirect,Stack } from "expo-router";
 import { useAuthContext } from '@components/functional/Auth/authProvider';
 
+import { RealtimeProvider } from "@core/modules/realtimeProvider/RealtimeProvider";
+
 export default function AppLayout() {
   const { isLoggedIn } = useAuthContext();
 
@@ -8,9 +10,11 @@ export default function AppLayout() {
     return <Redirect href="/welcome" />;
   }
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="report" />
-    </Stack>
+    <RealtimeProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="report" />
+      </Stack>
+    </RealtimeProvider>
   );
 }

@@ -6,7 +6,6 @@ import {
   Image,
   ActivityIndicator,
   Platform,
-  Dimensions,
   TouchableOpacity,
 } from "react-native";
 import MapView, {
@@ -22,6 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 //--- Components ---
 import ReportPopupScreen from "@components/functional/Report/ReportPopupScreen";
+import AnnouncementBanner from "@components/functional/Announcements/AnnouncementBanner";
 
 import { API } from "@core/networking/api";
 
@@ -201,6 +201,12 @@ export default function LocationMap() {
 
   return (
     <View style={styles.container}>
+      {location && (
+        <AnnouncementBanner 
+          location_lat={location.coords.latitude} 
+          location_long={location.coords.longitude} 
+        />
+      )}
       <MapView
         ref={mapRef}
         style={styles.map}

@@ -49,6 +49,7 @@ export interface Report extends Models.Document {
     points_awarded?: number;
     user_id: string;       
     organization_id?: string; 
+    vision_labels?: string[];
 }
 
 export interface Reward extends Models.Document {
@@ -79,7 +80,7 @@ export interface Announcement extends Models.Document {
     start_at: string;
     ends_at: string;
     organization_id: string;
-    priority: 'normal' | 'high';
+    priority: "low" | "medium" | "high";
     is_active: boolean;
 }
 
