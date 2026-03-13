@@ -23,6 +23,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ReportPopupScreen from "@components/functional/Report/ReportPopupScreen";
 import AnnouncementBanner from "@components/functional/Announcements/AnnouncementBanner";
 
+import ReportMarkers from "@components/functional/Report/ReportMarkers";
+
 import { API } from "@core/networking/api";
 
 // --- Theme styling ---
@@ -237,6 +239,13 @@ export default function LocationMap() {
               style={styles.markerImage}
             />
           </Marker>
+        )}
+        {location && (
+          <ReportMarkers 
+            location_lat={location.coords.latitude} 
+            location_long={location.coords.longitude} 
+            onReportPress={(report) => console.log("Geklikt op melding:", report.$id)} // Optioneel
+          />
         )}
       </MapView>
       <TouchableOpacity

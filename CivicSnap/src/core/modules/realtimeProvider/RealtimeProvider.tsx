@@ -1,5 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { API } from "@core/networking/api";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from "react";
+import { AppState, AppStateStatus } from "react-native";
 
 interface RealtimeContextType {
   lastUpdate: number;
@@ -15,20 +21,30 @@ export const RealtimeProvider = ({
   children: React.ReactNode;
 }) => {
   const [lastUpdate, setLastUpdate] = useState(Date.now());
+  const appStateRef = useRef<AppStateStatus>("active");
 
   useEffect(() => {
-    const unsubscribe = API.client.subscribe(
-      [
-        `databases.${API.config.databaseId}.collections.${API.config.reportsCollectionId}.documents`,
-        `databases.${API.config.databaseId}.collections.${API.config.announcementsCollectionId}.documents`,
-      ],
-      (response) => {
+    const intervalId = setInterval(() => {
+      // Only poll when the app is active
+      if (appStateRef.current === "active") {
         setLastUpdate(Date.now());
+      }
+    }, 10000);
+
+    const subscription = AppState.addEventListener(
+      "change",
+      (nextAppState: AppStateStatus) => {
+        if (nextAppState === "active") {
+          console.log("📱 App back in focus! Refreshing immediately...");
+          setLastUpdate(Date.now());
+        }
+        appStateRef.current = nextAppState;
       },
     );
 
     return () => {
-      unsubscribe();
+      clearInterval(intervalId);
+      subscription.remove();
     };
   }, []);
 
