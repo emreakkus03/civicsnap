@@ -49,7 +49,9 @@
       "reports": "Meldingen",
       "users": "Gebruikers",
       "announcements": "Aankondigingen",
-      "settings": "Instellingen"
+      "settings": "Instellingen",
+      "rewards": "Beloningen",
+      "organizations": "Organisaties"
     },
     "reportsTable": {
       "date": "Datum",
@@ -359,5 +361,69 @@
     "resetPassword": {
       "redirecting": "Je wordt doorgestuurd naar de CivicSnap app..."
     }
-  }
+  },
+  "rewards": {
+    "title": "Rewards",
+    "addButton": "Reward toevoegen",
+    "loading": "Laden...",
+    "empty": "Nog geen rewards toegevoegd.",
+    "table": {
+        "image": "Afbeelding",
+        "title": "Titel",
+        "business": "Bedrijf",
+        "cost": "Kosten",
+        "location": "Locatie",
+        "validUntil": "Geldig t/m",
+        "active": "Actief",
+        "actions": "Acties",
+        "noPhoto": "Geen foto"
+    },
+    "form": {
+        "titleCreate": "Reward toevoegen",
+        "titleEdit": "Reward bewerken",
+        "titleLabel": "Titel",
+        "businessLabel": "Bedrijfsnaam",
+        "descriptionLabel": "Beschrijving",
+        "imageLabel": "Afbeelding",
+        "imageUploadText": "Klik om een afbeelding te uploaden",
+        "costLabel": "Kosten",
+        "typeLabel": "Type",
+        "locationLabel": "Locatie filter",
+        "validUntilLabel": "Geldig tot",
+        "activeLabel": "Actief",
+        "cancelButton": "Annuleren",
+        "saveButton": "Toevoegen",
+        "updateButton": "Bijwerken",
+        "savingButton": "Opslaan...",
+        "types": {
+            "discount": "Korting",
+            "free_product": "Gratis product",
+            "ticket": "Ticket",
+            "voucher": "Voucher",
+            "good_cause": "Goed doel"
+        },
+        "locations": {
+            "all": "Alle",
+            "antwerp": "Antwerpen",
+            "ghent": "Gent",
+            "brussels": "Brussel",
+            "bruges": "Brugge",
+            "hasselt": "Hasselt",
+            "courtrai": "Kortrijk",
+            "namur": "Namen",
+            "liege": "Luik",
+            "charleroi": "Charleroi"
+        }
+    },
+    "toast": {
+        "fetchError": "Kon rewards niet ophalen.",
+        "saveSuccess": "Reward aangemaakt!",
+        "updateSuccess": "Reward bijgewerkt!",
+        "saveError": "Er is een fout opgetreden.",
+        "deleteConfirm": "Wil je \"{{title}}\" verwijderen?",
+        "deleteSuccess": "Reward verwijderd!",
+        "deleteError": "Kon reward niet verwijderen.",
+        "toggleError": "Kon status niet wijzigen."
+    }
+}
 }

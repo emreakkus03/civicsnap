@@ -10,6 +10,7 @@ export const appwriteConfig = {
     categoriesCollectionId: process.env.REACT_APP_APPWRITE_CATEGORIES_COLLECTION_ID || "",
     storageBucketId: process.env.REACT_APP_APPWRITE_BUCKET_ID || "",
     announcementsCollectionId: process.env.REACT_APP_APPWRITE_ANNOUNCEMENTS_COLLECTION_ID || "",
+    rewardsCollectionId: process.env.REACT_APP_APPWRITE_REWARDS_COLLECTION_ID || "",
 };
 
 

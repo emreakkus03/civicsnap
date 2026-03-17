@@ -4,6 +4,7 @@ import { ID, Models, Permission, Role } from 'appwrite';
 import { X, Settings, Edit, Mail, Trash2 } from 'lucide-react';
 
 import Header from '@components/Header';
+import Sidebar from '@components/Sidebar';
 import { useTranslation } from "react-i18next";
 
 // Extends the Appwrite Document model with organization-specific fields
@@ -292,7 +293,9 @@ export default function SuperAdminDashboard() {
             <Header />
 
             {/* Main content area */}
-            <div className="p-8 max-w-6xl mx-auto mt-8">
+            <div className="flex">
+    <Sidebar activeItem="organizations" />
+    <div className="flex-1 p-8 max-w-6xl mx-auto mt-8">
 
                 {/* Page title and "Add Organization" button */}
                 <div className="flex justify-between items-center mb-8">
@@ -467,6 +470,7 @@ export default function SuperAdminDashboard() {
                     </div>
                 )}
 
+            </div>
             </div>
 
             {/* ===== EDIT ORGANIZATION MODAL ===== */}
