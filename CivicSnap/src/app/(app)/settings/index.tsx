@@ -105,7 +105,7 @@ const CONFIRM_PHRASE = "VERWIJDEREN";
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       {/* --- Header --- */}
       <View style={styles.header}>
         <View style={styles.backButtonWrapper}>
@@ -115,7 +115,7 @@ const CONFIRM_PHRASE = "VERWIJDEREN";
         <View style={{ width: 26 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentInsetAdjustmentBehavior="automatic">
         {/* --- Profile card --- */}
         <View style={styles.profileCard}>
           <Image
@@ -390,8 +390,8 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     alignItems: "center",
-    marginBottom: Variables.sizes.xl + 8,
-  },
+    paddingBottom: Variables.sizes.md,
+},
   deleteText: {
     fontFamily: Variables.fonts.semibold,
     fontSize: Variables.textSizes.md,

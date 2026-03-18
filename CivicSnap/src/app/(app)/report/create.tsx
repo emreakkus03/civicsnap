@@ -10,6 +10,7 @@ import { Variables } from "@style/theme";
 
 // ---- Functional Components ---- //
 import CreateReportForm from "@components/functional/Report/CreateReportForm";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 export default function CreateReportScreen() {
     const router = useRouter();
@@ -23,7 +24,13 @@ export default function CreateReportScreen() {
     const hasPhoto = params.hasPhoto === "true";
 
     return (
-    <ScrollView style={styles.container} bounces={false}>
+    <KeyboardAwareScrollView 
+  style={styles.container} 
+  bounces={false}
+  enableOnAndroid={true}
+  extraScrollHeight={80}
+  keyboardShouldPersistTaps="handled"
+>
       
       <View style={styles.blueHeader}>
          <View  style={styles.backButtonWrapper}>
@@ -45,7 +52,7 @@ export default function CreateReportScreen() {
         hasPhoto={hasPhoto}
       />
       
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 };
 

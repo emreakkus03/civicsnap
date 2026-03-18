@@ -82,8 +82,13 @@ export default function ReportMarkers({location_lat, location_long, onReportPres
           title={report.category_name || "Melding"}
           description={report.address || "Adres onbekend"}
           onPress={(e) =>{e.stopPropagation(); onReportPress && onReportPress(report);} }
-          image={require("@assets/icons/ReportPinMarker.png")}
+         anchor={{ x: 0.5, y: 1 }}
         >
+          <Image
+    source={require("@assets/icons/ReportPinMarker.png")}
+    style={{ width: 40, height: 40 }}
+    resizeMode="contain"
+/>
         </Marker>
       ))}
     </>
