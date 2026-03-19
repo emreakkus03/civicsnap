@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useAuthContext } from "@components/functional/Auth/authProvider";
@@ -86,28 +87,30 @@ export default function ShopScreen() {
   }, [lastUpdate, profile?.$id]);
 
   // --- Fetch rewards ---
-  useEffect(() => {
-    const fetchRewards = async () => {
-      setLoading(true);
-      try {
-        const response = await API.database.listDocuments(
-          API.config.databaseId,
-          API.config.rewardsCollectionId,
-        );
-        const now = new Date();
-        const valid = response.documents.filter(
-          (r: any) =>
-            r.is_active && (!r.valid_until || new Date(r.valid_until) > now),
-        );
-        setRewards(valid);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRewards();
-  }, [lastUpdate]);
+ useFocusEffect(
+    useCallback(() => {
+        const fetchRewards = async () => {
+            setLoading(true);
+            try {
+                const response = await API.database.listDocuments(
+                    API.config.databaseId,
+                    API.config.rewardsCollectionId,
+                );
+                const now = new Date();
+                const valid = response.documents.filter(
+                    (r: any) =>
+                        r.is_active && (!r.valid_until || new Date(r.valid_until) > now),
+                );
+                setRewards(valid);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRewards();
+    }, [])
+);
 
   // --- Fetch user rewards (coupons) ---
   useEffect(() => {
