@@ -1,12 +1,35 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, Modal } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Modal,
+  ScrollView,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import QRCode from "react-qr-code";
+
 import { Variables } from "@style/theme";
 
 interface CouponModalProps {
   coupon: any;
   onClose: () => void;
 }
+
+const LOCATION_LABELS: Record<string, string> = {
+  all: "Alle steden",
+  antwerp: "Antwerpen",
+  ghent: "Gent",
+  brussels: "Brussel",
+  bruges: "Brugge",
+  hasselt: "Hasselt",
+  courtrai: "Kortrijk",
+  namur: "Namen",
+  liege: "Luik",
+  charleroi: "Charleroi",
+};
 
 export default function CouponModal({ coupon, onClose }: CouponModalProps) {
   return (
@@ -17,33 +40,65 @@ export default function CouponModal({ coupon, onClose }: CouponModalProps) {
             <Ionicons name="close" size={24} color={Variables.colors.text} />
           </TouchableOpacity>
 
-          <View style={styles.modalImageWrapper}>
-            {coupon.reward?.image_url ? (
-              <Image source={{ uri: coupon.reward.image_url }} style={styles.modalImage} />
-            ) : (
-              <View style={[styles.modalImage, styles.imagePlaceholder]}>
-                <Ionicons name="gift-outline" size={48} color={Variables.colors.textLight} />
-              </View>
-            )}
-          </View>
+          <ScrollView showsVerticalScrollIndicator={false}>
+           <View style={styles.modalImageWrapper}>
+    {coupon.reward?.image_url ? (
+        <Image source={{ uri: coupon.reward.image_url }} style={styles.modalImage} />
+    ) : (
+        <View style={[styles.modalImage, styles.imagePlaceholder]}>
+            <Ionicons name="gift-outline" size={48} color={Variables.colors.textLight} />
+        </View>
+    )}
+</View>
 
-          <Text style={styles.modalTitle}>{coupon.reward?.title || "Reward"}</Text>
-          <Text style={styles.modalBusiness}>{coupon.reward?.business_name || ""}</Text>
+<Text style={styles.modalTitle}>{coupon.reward?.title || "Reward"}</Text>
 
-          <View style={styles.codeBox}>
-            <Text style={styles.codeLabel}>Jouw coupon code</Text>
-            <Text style={styles.codeText}>{coupon.code}</Text>
-          </View>
+<View style={styles.section}>
+    <View style={styles.businessRow}>
+        <Image source={require("@assets/icons/ReportPinMarker.png")} style={styles.markerIcon} resizeMode="contain" />
+        <Text style={styles.modalBusiness}>
+            {coupon.reward?.business_name || ""} · {LOCATION_LABELS[coupon.reward?.location_filter] || coupon.reward?.location_filter}
+        </Text>
+    </View>
+</View>
 
-          {coupon.reward?.valid_until && (
-            <Text style={styles.modalValidity}>
-              Geldig tot {new Date(coupon.reward.valid_until).toLocaleDateString("nl-BE")}
-            </Text>
-          )}
 
-          <Text style={styles.codeInstructions}>
-            Toon deze code aan de kassa om je reward in te wisselen.
-          </Text>
+
+<View style={styles.section}>
+    <Text style={styles.sectionLabel}>Jouw QR Code</Text>
+    <View style={styles.qrContainer}>
+        <QRCode value={coupon.code} size={180} color={Variables.colors.text} />
+    </View>
+</View>
+
+
+<View style={styles.section}>
+    <Text style={styles.sectionLabel}>Coupon Code</Text>
+    <View style={styles.codeBox}>
+        <Text style={styles.codeText}>{coupon.code}</Text>
+    </View>
+</View>
+
+
+
+
+{coupon.reward?.valid_until && (
+    <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Geldig tot</Text>
+        <Text style={styles.modalValidity}>
+            {new Date(coupon.reward.valid_until).toLocaleDateString("nl-BE")}
+        </Text>
+    </View>
+)}
+
+
+<View style={styles.section}>
+    <Text style={styles.sectionLabel}>Hoe inwisselen?</Text>
+    <Text style={styles.codeInstructions}>
+        Toon deze code aan de kassa om je reward in te wisselen.
+    </Text>
+</View>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -51,6 +106,20 @@ export default function CouponModal({ coupon, onClose }: CouponModalProps) {
 }
 
 const styles = StyleSheet.create({
+    section: {
+    marginBottom: Variables.sizes.md,
+    paddingBottom: Variables.sizes.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Variables.colors.background,
+},
+sectionLabel: {
+    fontFamily: Variables.fonts.bold,
+    fontSize: Variables.textSizes.sm,
+    color: Variables.colors.text,
+    marginBottom: Variables.sizes.xs,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+},
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -62,6 +131,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: Variables.sizes.lg,
     paddingBottom: Variables.sizes.xl + Variables.sizes.lg,
+    maxHeight: "90%",
   },
   modalClose: {
     alignSelf: "flex-end",
@@ -89,11 +159,20 @@ const styles = StyleSheet.create({
     color: Variables.colors.text,
     marginBottom: Variables.sizes.xs,
   },
-  modalBusiness: {
-    fontFamily: Variables.fonts.regular,
-    fontSize: Variables.textSizes.sm,
-    color: Variables.colors.textLight,
+  businessRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Variables.sizes.xs,
     marginBottom: Variables.sizes.md,
+  },
+  markerIcon: {
+    width: 16,
+    height: 20,
+  },
+  modalBusiness: {
+    fontFamily: Variables.fonts.bold,
+    fontSize: Variables.textSizes.base,
+    color: Variables.colors.textLight,
   },
   modalValidity: {
     fontFamily: Variables.fonts.semibold,
@@ -101,6 +180,19 @@ const styles = StyleSheet.create({
     color: Variables.colors.textLight,
     marginBottom: Variables.sizes.md,
     textAlign: "center",
+  },
+  qrContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: Variables.sizes.md,
+    padding: Variables.sizes.md,
+    backgroundColor: Variables.colors.surface,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   codeBox: {
     backgroundColor: Variables.colors.background,
@@ -111,12 +203,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Variables.colors.primary,
     borderStyle: "dashed",
-  },
-  codeLabel: {
-    fontFamily: Variables.fonts.semibold,
-    fontSize: Variables.textSizes.sm,
-    color: Variables.colors.textLight,
-    marginBottom: Variables.sizes.xs,
   },
   codeText: {
     fontFamily: Variables.fonts.extrabold,

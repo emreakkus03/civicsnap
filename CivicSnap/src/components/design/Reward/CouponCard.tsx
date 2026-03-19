@@ -25,9 +25,17 @@ export default function CouponCard({ coupon, onPress }: CouponCardProps) {
         <Text style={styles.couponTitle} numberOfLines={1}>
           {coupon.reward?.title || "Reward"}
         </Text>
-        <Text style={styles.couponBusiness} numberOfLines={1}>
-          {coupon.reward?.business_name || ""}
-        </Text>
+        <View style={styles.couponBusinessRow}>
+
+            <Image
+                        source={require("@assets/icons/ReportPinMarker.png")}
+                        style={{ width: 15, height: 18 }}
+                        resizeMode="contain"
+                    />
+            <Text style={styles.couponBusiness} numberOfLines={1}>
+            {coupon.reward?.business_name || ""}
+            </Text>
+        </View>
         {coupon.reward?.valid_until && (
           <Text style={styles.couponValidity}>
             Geldig t/m {new Date(coupon.reward.valid_until).toLocaleDateString("nl-BE")}
@@ -59,14 +67,14 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   couponImageWrapper: {
-    width: 60,
-    height: 60,
+    width: 80,
+    height: 80,
     borderRadius: 12,
     overflow: "hidden",
   },
   couponImage: {
-    width: 60,
-    height: 60,
+    width: 80,
+    height: 80,
   },
   imagePlaceholder: {
     backgroundColor: "#F0F0F0",
@@ -82,21 +90,21 @@ const styles = StyleSheet.create({
     color: Variables.colors.text,
   },
   couponBusiness: {
-    fontFamily: Variables.fonts.regular,
+    fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.sm,
     color: Variables.colors.textLight,
   },
   couponValidity: {
-    fontFamily: Variables.fonts.regular,
+    fontFamily: Variables.fonts.bold,
     fontSize: 11,
     color: Variables.colors.textLight,
-    marginTop: 2,
   },
   couponStatusBadge: {
     backgroundColor: "#E8F5E9",
     paddingHorizontal: Variables.sizes.sm,
     paddingVertical: Variables.sizes.xs,
     borderRadius: 10,
+    top: -30,
   },
   couponStatusUsed: {
     backgroundColor: "#F5F5F5",
@@ -105,5 +113,11 @@ const styles = StyleSheet.create({
     fontFamily: Variables.fonts.bold,
     fontSize: 11,
     color: "#388E3C",
+  },
+  couponBusinessRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    marginBottom: Variables.sizes.xs,
   },
 });
