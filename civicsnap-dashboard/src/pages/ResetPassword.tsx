@@ -9,11 +9,12 @@ export default function ResetPassword() {
     useEffect(() => {
         const userId = searchParams.get("userId");
         const secret = searchParams.get("secret");
+        const source = searchParams.get("source");
 
-        if (userId && secret) {
-            const deepLink = `civicsnap://reset-password?userId=${userId}&secret=${secret}`;
-            window.location.href = deepLink;
-        }
+       if (userId && secret) {
+        const deepLink = `civicsnap://reset-password?userId=${userId}&secret=${secret}${source ? `&source=${source}` : ''}`;
+        window.location.href = deepLink;
+    }
     }, [searchParams]);
 
     return (

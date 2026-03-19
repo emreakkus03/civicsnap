@@ -24,7 +24,7 @@ import { Variables } from "@style/theme";
 export default function NativeResetPasswordScreen() {
     const router = useRouter();
     
-    const { userId, secret } = useLocalSearchParams<{ userId: string; secret: string }>();
+    const { userId, secret, source } = useLocalSearchParams<{ userId: string; secret: string; source: string }>();
 
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -58,9 +58,18 @@ export default function NativeResetPasswordScreen() {
         try {
             await resetPasswordWithRecovery(userId, secret, newPassword);
             
-            Alert.alert("Succes!", "Je wachtwoord is succesvol gewijzigd. Je kunt nu inloggen met je nieuwe wachtwoord.", [
-                { text: "Naar inloggen", onPress: () => router.replace("/login") }
-            ]);
+            Alert.alert("Succes!", "Je wachtwoord is succesvol gewijzigd.", [
+    { 
+        text: "OK", 
+        onPress: () => {
+            if (source === "settings") {
+                router.replace("/(app)/settings");
+            } else {
+                router.replace("/login");
+            }
+        }
+    }
+]);
         } catch (error: any) {
             Alert.alert("Fout", error.message || "Er ging iets mis bij het resetten.");
         } finally {

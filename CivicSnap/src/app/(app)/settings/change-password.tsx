@@ -91,7 +91,7 @@ export default function ChangePasswordScreen() {
                         setIsSendingReset(true);
                         try {
                             
-                            const resetUrl = process.env.EXPO_PUBLIC_RESET_URL!;
+                            const resetUrl = `${process.env.EXPO_PUBLIC_RESET_URL}?source=settings`;
 await sendPasswordRecovery(profile.email, resetUrl);
                             Alert.alert("E-mail verzonden", "Check je inbox en klik op de link om terug te keren naar de app.");
                         } catch (error: any) {

@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   rewardBusiness: {
     fontFamily: Variables.fonts.default,
-    fontSize: 13,
+    fontSize: 15,
     color: Variables.colors.text,
   },
   rewardCostRow: {
