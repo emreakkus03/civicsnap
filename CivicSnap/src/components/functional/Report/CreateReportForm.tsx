@@ -511,6 +511,7 @@ export default function CreateReportForm({
       <TextInput
         style={styles.textArea}
         placeholder="Typ hier extra info..."
+        placeholderTextColor={Variables.colors.textLight}
         multiline
         numberOfLines={6}
         value={description}
