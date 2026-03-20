@@ -1,3 +1,24 @@
-# https://www.robotstxt.org/robotstxt.html
+# Block ai crawlers and data scrapers
+User-agent: GPTBot
+Disallow: /
+User-agent: ChatGPT-User
+Disallow: /
+User-agent: Google-Extended
+Disallow: /
+User-agent: CCBot
+Disallow: /
+User-agent: Anthropic-ai
+Disallow: /
+User-agent: Omgili
+Disallow: /
+User-agent: FacebookBot
+Disallow: /
+
+# Block specific routes for all VM
 User-agent: *
-Disallow:
+Disallow: /login
+Disallow: /reset-password
+Disallow: /reports/
+Disallow: /settings/
+Disallow: /announcements/
+Disallow: /rewards/

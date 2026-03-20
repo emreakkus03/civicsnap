@@ -129,6 +129,8 @@ function AppRoutes() {
 
       <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
       <Route path="/reset-password" element={<ResetPassword />} />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
