@@ -160,7 +160,7 @@ export default function Settings() {
     if (profile?.avatar_url && !avatarUrl) {
         setAvatarUrl(profile.avatar_url);
     }
-}, [profile?.avatar_url]);
+}, [profile?.avatar_url, avatarUrl]);
 
   // ─── Invite a New Member ─────────────────────────────────────
   // Creates a new team membership and sends an invitation email.
