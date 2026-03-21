@@ -67,7 +67,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         {
           "locationAlwaysAndWhenInUsePermission": "CivicSnap gebruikt je locatie om te laten zien waar je bent op de kaart."
         }
-    ]
+    ],
+    [
+    "expo-notifications",
+    {
+        "icon": "./assets/images/icon.png",
+        "color": "#274373"
+    }
+]
   ],
   
   experiments: {

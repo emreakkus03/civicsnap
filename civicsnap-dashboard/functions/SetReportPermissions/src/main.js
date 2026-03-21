@@ -1,5 +1,24 @@
 import { Client, Databases, Users, Permission, Role, ID, Query } from 'node-appwrite';
 
+
+async function sendPushNotification(token, title, body) {
+    try {
+        await fetch(process.env.EXPO_PUSH_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                to: token,
+                title: title,
+                body: body,
+                sound: "default",
+                data: { type: "report_created" },
+            }),
+        });
+    } catch (e) {
+        console.error("Push notification error:", e);
+    }
+}
+
 export default async ({ req, res, log, error }) => {
 
 const event = req.headers['x-appwrite-event'] || '';
@@ -168,6 +187,23 @@ try {
         );
 
         log(`Permissions successfully set for report: ${documentId}`);
+
+        try {
+    const userProfile = await databases.getDocument(
+        process.env.DATABASE_ID,
+        process.env.PROFILES_COLLECTION_ID,
+        userId
+    );
+    if (userProfile.push_token) {
+        await sendPushNotification(
+            userProfile.push_token,
+            "Melding ontvangen! 📍",
+            "Je melding is succesvol ingediend. We gaan ermee aan de slag!"
+        );
+    }
+} catch (e) {
+    error(`Error sending push notification: ${e.message}`);
+}
         return res.json({ success: true });
 
     } catch (err) {

@@ -1,10 +1,18 @@
+import { useEffect } from "react";
 import { Redirect,Stack } from "expo-router";
 import { useAuthContext } from '@components/functional/Auth/authProvider';
 
 import { RealtimeProvider } from "@core/modules/realtimeProvider/RealtimeProvider";
+import { registerForPushNotifications } from "@core/modules/notifications/pushNotifications";
 
 export default function AppLayout() {
-  const { isLoggedIn } = useAuthContext();
+  const { isLoggedIn, profile } = useAuthContext();
+
+  useEffect(() => {
+    if (profile?.$id) {
+        registerForPushNotifications(profile.$id);
+    }
+}, [profile?.$id]);
 
   if (!isLoggedIn) {
     return <Redirect href="/welcome" />;

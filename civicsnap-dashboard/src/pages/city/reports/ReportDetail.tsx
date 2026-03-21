@@ -143,6 +143,21 @@ export default function ReportDetail() {
                     }
                 );
 
+       if (userProfile.push_token) {
+    await fetch(process.env.REACT_APP_EXPO_PUSH_URL!, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            to: userProfile.push_token,
+            title: t('reportsDetail.pushNotification.title'),
+            body: status === 'resolved' 
+                ? t('reportsDetail.pushNotification.bodyResolved', { points: pointsAwardedNow })
+                : t('reportsDetail.pushNotification.bodyApproved', { points: pointsAwardedNow }),
+            sound: "default",
+            data: { type: "report_approved" },
+        }),
+    });
+}
                 newPointsAwarded = pointsAwardedNow;
             }
 

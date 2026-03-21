@@ -236,7 +236,12 @@
     "updateSuccess": "Melding succesvol bijgewerkt!",
     "notFound": "Melding niet gevonden.",
     "pointsAwardedSuccess": "Succes! De melder heeft {{pointsAwardedNow}} punten gekregen. 🏆",
-    "altMainImage": "Melding Foto"
+    "altMainImage": "Melding Foto",
+    "pushNotification": {
+    "title": "Je melding is goedgekeurd! 🎉",
+    "bodyResolved": "Goed nieuws! Je melding is opgelost en je hebt {{points}} 💎 ontvangen!",
+    "bodyApproved": "Goed nieuws! Je melding is goedgekeurd en je hebt {{points}} 💎 ontvangen!"
+}
   },
   "announcements": {
     "title": "Aankondigingen",
