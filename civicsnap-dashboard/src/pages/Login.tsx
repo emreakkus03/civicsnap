@@ -35,6 +35,11 @@ export default function Login() {
     // i18n translation hook
     const { t } = useTranslation();
 
+    const [showForgotModal, setShowForgotModal] = useState(false);
+const [forgotEmail, setForgotEmail] = useState("");
+const [isSendingReset, setIsSendingReset] = useState(false);
+const [forgotError, setForgotError] = useState("");
+
     /**
      * Handles a normal email/password login (non-invite flow).
      * Creates an Appwrite session and navigates to the home page on success.
@@ -168,6 +173,23 @@ export default function Login() {
         }
     };
 
+ const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError("");
+    setIsSendingReset(true);
+    try {
+        const resetUrl = `${process.env.REACT_APP_DASHBOARD_RESET_URL}`;
+        await account.createRecovery(forgotEmail, resetUrl);
+        setShowForgotModal(false);
+        setForgotEmail("");
+        toast.success(t("login.forgotPassword.successToast"));
+    } catch (err: any) {
+        setForgotError(err.message || t("login.forgotPassword.errorFallback"));
+    } finally {
+        setIsSendingReset(false);
+    }
+};
+
     return (
         // Full-screen centered container with a light gray background
         <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA] font-inter">
@@ -276,8 +298,61 @@ export default function Login() {
                         >
                             {loading ? t('login.buttonLoading') : t('login.buttonLogin')}
                         </button>
+
+                        <button
+    type="button"
+    onClick={() => { setForgotEmail(email); setShowForgotModal(true); }}
+    className="text-sm text-[#0870C4] hover:underline font-inter-regular mt-1"
+>
+    {t("login.forgotPassword.button")}
+</button>
                     </form>
                 )}
+               {showForgotModal && (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
+            <h2 className="text-xl font-inter-bold text-gray-900 mb-2">
+                {t("login.forgotPassword.modalTitle")}
+            </h2>
+            <p className="text-gray-500 text-sm font-inter-regular mb-6">
+                {t("login.forgotPassword.modalSubtitle")}
+            </p>
+
+            {forgotError && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
+                    {forgotError}
+                </div>
+            )}
+
+            <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
+                <input
+                    type="email"
+                    placeholder={t("login.forgotPassword.emailPlaceholder")}
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] font-inter-regular"
+                    required
+                />
+                <div className="flex gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setShowForgotModal(false)}
+                        className="flex-1 p-3 rounded-xl bg-gray-100 text-gray-700 font-inter-bold hover:bg-gray-200 transition-colors"
+                    >
+                        {t("login.forgotPassword.cancelButton")}
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={isSendingReset}
+                        className="flex-1 p-3 rounded-xl bg-[#0870C4] text-white font-inter-bold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                        {isSendingReset ? t("login.forgotPassword.loadingButton") : t("login.forgotPassword.submitButton")}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+)}
             </div>
         </div>
     );

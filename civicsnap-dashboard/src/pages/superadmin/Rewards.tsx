@@ -74,8 +74,8 @@ export default function Rewards() {
     }, [t]);
 
     useEffect(() => {
-        fetchRewards();
-    }, [fetchRewards]);
+    fetchRewards();
+    }, [fetchRewards]);
 
     const handleOpenCreate = () => {
         setForm(emptyForm);

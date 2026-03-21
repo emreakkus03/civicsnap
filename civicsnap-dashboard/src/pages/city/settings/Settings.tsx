@@ -43,7 +43,7 @@ export default function Settings() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Avatar upload state
-  const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl || "");
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   // Hidden file input ref so we can trigger it programmatically
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -155,6 +155,12 @@ export default function Settings() {
     fetchOrgDetails();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.organization_id]);
+
+  useEffect(() => {
+    if (profile?.avatar_url && !avatarUrl) {
+        setAvatarUrl(profile.avatar_url);
+    }
+}, [profile?.avatar_url]);
 
   // ─── Invite a New Member ─────────────────────────────────────
   // Creates a new team membership and sends an invitation email.
@@ -464,9 +470,9 @@ export default function Settings() {
                     onClick={() => fileInputRef.current?.click()}
                   >
                     {/* Show avatar image if available, otherwise show placeholder icon */}
-                    {profile.avatar_url ? (
+                    {avatarUrl  ? (
                       <img
-                        src={profile.avatar_url}
+                        src={avatarUrl}
                         alt={t("settings.profile.altAvatar")}
                         className="w-full h-full object-cover"
                       />

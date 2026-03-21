@@ -20,6 +20,7 @@ import Settings from "@pages/city/settings/Settings";
 import Announcements from "@pages/city/announcements/Announcements";
 import ResetPassword from "@pages/ResetPassword";
 import Rewards from "@pages/superadmin/Rewards";
+import ResetPasswordDashboard from "@pages/ResetPasswordDashboard";
 
 function DashboardRouter() {
   const { profile } = useAuth();
@@ -129,6 +130,7 @@ function AppRoutes() {
 
       <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/reset-password-dashboard" element={<ResetPasswordDashboard />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

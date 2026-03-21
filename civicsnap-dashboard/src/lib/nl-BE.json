@@ -41,7 +41,18 @@
     },
     "success": {
       "existingUser": "Uitnodiging geaccepteerd! Omdat je al bekend was in het systeem, is je originele wachtwoord behouden."
-    }
+    },
+    "forgotPassword": {
+    "button": "Wachtwoord vergeten?",
+    "modalTitle": "Wachtwoord vergeten?",
+    "modalSubtitle": "Voer je e-mailadres in om een herstelmail te ontvangen.",
+    "emailPlaceholder": "E-mailadres",
+    "cancelButton": "Annuleren",
+    "submitButton": "Stuur link",
+    "loadingButton": "Verzenden...",
+    "successToast": "Herstelmail verzonden! Check je inbox.",
+    "errorFallback": "Kon geen herstelmail sturen."
+}
   },
   "dashboard": {
     "menu": {
@@ -424,6 +435,21 @@
         "deleteSuccess": "Reward verwijderd!",
         "deleteError": "Kon reward niet verwijderen.",
         "toggleError": "Kon status niet wijzigen."
+    }
+},
+"resetPasswordDashboard": {
+    "title": "Nieuw wachtwoord",
+    "subtitle": "Kies een nieuw, veilig wachtwoord voor je account.",
+    "newPasswordPlaceholder": "Nieuw wachtwoord",
+    "confirmPasswordPlaceholder": "Bevestig wachtwoord",
+    "submitButton": "Wachtwoord opslaan",
+    "loadingButton": "Opslaan...",
+    "successMessage": "Wachtwoord succesvol gewijzigd! Je kunt nu inloggen.",
+    "error": {
+        "invalidLink": "Ongeldige of verlopen link. Vraag een nieuwe herstelmail aan.",
+        "passwordMismatch": "De wachtwoorden komen niet overeen.",
+        "passwordLength": "Je wachtwoord moet minimaal 8 tekens bevatten.",
+        "fallback": "Er is een fout opgetreden. Vraag een nieuwe herstelmail aan."
     }
 }
 }

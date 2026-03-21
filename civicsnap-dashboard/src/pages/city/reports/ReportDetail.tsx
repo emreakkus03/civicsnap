@@ -272,7 +272,7 @@ export default function ReportDetail() {
 
                                 {/* --- AI-detected category badge overlay --- */}
                                 {report.ai_detected_category && (
-                                    <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-full flex items-center gap-2 shadow-lg">
+                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white/90 backdrop-blur px-4 py-2 rounded-full flex items-center gap-2 shadow-lg">
                                         <Sparkles size={16} className="text-orange-500" />
                                         <span className="text-sm font-bold text-gray-800">
                                             AI: {report.ai_detected_category} {t('reportsDetail.recognized')}
