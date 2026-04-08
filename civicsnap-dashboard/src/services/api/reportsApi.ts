@@ -41,6 +41,7 @@ export const getFilteredReports = async (params: FetchReportsParams) => {
         const queries = [
             Query.equal("zip_code", zipCodesArray),
             Query.equal("is_duplicate", false),
+            Query.equal("is_shadowbanned", false),
             Query.limit(reportsPerPage),
             Query.offset((currentPage - 1) * reportsPerPage),
             sortOrderDirection === 'desc' ? Query.orderDesc("$createdAt") : Query.orderAsc("$createdAt")

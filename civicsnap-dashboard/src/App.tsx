@@ -22,6 +22,10 @@ import ResetPassword from "@pages/ResetPassword";
 import Rewards from "@pages/superadmin/Rewards";
 import ResetPasswordDashboard from "@pages/ResetPasswordDashboard";
 
+import FloatingChatWidget from "@components/FloatingChatWidget";
+
+import { ChatProvider } from "@components/context/ChatContext";
+
 function DashboardRouter() {
   const { profile } = useAuth();
   const { t } = useTranslation();
@@ -141,7 +145,10 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <AppRoutes />
+        <ChatProvider>
+          <AppRoutes />
+          <FloatingChatWidget />
+        </ChatProvider>
       </BrowserRouter>
       <Toaster position="top-right" toastOptions={{ duration: 5000 }} />
     </AuthProvider>

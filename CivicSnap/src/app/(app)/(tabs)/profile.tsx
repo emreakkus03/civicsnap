@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Query } from "react-native-appwrite";
 
 import { useAuthContext } from "@components/functional/Auth/authProvider";
 import { API } from "@core/networking/api";

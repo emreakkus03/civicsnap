@@ -1,6 +1,6 @@
-import { Client, Databases, Users, Permission, Role, ID, Query } from 'node-appwrite';
+import { Client, Databases, Permission, Role } from 'node-appwrite';
 
-
+// Hulpfunctie voor push notificaties
 async function sendPushNotification(token, title, body) {
     try {
         await fetch(process.env.EXPO_PUSH_URL, {
@@ -20,7 +20,7 @@ async function sendPushNotification(token, title, body) {
 }
 
 export default async ({ req, res, log, error }) => {
-    const event = req.headers['x-appwrite-event'] || '';
+    // 1. Veilig de payload parsen
     let payload = {};
     try {
         if (req.body) {
@@ -31,218 +31,82 @@ export default async ({ req, res, log, error }) => {
         }
     } catch (e) {
         error(`Failed to parse request body: ${e.message}`);
-        return res.json({ success: false, error: 'Invalid request body' });
+        return res.json({ success: false, error: 'Invalid request body' }, 400);
     }
 
-    log(`Event: ${event}`);
-log(`Payload: ${JSON.stringify(payload)}`);
+    const documentId = payload.$id;
+    const orgId = payload.organization_id;
+    const userId = payload.user_id;
 
+    if (!orgId || !userId || !documentId) {
+        log('No organization_id, user_id, or document_id found, skipping.');
+        return res.json({ success: false, message: 'Missing required IDs' }, 400);
+    }
+
+    // 2. Appwrite Client Setup
     const client = new Client()
         .setEndpoint(process.env.APPWRITE_ENDPOINT)
         .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
         .setKey(process.env.APPWRITE_API_KEY);
 
     const databases = new Databases(client);
-    const users = new Users(client);
-
-    // --- 1. REWARD PURCHASE (HTTP call, no database event) ---
-    if (!event) {
-        const { userId, rewardId } = payload;
-
-        if (!userId || !rewardId) {
-            return res.json({ success: false, error: 'userId and rewardId are required.' });
-        }
-
-        try {
-            // Fetch the reward document
-            const reward = await databases.getDocument(
-                process.env.DATABASE_ID,
-                process.env.REWARDS_COLLECTION_ID,
-                rewardId
-            );
-
-            // Check if reward is active
-            if (!reward.is_active) {
-                return res.json({ success: false, error: 'This reward is no longer available.' });
-            }
-
-            // Check if reward is still valid
-            if (reward.valid_until && new Date(reward.valid_until) < new Date()) {
-                // Set reward to inactive
-                await databases.updateDocument(
-                    process.env.DATABASE_ID,
-                    process.env.REWARDS_COLLECTION_ID,
-                    rewardId,
-                    { is_active: false }
-                );
-                return res.json({ success: false, error: 'This reward has expired.' });
-            }
-
-            // Fetch the user profile
-            const profile = await databases.getDocument(
-                process.env.DATABASE_ID,
-                process.env.PROFILES_COLLECTION_ID,
-                userId
-            );
-
-            // Check if user has enough diamonds
-            if (profile.current_points < reward.cost_points) {
-                return res.json({ success: false, error: 'Insufficient diamonds.' });
-            }
-
-            // Check if user already owns this reward
-            const existingReward = await databases.listDocuments(
-                process.env.DATABASE_ID,
-                process.env.USER_REWARDS_COLLECTION_ID,
-                [
-                    Query.equal('user_id', userId),
-                    Query.equal('reward_id', rewardId),
-                ]
-            );
-
-            if (existingReward.total > 0) {
-                return res.json({ success: false, error: 'You already own this reward.' });
-            }
-
-            // Generate unique redemption code
-            const code = `CS-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-
-            // Deduct diamonds from user profile
-            await databases.updateDocument(
-                process.env.DATABASE_ID,
-                process.env.PROFILES_COLLECTION_ID,
-                userId,
-                {
-                    current_points: profile.current_points - reward.cost_points
-                }
-            );
-
-            // Create user_rewards document
-            await databases.createDocument(
-                process.env.DATABASE_ID,
-                process.env.USER_REWARDS_COLLECTION_ID,
-                ID.unique(),
-                {
-                    user_id: userId,
-                    reward_id: rewardId,
-                    code: code,
-                    status: 'active',
-                    redeemed_at: null,
-                },
-                [
-                    Permission.read(Role.user(userId)),
-                    Permission.update(Role.user(userId)),
-                ]
-            );
-
-            log(`Reward ${rewardId} purchased by user ${userId} for ${reward.cost_points} diamonds`);
-            return res.json({ success: true, code: code, pointsLeft: profile.current_points - reward.cost_points });
-
-        } catch (err) {
-            error(`Error during reward purchase: ${err.message}`);
-            return res.json({ success: false, error: err.message });
-        }
-    }
-
-    // --- 2. PROFILE DELETE EVENT ---
-    if (event.includes('profiles') && event.includes('delete')) {
-        const deletedUserId = payload.$id;
-        try {
-            await users.delete(deletedUserId);
-            log(`Auth account ${deletedUserId} deleted`);
-        } catch (err) {
-            error(`Could not delete auth account: ${err.message}`);
-        }
-        return res.empty();
-    }
-
-    // --- 2B. REPORT UPDATE EVENT ---
-    if (event.includes('reports') && event.includes('update')) {
-        const updatedUserId = payload.user_id;
-        const newStatus = payload.status;
-        const pointsAwarded = payload.points_awarded || 0;
-
-        const positiveStatuses = ['approved', 'in_progress', 'resolved'];
-        if (!positiveStatuses.includes(newStatus)) {
-            return res.json({ success: true });
-        }
-
-        try {
-            const userProfile = await databases.getDocument(
-                process.env.DATABASE_ID,
-                process.env.PROFILES_COLLECTION_ID,
-                updatedUserId
-            );
-
-            if (userProfile.push_token) {
-                let body = "";
-                if (newStatus === 'approved') body = `Je melding is goedgekeurd! Je ontving ${pointsAwarded} diamonds. 💎`;
-                else if (newStatus === 'in_progress') body = `Je melding wordt behandeld! Je ontving ${pointsAwarded} diamonds. 💎`;
-                else if (newStatus === 'resolved') body = `Je melding is opgelost! Je ontving ${pointsAwarded} diamonds. 💎`;
-
-                await sendPushNotification(userProfile.push_token, "Update over je melding! 🔔", body);
-            }
-        } catch (err) {
-            error(`Error sending status update notification: ${err.message}`);
-        }
-
-        return res.json({ success: true });
-    }
-
-    // --- 3. ORIGINAL REPORT PERMISSIONS LOGIC ---
-    const documentId = payload.$id;
-    const orgId = payload.organization_id;
-    const userId = payload.user_id;
-
-    if (!orgId || !userId) {
-        log('No organization_id or user_id found, skipping.');
-        return res.json({ success: true });
-    }
 
     try {
+        // --- AANGEPAST: We halen het profiel hier direct bovenaan op ---
+        const userProfile = await databases.getDocument(
+            process.env.DATABASE_ID,
+            process.env.PROFILES_COLLECTION_ID,
+            userId
+        );
+
+        // Bepaal of de user geband is
+        const isBanned = userProfile.is_shadowbanned === true;
+
+        // 3. Permissies instellen
         const newPermissions = [
-            // Citizen can manage their own report
+            // Burger kan eigen report beheren
             Permission.read(Role.user(userId)),
             Permission.update(Role.user(userId)),
             Permission.delete(Role.user(userId)),
 
-            // Organization team permissions
+            // Ambtenaren permissies op basis van hun Team Role
             Permission.read(Role.team(orgId)),
             Permission.update(Role.team(orgId, 'org_admin')),
             Permission.update(Role.team(orgId, 'org_officer')),
             Permission.delete(Role.team(orgId, 'org_admin'))
         ];
 
+        // --- AANGEPAST: We sturen de shadowban status van de user mee naar de melding ---
         await databases.updateDocument(
             process.env.DATABASE_ID,
             process.env.REPORTS_COLLECTION_ID,
             documentId,
-            {},
+            { is_shadowbanned: isBanned }, // Dit kopieert de status direct naar de reports tabel!
             newPermissions
         );
 
-        log(`Permissions successfully set for report: ${documentId}`);
+        log(`Permissions and shadowban status set for report: ${documentId}`);
 
-        try {
-            const userProfile = await databases.getDocument(
-                process.env.DATABASE_ID,
-                process.env.PROFILES_COLLECTION_ID,
-                userId
-            );
-            if (userProfile.push_token) {
-                await sendPushNotification(
-                    userProfile.push_token,
-                    "Melding ontvangen! 📍",
-                    "Je melding is succesvol ingediend. We gaan ermee aan de slag!"
-                );
+        // 4. Push notificatie sturen (ALLEEN als de gebruiker NIET is geshadowbanned)
+        if (!isBanned) {
+            try {
+                if (userProfile.push_token) {
+                    await sendPushNotification(
+                        userProfile.push_token,
+                        "Melding ontvangen! 📍",
+                        "Je melding is succesvol ingediend. We gaan ermee aan de slag!"
+                    );
+                    log(`Push notification sent to user: ${userId}`);
+                }
+            } catch (pushErr) {
+                error(`Error sending push notification: ${pushErr.message}`);
             }
-        } catch (e) {
-            error(`Error sending push notification: ${e.message}`);
         }
-        return res.json({ success: true });
+
+        return res.json({ success: true, message: 'Permissions set and notification handled' });
 
     } catch (err) {
-        error(`Error: ${err.message}`);
-        return res.json({ success: false, error: err.message });
+        error(`Error setting permissions: ${err.message}`);
+        return res.json({ success: false, error: err.message }, 500);
     }
 };

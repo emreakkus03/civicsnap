@@ -25,7 +25,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       backgroundColor:  "#F5F7FA",
-       foregroundImage: "./assets/images/icon.png",
+      foregroundImage: "./assets/images/civicsnap-adaptive-icon.png",
     },
     package: "dev.emre.CivicSnap",
     edgeToEdgeEnabled: true,

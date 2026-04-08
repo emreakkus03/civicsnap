@@ -1,4 +1,4 @@
-import { Client, Account, Databases, Teams, Storage } from "appwrite";
+import { Client, Account, Databases, Teams, Storage, Functions } from "appwrite";
 
 export const appwriteConfig = {
     endpoint: process.env.REACT_APP_APPWRITE_ENDPOINT || "",
@@ -11,11 +11,16 @@ export const appwriteConfig = {
     storageBucketId: process.env.REACT_APP_APPWRITE_BUCKET_ID || "",
     announcementsCollectionId: process.env.REACT_APP_APPWRITE_ANNOUNCEMENTS_COLLECTION_ID || "",
     rewardsCollectionId: process.env.REACT_APP_APPWRITE_REWARDS_COLLECTION_ID || "",
+    conversationsCollectionId: process.env.REACT_APP_APPWRITE_CONVERSATIONS_COLLECTION_ID || "",
+    messagesCollectionId: process.env.REACT_APP_APPWRITE_MESSAGES_COLLECTION_ID || "",
+    startChatFunctionId: process.env.REACT_APP_APPWRITE_FUNCTION_START_CHAT_ID || "",
+    sendMessageFunctionId: process.env.REACT_APP_APPWRITE_FUNCTION_SEND_MESSAGE_ID || "",
 };
 
 
 export const googleMapsApiKey = process.env.REACT_APP_GOOGLEMAPS_API || "";
 const client = new Client()
+export const functions = new Functions(client);
 
 client
     .setEndpoint(appwriteConfig.endpoint)

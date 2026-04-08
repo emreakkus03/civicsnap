@@ -5,14 +5,16 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { ThemeProvider } from "@react-navigation/native";
 import { Theme, Variables } from "@style/theme";
 
-import AuthProvider, { useAuthContext } from "@components/functional/Auth/authProvider";
+import AuthProvider, {
+  useAuthContext,
+} from "@components/functional/Auth/authProvider";
 
 SplashScreen.preventAutoHideAsync();
-
 
 const InitialLayout = () => {
   const { isLoggedIn, isInitialized } = useAuthContext();
@@ -20,24 +22,34 @@ const InitialLayout = () => {
   const segments = useSegments();
 
   useEffect(() => {
-    if (!isInitialized) return; 
+    if (!isInitialized) return;
 
-    const inAppGroups = segments.filter(segment => segment.startsWith("(app)"));
-    
+    const inAppGroups = segments.filter((segment) =>
+      segment.startsWith("(app)"),
+    );
+
     if (!isLoggedIn && inAppGroups.length > 0) {
       router.push("/welcome");
     } else if (isLoggedIn && segments[0] === "welcome") {
       router.push("/(app)/(tabs)/home");
     }
   }, [isLoggedIn, isInitialized, segments]);
-if (!isInitialized) {
+
+  
+  if (!isInitialized) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: Variables.colors.background }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: Variables.colors.background,
+        }}
+      >
         <ActivityIndicator size="large" color={Variables.colors.primary} />
       </View>
     );
   }
-
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
@@ -49,7 +61,6 @@ if (!isInitialized) {
     </Stack>
   );
 };
-
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -73,7 +84,6 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={Theme}>
-        
         <AuthProvider>
           <InitialLayout />
           <StatusBar style="auto" />

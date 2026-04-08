@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Query } from "appwrite";
-import { databases, appwriteConfig, googleMapsApiKey } from "@core/appwrite";
+import { ID, Permission, Query, Role } from "appwrite";
+import { databases, appwriteConfig, googleMapsApiKey, functions } from "@core/appwrite";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 
 import toast from "react-hot-toast";
@@ -17,6 +17,8 @@ import { Sparkles, ArrowLeft, Image as ImageIcon } from "lucide-react";
 
 // --- Auth context hook ---
 import { useAuth } from "@core/AuthProvider";
+
+import { useChat } from "@components/context/ChatContext";
 
 /**
  * ReportDetail page component.
@@ -53,6 +55,9 @@ export default function ReportDetail() {
 
   // --- State: admin internal notes (editable by admin) ---
   const [adminNote, setAdminNote] = useState("");
+
+
+  const { startNewChat, openChat } = useChat();
 
   // --- Load the Google Maps JavaScript API ---
   const { isLoaded } = useJsApiLoader({
@@ -96,6 +101,8 @@ export default function ReportDetail() {
     };
     fetchReportAndDuplicates();
   }, [id, t]);
+
+ 
 
   /**
    * Save handler: updates report status, admin notes, awards points
@@ -236,6 +243,71 @@ export default function ReportDetail() {
       toast.error(t("reportsDetail.toast.saveError"));
     }
   };
+
+  const handleShadowbanUser = async () => {
+    
+    if (!window.confirm("Weet je zeker dat je deze melder onzichtbaar wilt maken? Al zijn/haar meldingen verdwijnen uit het dashboard.")) return;
+
+    try {
+      await databases.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.profilesCollectionId,
+        report.user_id,
+        { is_shadowbanned: true }
+      );
+      
+      toast.success("Gebruiker is geshadowbanned! De server is nu bezig met opruimen.");
+      navigate("/reports"); 
+    } catch (error) {
+      console.error("Fout bij shadowbannen:", error);
+      toast.error("Er ging iets mis bij het bannen van de gebruiker.");
+    }
+  };
+
+
+  const handleStartChat = async () => {
+    try {
+      const subject = prompt("Geef een kort onderwerp op voor deze chat (bijv. 'Vraag over locatie'):");
+      if (!subject) return; 
+
+      toast.loading("Chat wordt aangemaakt...");
+
+      
+      const response = await functions.createExecution(
+        appwriteConfig.startChatFunctionId, 
+        JSON.stringify({
+          report_id: report.$id,
+          user_id: report.user_id,
+          organization_id: report.organization_id,
+          subject: subject
+        })
+      );
+
+      const result = JSON.parse(response.responseBody);
+
+      if (result.success) {
+        toast.dismiss();
+        toast.success("Chat gestart! De melder heeft een notificatie gekregen.");
+        
+      } else {
+        toast.dismiss();
+        toast.error("Fout bij aanmaken chat.");
+      }
+
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Er ging iets mis met de server.");
+      console.error(error);
+    }
+  };
+
+  const handleStartChatClicked = async () => {
+  const subject = prompt("Geef een onderwerp voor de chat:");
+  if (subject) {
+    // We roepen de functie uit de ChatContext aan!
+    await startNewChat(report, subject);
+  }
+};
 
   // --- Show loading spinner while data is being fetched ---
   if (loading) {
@@ -403,14 +475,32 @@ export default function ReportDetail() {
                   />
                 </div>
 
-                {/* --- Save button (hidden for viewers) --- */}
+                {/* --- Action buttons (hidden for viewers) --- */}
                 {profile?.role !== "org_viewer" && (
-                  <button
-                    onClick={handleSave}
-                    className="w-full bg-[#0870C4] text-white font-bold py-3 px-4 rounded-xl hover:bg-blue-700 transition-colors shadow-md shadow-blue-200"
-                  >
-                    {t("general.saveButton")}
-                  </button>
+                  <div className="flex flex-col gap-3 mt-4">
+                    <button
+                      onClick={handleSave}
+                      className="w-full bg-[#0870C4] text-white font-bold py-3 px-4 rounded-xl hover:bg-blue-700 transition-colors shadow-md shadow-blue-200"
+                    >
+                      {t("general.saveButton")}
+                    </button>
+                    
+                   
+                    <button
+                      onClick={handleShadowbanUser}
+                      className="w-full bg-red-50 text-red-600 font-bold py-3 px-4 rounded-xl border border-red-200 hover:bg-red-100 hover:text-red-700 transition-colors"
+                    >
+                      👻 Shadowban Melder
+                    </button>
+
+                  
+                    <button
+                      onClick={handleStartChat}
+                      className="w-full bg-green-50 text-green-700 font-bold py-3 px-4 rounded-xl border border-green-200 hover:bg-green-100 transition-colors flex justify-center items-center gap-2"
+                    >
+                      💬 Start Chat met Melder
+                    </button>
+                  </div>
                 )}
 
                 {/* --- View-only notice for org_viewer role --- */}
@@ -536,6 +626,21 @@ export default function ReportDetail() {
               </div>
             )}
           </div>
+          {/* --- CHAT STARTEN SECTIE --- */}
+{profile?.role !== "org_viewer" && (
+  <div className="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex justify-between items-center">
+    <div>
+      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">💬 Contact met Melder</h2>
+      <p className="text-sm text-gray-500 mt-1">Start een chatvenster over deze specifieke melding.</p>
+    </div>
+    <button
+      onClick={handleStartChatClicked}
+      className="bg-[#0870C4] text-white font-bold py-2.5 px-6 rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+    >
+      Start / Open Chat
+    </button>
+  </div>
+)}
         </main>
       </div>
     </div>

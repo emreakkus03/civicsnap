@@ -17,26 +17,15 @@ function calculateLabelOverlap(labels1, labels2) {
   return intersection.length;
 }
 
-// XP formula: 100 + floor(totalReports/20)²
-// 1st report  → 100 XP
-// 20th report → 101 XP
-// 40th report → 104 XP
-// 100th report → 125 XP
-// 200th report → 200 XP
-function calculateXP(totalReports) {
-  const multiplier = Math.floor(totalReports / 20);
-  return 100 + (multiplier * multiplier);
-}
-
 export default async ({ req, res, log, error }) => {
-  if (!req.body) {
-    return res.send("Function called directly, no database payload found.");
+  if (!req.headers['x-appwrite-event']) {
+    return res.json({ success: false, message: 'Moet via event trigger lopen.' }, 400);
   }
 
   const newReport = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
   
   if (newReport.original_report_id) {
-    return res.json({ success: true, message: "Report is already linked." });
+    return res.json({ success: true, message: "Report is already linked as duplicate." });
   }
 
   const client = new Client()
@@ -45,10 +34,8 @@ export default async ({ req, res, log, error }) => {
     .setKey(process.env.APPWRITE_API_KEY);
 
   const databases = new Databases(client);
-
   const databaseId = process.env.DATABASE_ID;
   const collectionId = process.env.REPORTS_COLLECTION_ID;
-  const profilesCollectionId = process.env.PROFILES_COLLECTION_ID;
 
   try {
     log(`Searching for duplicates for report ${newReport.$id} in category ${newReport.category_id}`);
@@ -71,10 +58,8 @@ export default async ({ req, res, log, error }) => {
     // 2. Loop through the results and check GPS distance & AI labels
     for (const report of existingReports.documents) {
       const distance = getDistanceFromLatLonInMeters(
-        newReport.location_lat, 
-        newReport.location_long, 
-        report.location_lat, 
-        report.location_long
+        newReport.location_lat, newReport.location_long, 
+        report.location_lat, report.location_long
       );
 
       log(`Distance to ${report.$id}: ${Math.round(distance)} meters`);
@@ -113,60 +98,15 @@ export default async ({ req, res, log, error }) => {
           is_duplicate: true
         }
       );
-      log(`Duplicate linked to ${foundOriginalId}. Skipping XP award.`);
+      log(`Duplicate linked to ${foundOriginalId}.`);
       return res.json({ success: true, message: `Duplicate successfully linked to ${foundOriginalId}` });
     }
 
-    // --- XP LOGIC (only if it's NOT a duplicate) ---
-    const userId = newReport.user_id;
-
-    if (!userId || !profilesCollectionId) {
-      log('No user_id or profilesCollectionId found, XP skipped.');
-      return res.json({ success: true, message: "No duplicates found. XP skipped." });
-    }
-
-    // Count how many reports this user has in total (including this new one)
-    const userReportsResponse = await databases.listDocuments(
-      databaseId,
-      collectionId,
-      [
-        Query.equal('user_id', userId),
-        Query.limit(1000)
-      ]
-    );
-    const totalReports = userReportsResponse.total;
-    log(`User ${userId} has ${totalReports} reports in total`);
-
-    // Calculate XP based on total number of reports
-    const xpToAward = calculateXP(totalReports);
-    log(`XP to award: ${xpToAward}`);
-
-    // Fetch the current profile
-    const profile = await databases.getDocument(
-      databaseId,
-      profilesCollectionId,
-      userId
-    );
-
-    const currentLifetimePoints = profile.lifetime_points || 0;
-    const newLifetimePoints = currentLifetimePoints + xpToAward;
-
-    // Update lifetime_points in the profile
-    await databases.updateDocument(
-      databaseId,
-      profilesCollectionId,
-      userId,
-      {
-        lifetime_points: newLifetimePoints,
-      }
-    );
-
-    log(`XP updated for user ${userId}: ${currentLifetimePoints} → ${newLifetimePoints}`);
-
-    return res.json({ success: true, message: `No duplicates found. ${xpToAward} XP awarded.` });
+    log("No duplicates found.");
+    return res.json({ success: true, message: "No duplicates found." });
 
   } catch (err) {
-    error(`Error during duplicate check or XP award: ${err.message}`);
-    return res.json({ success: false, error: err.message });
+    error(`Error during duplicate check: ${err.message}`);
+    return res.json({ success: false, error: err.message }, 500);
   }
 };

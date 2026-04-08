@@ -2,6 +2,8 @@ import { API } from "@/core/networking/api";
 import { ID, Models } from "react-native-appwrite";
 import {UserProfile} from "@core/networking/database.types";
 
+import { getDeviceId } from "@core/utils/device";
+
 
 
 const filePreparingForUploadingFiles = (fileUri: string, fileName: string) => {
@@ -40,56 +42,66 @@ export const getCurrentSession = async (): Promise<Models.User<Models.Preference
 
 export const login = async ({ email, password }: LoginBody) => {
   try {
-
-    const session = await API.auth.createEmailPasswordSession(email, password);
-    
- 
+  
+    await API.auth.createEmailPasswordSession(email, password);
     const user = await API.auth.get();
+    
+   
+    const deviceId = await getDeviceId();
+    
+    if (deviceId) {
+      try {
+        
+        await API.database.updateDocument(
+          API.config.databaseId,
+          API.config.profilesCollectionId,
+          user.$id,
+          { device_id: deviceId }
+        );
+        console.log("Device ID geüpdatet bij login:", deviceId);
+      } catch (updateErr) {
+      
+        console.log("Kon device_id niet updaten tijdens login.", updateErr);
+      }
+    }
+
     return user; 
   } catch (error) {
-    
     return Promise.reject(error);
   }
 };
 
 export const register = async ({ email, password, fullname, avatarUri }: RegisterBody) => {
   try {
-
     const newAccount = await API.auth.create(ID.unique(), email, password, fullname);
-    
-    
     await API.auth.createEmailPasswordSession(email, password);
 
+   
+    const deviceId = await getDeviceId();
+
     let avatarUrl = null;
-    
-    
     if (avatarUri) {
       try {
-        
         const file = filePreparingForUploadingFiles(avatarUri, `avatar_${newAccount.$id}.jpg`);
-        
         const uploadResponse = await API.storage.createFile(
             API.config.storageBucketId, 
             ID.unique(), 
             file
         );
    
-    
-       const endpoint = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT;
+        const endpoint = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT;
         const projectId = process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID;
         const bucketId = API.config.storageBucketId;
         const fileId = uploadResponse.$id;
-
         
         avatarUrl = `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
-
         console.log("7. Generated URL:", avatarUrl);
       } catch (uploadError) {
         console.log("Avatar upload error.", uploadError);
       }
     }
 
-
+   
     await API.database.createDocument(
         API.config.databaseId,      
         API.config.profilesCollectionId, 
@@ -101,11 +113,11 @@ export const register = async ({ email, password, fullname, avatarUri }: Registe
             current_points: 0,
             lifetime_points: 1,
             role: "citizen",
-            is_banned: false
+            is_banned: false,
+            device_id: deviceId || null 
         }
     );
     
-  
     return await API.auth.get();
 
   } catch (error) {
