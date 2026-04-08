@@ -57,7 +57,7 @@ export default function ReportDetail() {
   const [adminNote, setAdminNote] = useState("");
 
 
-  const { startNewChat, openChat } = useChat();
+  const { startNewChat } = useChat();
 
   // --- Load the Google Maps JavaScript API ---
   const { isLoaded } = useJsApiLoader({
