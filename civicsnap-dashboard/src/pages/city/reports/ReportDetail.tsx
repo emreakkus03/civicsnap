@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ID, Permission, Query, Role } from "appwrite";
+import { Query  } from "appwrite";
 import { databases, appwriteConfig, googleMapsApiKey, functions } from "@core/appwrite";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 
