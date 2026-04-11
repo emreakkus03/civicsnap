@@ -4,14 +4,17 @@ import { Query } from "appwrite";
 import { useAuth } from "@core/AuthProvider";
 import toast from "react-hot-toast";
 
-// De 'vorm' van onze nieuwe chat-data
 interface ChatContextType {
   isMinimized: boolean;
   view: "list" | "chat";
+  inboxTab: "open" | "closed";
   conversations: any[];
   activeConversation: any | null;
+  activeChatDetails: { name: string; email: string; location: string } | null;
   messages: any[];
   newMessage: string;
+  isSending: boolean;
+  setInboxTab: (tab: "open" | "closed") => void;
   setNewMessage: (msg: string) => void;
   toggleMinimize: () => void;
   setView: (view: "list" | "chat") => void;
@@ -19,6 +22,8 @@ interface ChatContextType {
   fetchConversations: () => Promise<void>;
   sendMessage: () => Promise<void>;
   startNewChat: (report: any, subject: string) => Promise<void>;
+  endConversation: () => Promise<void>;
+  deleteConversation: (conversationId: string) => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -26,16 +31,18 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { profile } = useAuth();
   
-  // Nieuwe states voor het minimaliseren en de inbox-lijst
   const [isMinimized, setIsMinimized] = useState(true);
   const [view, setView] = useState<"list" | "chat">("list");
+  const [inboxTab, setInboxTab] = useState<"open" | "closed">("open"); // NIEUW: Tab state
   const [conversations, setConversations] = useState<any[]>([]);
   
   const [activeConversation, setActiveConversation] = useState<any | null>(null);
+  const [activeChatDetails, setActiveChatDetails] = useState<any | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
-  // Haal alle conversaties van deze specifieke gemeente op
+  // NIEUW: Super snelle Server-Side Fetch met filters en limieten
   const fetchConversations = async () => {
     if (!profile?.organization_id) return;
     try {
@@ -44,7 +51,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         appwriteConfig.conversationsCollectionId,
         [
           Query.equal("organization_id", profile.organization_id),
-          Query.orderDesc("$createdAt") // Toon de nieuwste bovenaan
+          Query.equal("status", inboxTab), // Filtert op Open of Gesloten
+          Query.orderDesc("$updatedAt"), // Sorteert op laatst actief
+          Query.limit(30) // Beschermt de browser tegen vastlopen
         ]
       );
       setConversations(res.documents);
@@ -53,7 +62,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Haal berichten op zodra er een chat actief wordt
+  // Zodra we van tab wisselen of de widget openen, haal de lijst op
+  useEffect(() => {
+    if (!isMinimized && view === "list") {
+      fetchConversations();
+    }
+  }, [inboxTab, isMinimized, view]);
+
+  // Zodra een chat opent, halen we de berichten én de extra details op!
   useEffect(() => {
     if (activeConversation && view === "chat") {
       const fetchMessages = async () => {
@@ -71,18 +87,34 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error("Fout bij laden berichten:", err);
         }
       };
+
+      const fetchDetails = async () => {
+        try {
+          const [userRes, reportRes] = await Promise.all([
+            databases.getDocument(appwriteConfig.databaseId, appwriteConfig.profilesCollectionId, activeConversation.user_id).catch(() => null),
+            databases.getDocument(appwriteConfig.databaseId, appwriteConfig.reportsCollectionId, activeConversation.report_id).catch(() => null)
+          ]);
+          
+          setActiveChatDetails({
+            name: userRes?.full_name || "Onbekende burger",
+            email: userRes?.email || "",
+            location: reportRes?.address || reportRes?.location || "Bekijk melding voor locatie"
+          });
+        } catch (error) {
+          console.error("Fout bij ophalen details", error);
+        }
+      };
+
       fetchMessages();
+      fetchDetails();
     } else {
       setMessages([]);
+      setActiveChatDetails(null);
     }
   }, [activeConversation, view]);
 
   const toggleMinimize = () => {
     setIsMinimized((prev) => !prev);
-    // Als we hem openen, haal dan altijd even de nieuwste lijst op
-    if (isMinimized) {
-      fetchConversations();
-    }
   };
 
   const openChat = (conversation: any) => {
@@ -112,8 +144,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           appwriteConfig.conversationsCollectionId,
           result.conversation_id
         );
-        
-        // Ververs de lijst en open direct het nieuwe gesprek
+        setInboxTab("open"); // Zorg dat we in de open tab staan
         await fetchConversations();
         openChat(convo);
       }
@@ -124,11 +155,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !activeConversation) return;
+    if (!newMessage.trim() || !activeConversation || isSending) return;
 
     try {
+      setIsSending(true);
       const textToSend = newMessage;
-      setNewMessage(""); // Optimistische UI
+      setNewMessage("");
 
       const response = await functions.createExecution(
         appwriteConfig.sendMessageFunctionId,
@@ -146,25 +178,61 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (err) {
       toast.error("Bericht niet verzonden.");
+      setNewMessage(newMessage);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const endConversation = async () => {
+    if (!activeConversation) return;
+    if (!window.confirm("Weet je zeker dat je dit gesprek wilt sluiten? Je kunt hierna geen berichten meer sturen.")) return;
+
+    const toastId = toast.loading("Gesprek sluiten...");
+    try {
+      const updatedConvo = await databases.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.conversationsCollectionId,
+        activeConversation.$id,
+        { status: 'closed' }
+      );
+      
+      setActiveConversation(updatedConvo);
+      toast.success("Gesprek succesvol gesloten.", { id: toastId });
+    } catch (error) {
+      toast.error("Kon gesprek niet sluiten.", { id: toastId });
+    }
+  };
+
+  // NIEUW: Gesprek definitief verwijderen (via de Server Function)
+  const deleteConversation = async (conversationId: string) => {
+    if (!window.confirm("Weet je zeker dat je dit hele gesprek en alle berichten permanent wilt verwijderen? Dit kan niet ongedaan worden gemaakt.")) return;
+
+    const toastId = toast.loading("Gesprek verwijderen...");
+    try {
+      const response = await functions.createExecution(
+        appwriteConfig.deleteConversationFunctionId, // ZORG DAT DEZE IN JE APPWRITE.TS STAAT!
+        JSON.stringify({ conversation_id: conversationId })
+      );
+
+      const result = JSON.parse(response.responseBody);
+      if (result.success) {
+        toast.success("Gesprek permanent verwijderd.", { id: toastId });
+        setView("list");
+        fetchConversations();
+      } else {
+        toast.error("Verwijderen mislukt.", { id: toastId });
+      }
+    } catch (err) {
+      toast.error("Serverfout bij verwijderen.", { id: toastId });
     }
   };
 
   return (
     <ChatContext.Provider
       value={{
-        isMinimized,
-        view,
-        conversations,
-        activeConversation,
-        messages,
-        newMessage,
-        setNewMessage,
-        toggleMinimize,
-        setView,
-        openChat,
-        fetchConversations,
-        sendMessage,
-        startNewChat
+        isMinimized, view, inboxTab, conversations, activeConversation, activeChatDetails, messages, newMessage, isSending,
+        setInboxTab, setNewMessage, toggleMinimize, setView, openChat, fetchConversations, sendMessage, startNewChat, endConversation, deleteConversation
       }}
     >
       {children}

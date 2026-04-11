@@ -297,6 +297,30 @@
                 ".npm"
             ],
             "path": "functions/SendMessage"
+        },
+        {
+            "$id": "69da17390035fb8c9fb2",
+            "name": "DeleteConversation",
+            "runtime": "node-25",
+            "specification": "s-0.5vcpu-512mb",
+            "execute": [
+                "any"
+            ],
+            "events": [],
+            "scopes": [
+                "users.read"
+            ],
+            "schedule": "",
+            "timeout": 15,
+            "enabled": true,
+            "logging": true,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "ignore": [
+                "node_modules",
+                ".npm"
+            ],
+            "path": "functions/DeleteConversation"
         }
     ],
     "tablesDB": [

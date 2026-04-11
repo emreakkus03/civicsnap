@@ -626,21 +626,6 @@ export default function ReportDetail() {
               </div>
             )}
           </div>
-          {/* --- CHAT STARTEN SECTIE --- */}
-{profile?.role !== "org_viewer" && (
-  <div className="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex justify-between items-center">
-    <div>
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">💬 Contact met Melder</h2>
-      <p className="text-sm text-gray-500 mt-1">Start een chatvenster over deze specifieke melding.</p>
-    </div>
-    <button
-      onClick={handleStartChatClicked}
-      className="bg-[#0870C4] text-white font-bold py-2.5 px-6 rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
-    >
-      Start / Open Chat
-    </button>
-  </div>
-)}
         </main>
       </div>
     </div>
