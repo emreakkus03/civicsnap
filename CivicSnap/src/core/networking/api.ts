@@ -1,4 +1,4 @@
-import { Client, Account, Databases, Storage, Avatars } from 'react-native-appwrite';
+import { Client, Account, Databases, Storage, Avatars, Functions } from 'react-native-appwrite';
 
 
 const CONFIG = {
@@ -15,6 +15,9 @@ const CONFIG = {
     announcementsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_ANNOUNCEMENTS_COLLECTION_ID || '',
     rewardsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_REWARDS_COLLECTION_ID || '',
     userRewardsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_USER_REWARDS_COLLECTION_ID || '',
+    conversationsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_CONVERSATIONS_COLLECTION_ID || '',
+    messagesCollectionId: process.env.EXPO_PUBLIC_APPWRITE_MESSAGES_COLLECTION_ID || '',
+    sendMessageFunctionId: process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_SEND_MESSAGE_ID || '',
 };
 
 
@@ -32,6 +35,7 @@ export const API = {
     database: new Databases(client),
     storage: new Storage(client),   
     avatars: new Avatars(client),   
+    functions: new Functions(client),
     
     
     config: {
@@ -47,5 +51,8 @@ export const API = {
         googleMapsApiKey: CONFIG.google_maps_api_key,
         rewardsCollectionId: CONFIG.rewardsCollectionId,
         userRewardsCollectionId: CONFIG.userRewardsCollectionId,
+        conversationsCollectionId: CONFIG.conversationsCollectionId,
+        messagesCollectionId: CONFIG.messagesCollectionId,
+        sendMessageFunctionId: CONFIG.sendMessageFunctionId,
     }
 };
