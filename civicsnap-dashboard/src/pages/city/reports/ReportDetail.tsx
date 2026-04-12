@@ -5,7 +5,6 @@ import {
   databases,
   appwriteConfig,
   googleMapsApiKey,
-  functions,
 } from "@core/appwrite";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 
@@ -271,10 +270,11 @@ export default function ReportDetail() {
     }
   };
 
- const handleStartChat = async () => {
+  const handleStartChat = async () => {
     const subject = prompt("Geef een kort onderwerp op voor deze chat (bijv. 'Vraag over locatie'):");
     
     if (subject) {
+     
       await startNewChat(report, subject);
     }
   };
