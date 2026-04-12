@@ -20,6 +20,14 @@ import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
 
 import { Variables } from "@/style/theme";
 
+const getLevelTitle = (level: number): string => {
+  if (level < 5) return "Scout";
+  if (level < 10) return "Verkenner";
+  if (level < 15) return "Beschermer";
+  if (level < 20) return "Stadsheld";
+  return "Legende";
+};
+
 export default function ProfileScreen() {
   const router = useRouter();
   const { profile } = useAuthContext();
@@ -160,6 +168,8 @@ export default function ProfileScreen() {
   const { calculatedLevel, progressPercent, pointsNeeded } =
     calculateLevelInfo(currentLevel);
 
+    const currentTitle = getLevelTitle(calculatedLevel);
+
   useEffect(() => {
     Animated.timing(animatedProgress, {
       toValue: progressPercent,
@@ -220,10 +230,18 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.nameText}>{displayName}</Text>
+         <Text style={styles.nameText}>{displayName}</Text>
+
+          {/* NIEUW: De Rank / Title Badge */}
+          <View style={styles.badgeContainer}>
+            <Ionicons name="shield-checkmark" size={14} color={Variables.colors.primary} />
+            <Text style={styles.badgeText}>
+              Lvl {calculatedLevel} • {currentTitle}
+            </Text>
+          </View>
 
           <View style={styles.levelPointsRow}>
-            <Text style={styles.levelText}>Level {calculatedLevel}</Text>
+            {/* Je hebt hier alleen nog de punten nodig, level staat in de badge */}
             <View style={styles.pointsGroup}>
               <Text style={styles.pointsText}>{points}</Text>
               <Image
@@ -464,6 +482,22 @@ const styles = StyleSheet.create({
     fontSize: 22,
     marginTop: 15,
     color: Variables.colors.text,
+  },
+  badgeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Variables.colors.primary + "1A", // 10% transparantie voor een lichtblauwe tint
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: 8,
+    gap: 6,
+  },
+  badgeText: {
+    fontFamily: Variables.fonts.bold,
+    fontSize: 14,
+    color: Variables.colors.primary,
+    textTransform: "uppercase",
   },
   levelPointsRow: {
     flexDirection: "row",

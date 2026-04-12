@@ -15,6 +15,15 @@ import { Variables } from "@style/theme";
 import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
 import { API } from "@core/networking/api";
 
+const getLevelTitle = (level: number): string => {
+  if (level < 5) return "Scout";
+  if (level < 10) return "Verkenner";
+  if (level < 15) return "Beschermer";
+  if (level < 20) return "Stadsheld";
+  return "Legende";
+};
+
+
 export default function HomeScreen() {
   const router = useRouter();
   const { profile } = useAuthContext();
@@ -68,6 +77,7 @@ const [displayName, setDisplayName] = useState(profile?.full_name?.split(" ")[0]
     return tempLevel;
 };
 const calculatedLevel = calculateLevel(lifetimeXp);
+const currentTitle = getLevelTitle(calculatedLevel);
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
@@ -87,7 +97,11 @@ const calculatedLevel = calculateLevel(lifetimeXp);
                 Hi, {displayName}
               </ThemedText>
 
-              <Text style={styles.levelText}>Level {calculatedLevel}</Text>
+              <View style={styles.badgeContainer}>
+                <Text style={styles.badgeText}>
+                  Lvl {calculatedLevel} • {currentTitle}
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -149,6 +163,20 @@ const styles = StyleSheet.create({
     fontFamily: Variables.fonts.bold || "bold",
     fontSize: Variables.textSizes.lg || 22,
     color: Variables.colors.text || "#000",
+  },
+  badgeContainer: {
+    backgroundColor: Variables.colors.primary + "1A", 
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 4,
+    alignSelf: "flex-start", 
+  },
+  badgeText: {
+    fontFamily: Variables.fonts.bold,
+    fontSize: 12,
+    color: Variables.colors.primary,
+    textTransform: "uppercase",
   },
   levelText: {
     fontSize: Variables.textSizes.md || 16,

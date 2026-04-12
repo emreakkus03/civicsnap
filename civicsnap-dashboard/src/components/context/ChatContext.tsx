@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback} from "react";
 import { databases, appwriteConfig, functions } from "@core/appwrite";
 import { Query } from "appwrite";
 import { useAuth } from "@core/AuthProvider";
@@ -42,8 +42,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
 
-  // NIEUW: Super snelle Server-Side Fetch met filters en limieten
-  const fetchConversations = async () => {
+
+ // NIEUW: useCallback toegevoegd zodat ESLint/Vercel blij is
+  const fetchConversations = useCallback(async () => {
     if (!profile?.organization_id) return;
     try {
       const res = await databases.listDocuments(
@@ -51,25 +52,25 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         appwriteConfig.conversationsCollectionId,
         [
           Query.equal("organization_id", profile.organization_id),
-          Query.equal("status", inboxTab), // Filtert op Open of Gesloten
-          Query.orderDesc("$updatedAt"), // Sorteert op laatst actief
-          Query.limit(30) // Beschermt de browser tegen vastlopen
+          Query.equal("status", inboxTab),
+          Query.orderDesc("$updatedAt"), 
+          Query.limit(30) 
         ]
       );
       setConversations(res.documents);
     } catch (err) {
       console.error("Fout bij laden gesprekken:", err);
     }
-  };
+  }, [profile?.organization_id, inboxTab]);
 
-  // Zodra we van tab wisselen of de widget openen, haal de lijst op
+
   useEffect(() => {
     if (!isMinimized && view === "list") {
       fetchConversations();
     }
-  }, [inboxTab, isMinimized, view]);
+  }, [isMinimized, view, fetchConversations]);
 
-  // Zodra een chat opent, halen we de berichten én de extra details op!
+ 
   useEffect(() => {
     if (activeConversation && view === "chat") {
       const fetchMessages = async () => {
