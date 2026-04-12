@@ -20,6 +20,8 @@ export default function FloatingChatWidget() {
     }
   }, [messages, view, isMinimized, isSending]);
 
+  if (!profile) return null;
+
   // ─── 1. Bubble View ───
   if (isMinimized) {
     if (profile?.role === "org_viewer") return null;
