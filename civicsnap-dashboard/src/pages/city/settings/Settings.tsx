@@ -116,7 +116,7 @@ export default function Settings() {
       const filteredMembers = membersWithUserData.filter(
         (member) =>
           member.userEmail?.toLowerCase().trim() !==
-          "cixicsnapadminsuper@gmail.com",
+          "civicsnapadminsuper@gmail.com",
       );
 
       setMembers(filteredMembers);

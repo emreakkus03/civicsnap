@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { databases, appwriteConfig, storage } from "@core/appwrite";
-import { ID, Models } from "appwrite";
+import { ID, Models, Query } from "appwrite";
 import { Plus, Edit, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import Header from "@components/Header";
 import Sidebar from "@components/Sidebar";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@core/AuthProvider";
 
 interface Reward extends Models.Document {
     title: string;
@@ -33,6 +34,7 @@ const emptyForm = {
 
 export default function Rewards() {
     const { t } = useTranslation();
+    const { profile } = useAuth();
     const [rewards, setRewards] = useState<Reward[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -46,9 +48,17 @@ export default function Rewards() {
     const fetchRewards = useCallback(async () => {
         setLoading(true);
         try {
+           const queries = [];
+            // Als het géén super_admin is, filter dan op de organisatie van de ambtenaar
+            
+            if (profile?.role !== "super_admin" && profile?.organization_id) {
+                queries.push(Query.equal("organization_id", profile.organization_id));
+            }
+
             const response = await databases.listDocuments(
                 appwriteConfig.databaseId,
                 appwriteConfig.rewardsCollectionId,
+                queries // <-- Geef de queries mee
             );
             const now = new Date();
             const processedRewards = await Promise.all(
@@ -71,7 +81,7 @@ export default function Rewards() {
         } finally {
             setLoading(false);
         }
-    }, [t]);
+    },[t, profile?.organization_id, profile?.role]);
 
     useEffect(() => {
     fetchRewards();
@@ -118,7 +128,7 @@ export default function Rewards() {
         }
 
         try {
-            const payload = {
+            const payload: any = {
                 title: form.title,
                 description: form.description,
                 image_url: finalImageUrl,
@@ -126,9 +136,13 @@ export default function Rewards() {
                 business_name: form.business_name,
                 valid_until: form.valid_until ? new Date(form.valid_until).toISOString() : null,
                 type: form.type,
-                location_filter: form.location_filter,
                 is_active: form.is_active,
+                location_filter: profile?.role === "super_admin" ? form.location_filter : "local",
             };
+
+            if (profile?.role !== "super_admin" && profile?.organization_id) {
+                payload.organization_id = profile.organization_id;
+            }
 
             if (editingReward) {
                 await databases.updateDocument(
@@ -354,21 +368,23 @@ export default function Rewards() {
                                         <option value="good_cause">{t("rewards.form.types.good_cause")}</option>
                                     </select>
                                 </div>
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-sm font-semibold text-gray-700">{t("rewards.form.locationLabel")}</label>
-                                    <select value={form.location_filter} onChange={(e) => setForm({ ...form, location_filter: e.target.value })} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] bg-white">
-                                        <option value="all">{t("rewards.form.locations.all")}</option>
-                                        <option value="antwerp">{t("rewards.form.locations.antwerp")}</option>
-                                        <option value="ghent">{t("rewards.form.locations.ghent")}</option>
-                                        <option value="brussels">{t("rewards.form.locations.brussels")}</option>
-                                        <option value="bruges">{t("rewards.form.locations.bruges")}</option>
-                                        <option value="hasselt">{t("rewards.form.locations.hasselt")}</option>
-                                        <option value="courtrai">{t("rewards.form.locations.courtrai")}</option>
-                                        <option value="namur">{t("rewards.form.locations.namur")}</option>
-                                        <option value="liege">{t("rewards.form.locations.liege")}</option>
-                                        <option value="charleroi">{t("rewards.form.locations.charleroi")}</option>
-                                    </select>
-                                </div>
+                               {profile?.role === "super_admin" && (
+    <div className="flex flex-col gap-1">
+        <label className="text-sm font-semibold text-gray-700">{t("rewards.form.locationLabel")}</label>
+        <select value={form.location_filter} onChange={(e) => setForm({ ...form, location_filter: e.target.value })} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] bg-white">
+            <option value="all">{t("rewards.form.locations.all")}</option>
+            <option value="antwerp">{t("rewards.form.locations.antwerp")}</option>
+            <option value="ghent">{t("rewards.form.locations.ghent")}</option>
+            <option value="brussels">{t("rewards.form.locations.brussels")}</option>
+            <option value="bruges">{t("rewards.form.locations.bruges")}</option>
+            <option value="hasselt">{t("rewards.form.locations.hasselt")}</option>
+            <option value="courtrai">{t("rewards.form.locations.courtrai")}</option>
+            <option value="namur">{t("rewards.form.locations.namur")}</option>
+            <option value="liege">{t("rewards.form.locations.liege")}</option>
+            <option value="charleroi">{t("rewards.form.locations.charleroi")}</option>
+        </select>
+    </div>
+)}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

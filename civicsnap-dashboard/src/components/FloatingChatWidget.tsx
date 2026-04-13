@@ -151,17 +151,17 @@ export default function FloatingChatWidget() {
           <div className="flex flex-col gap-3 p-4">
             
             {activeConversation?.status === "open" && (
-              <div className="flex justify-center mb-2">
-                <button 
-                  onClick={endConversation}
-                  className="text-xs bg-red-50 text-red-600 font-medium px-4 py-1.5 rounded-full border border-red-100 hover:bg-red-100 transition-colors"
-                >
-                  Gesprek afronden / sluiten
-                </button>
-              </div>
-            )}
+  <div className="sticky top-0 z-10 flex justify-center py-2  backdrop-blur-sm">
+    <button 
+      onClick={endConversation}
+      className="text-xs bg-red-50 text-red-600 font-medium px-4 py-1.5 rounded-full border border-red-100 hover:bg-red-100 transition-colors shadow-sm"
+    >
+      Gesprek afronden / sluiten
+    </button>
+  </div>
+)}
 
-            {messages.length === 0 ? (
+           {messages.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-center mt-10">
                 <p className="text-gray-400 text-sm">Typ hieronder je eerste bericht naar de melder.</p>
               </div>
@@ -177,7 +177,8 @@ export default function FloatingChatWidget() {
                         : "bg-white border border-gray-200 text-gray-800 self-start rounded-2xl rounded-tl-sm shadow-sm"
                     }`}
                   >
-                    <p className="leading-relaxed">{msg.text}</p>
+                    {/* NIEUW: break-words en whitespace-pre-wrap toegevoegd */}
+                    <p className="leading-relaxed break-words whitespace-pre-wrap">{msg.text}</p>
                     <p className={`text-[10px] mt-1.5 text-right font-medium ${isAdmin ? "text-blue-200" : "text-gray-400"}`}>
                       {new Date(msg.$createdAt).toLocaleTimeString("nl-BE", { hour: "2-digit", minute: "2-digit" })}
                     </p>

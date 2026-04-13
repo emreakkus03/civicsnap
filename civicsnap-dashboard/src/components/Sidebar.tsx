@@ -24,6 +24,7 @@ export default function Sidebar({ activeItem }: SidebarProps) {
             { label: t('dashboard.menu.dashboard'), icon: LayoutDashboard, href: '/', active: activeItem === 'dashboard' },
             { label: t('dashboard.menu.reports'), icon: FileText, href: '/reports', active: activeItem === 'reports' },
             { label: t('dashboard.menu.announcements'), icon: Megaphone, href: '/announcements', active: activeItem === 'announcements' },
+            { label: t('dashboard.menu.rewards'), icon: Gift, href: '/rewards', active: activeItem === 'rewards' },
             { label: t('dashboard.menu.settings'), icon: Settings, href: '/settings', active: activeItem === 'settings'},
     ];
 

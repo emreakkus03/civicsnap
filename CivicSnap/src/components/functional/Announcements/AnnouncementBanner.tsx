@@ -20,90 +20,86 @@ export default function AnnouncementBanner({ location_lat, location_long }: Prop
   const [showAnnouncements, setShowAnnouncements] = useState(true); // Control banner visibility state.
   const [dismissedAnnouncements, setDismissedAnnouncements] = useState<string | null>(null); // Store dismissed announcement ID to avoid immediate re-show.
 
-  const insets = useSafeAreaInsets(); // Read safe area insets for positioning below status bar.
-  const { lastUpdate } = useRealtime(); // Read realtime update marker to refetch data.
+ const insets = useSafeAreaInsets();
+  const { lastUpdate } = useRealtime();
+
+  // 👇 DE FIX: Afronden op 2 of 3 decimalen voorkomt de infinite loop crash!
+  // 2 decimalen is ~1 kilometer nauwkeurig. Genoeg om te weten of je in een andere stad bent.
+  const roundedLat = location_lat ? Math.round(location_lat * 100) / 100 : null;
+  const roundedLong = location_long ? Math.round(location_long * 100) / 100 : null;
 
   useEffect(() => {
-    // Run fetch logic when location or realtime updates change.
-    if (!location_lat && !location_long) {
-      // Guard clause when location is not available.
-      return; // Exit early if both coordinates are missing/falsy.
+    // Check nu op de afgeronde waarden
+    if (!roundedLat || !roundedLong) {
+      return; 
     }
 
     const fetchLocalAnnouncements = async () => {
-      // Define async function that fetches location-based announcements.
       try {
-        // Wrap network/database operations in try/catch.
-        const APIKey = await API.config.googleMapsApiKey; // Read Google Maps API key from config.
-        if (!APIKey) {
-          // Ensure API key exists before calling Geocoding API.
-          return; // Exit if no API key is configured.
-        }
+        const APIKey = await API.config.googleMapsApiKey; 
+        if (!APIKey) return; 
 
+        // 👇 Gebruik de afgeronde waarden voor de Google Maps call
         const geoResponse = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location_lat},${location_long}&key=${APIKey}`
-        ); // Request reverse geocoding data for current coordinates.
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${roundedLat},${roundedLong}&key=${APIKey}`
+        );
 
-        const geoData = await geoResponse.json(); // Parse geocoding JSON response payload.
+        const geoData = await geoResponse.json(); 
 
-        let currentZipCode = ""; // Initialize zipcode container.
+        let currentZipCode = ""; 
 
         if (geoData.results && geoData.results.length > 0) {
-          // Ensure at least one geocoding result exists.
-          const addressComponents = geoData.results[0].address_components; // Read address components from first result.
-          const zipComponent = addressComponents.find((c: any) => c.types.includes("postal_code")); // Find component tagged as postal code.
-          if (zipComponent) currentZipCode = zipComponent.long_name; // Store zipcode if found.
+          const addressComponents = geoData.results[0].address_components; 
+          const zipComponent = addressComponents.find((c: any) => c.types.includes("postal_code")); 
+          if (zipComponent) currentZipCode = zipComponent.long_name; 
         }
 
         if (!currentZipCode) {
-          // Ensure zipcode was resolved from geocode response.
-          return; // Exit if zipcode is unavailable.
+          return; 
         }
 
         const orgsResponse = await API.database.listDocuments(
           API.config.databaseId,
           API.config.organizationsCollectionId,
           [Query.equal("zip_codes", currentZipCode)]
-        ); // Query organizations that include this zipcode.
+        ); 
 
-        if (orgsResponse.documents.length === 0) return; // Exit when no matching organization exists.
-        const organizationId = orgsResponse.documents[0].$id; // Read organization ID from first match.
+        if (orgsResponse.documents.length === 0) return; 
+        const organizationId = orgsResponse.documents[0].$id; 
 
-        const now = new Date().toISOString(); // Build current timestamp for date range filtering.
+        const now = new Date().toISOString(); 
         const announcementsResponse = await API.database.listDocuments(
           API.config.databaseId,
           API.config.announcementsCollectionId,
           [
-            Query.equal("organization_id", organizationId), // Only announcements for current organization.
-            Query.equal("is_active", true), // Only active announcements.
-            Query.lessThanEqual("start_at", now), // Announcement must already have started.
-            Query.greaterThan("ends_at", now), // Announcement must not be expired yet.
-            Query.orderDesc("priority"), // Order with highest priority first.
-            Query.limit(1), // Fetch only top announcement.
+            Query.equal("organization_id", organizationId), 
+            Query.equal("is_active", true), 
+            Query.lessThanEqual("start_at", now), 
+            Query.greaterThan("ends_at", now), 
+            Query.orderDesc("priority"), 
+            Query.limit(1), 
           ]
-        ); // Query filtered announcement list.
+        ); 
 
         if (announcementsResponse.documents.length > 0) {
-          // Handle case where at least one active announcement exists.
-          const newAnnouncement = announcementsResponse.documents[0]; // Select first (highest-priority) announcement.
-          setActiveAnnouncement(newAnnouncement); // Store active announcement in state.
+          const newAnnouncement = announcementsResponse.documents[0]; 
+          setActiveAnnouncement(newAnnouncement); 
 
           if (newAnnouncement.$id !== dismissedAnnouncements) {
-            // Re-show banner when new announcement is not the dismissed one.
-            setShowAnnouncements(true); // Make banner visible.
+            setShowAnnouncements(true); 
           }
         } else {
-          // Handle case where no active announcements exist.
-          setActiveAnnouncement(null); // Clear active announcement state.
+          setActiveAnnouncement(null); 
         }
       } catch (error) {
-        // Handle API/network/database errors gracefully.
-        console.error("Error while fetching local announcements:", error); // Log English error message for debugging.
+        console.error("Error while fetching local announcements:", error); 
       }
-    }; // End fetch function definition.
+    }; 
 
-    fetchLocalAnnouncements(); // Trigger local announcement fetch immediately.
-  }, [location_lat, location_long, lastUpdate]); // Re-run effect when location or realtime marker changes.
+    fetchLocalAnnouncements(); 
+    
+  
+  }, [roundedLat, roundedLong, lastUpdate]);
 
   if (!activeAnnouncement || !showAnnouncements) return null; // Render nothing when no active item or banner is hidden.
 

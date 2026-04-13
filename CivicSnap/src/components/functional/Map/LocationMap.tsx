@@ -257,7 +257,7 @@ export default function LocationMap() {
 
         onPanDrag={() => setHasPanned(true)}
        onRegionChange={(region, details) => {
-          // isGesture is TRUE als een menselijke vinger de kaart vastpakt
+          
           if (details?.isGesture) {
             setHasPanned(true);
           }

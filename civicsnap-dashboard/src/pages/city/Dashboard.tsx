@@ -113,6 +113,8 @@ export default function Dashboard() {
                         Query.equal("zip_code", zipCodesArray),
                         Query.equal("status", "new"),
                         Query.equal("is_duplicate", false),
+                        Query.equal("is_shadowbanned", false),
+
                         Query.orderDesc("$createdAt"),
                         Query.limit(10),
                     ],

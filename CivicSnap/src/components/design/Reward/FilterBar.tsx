@@ -45,6 +45,7 @@ export default function FilterBar({
         contentContainerStyle={styles.filtersContent}
         style={styles.filtersScroll}
       >
+        {/* --- 1. ALLES KNOP --- */}
         <TouchableOpacity
           style={[
             styles.filterChip,
@@ -57,20 +58,35 @@ export default function FilterBar({
           </Text>
         </TouchableOpacity>
 
+        {/* --- 2. LOKAAL KNOP (NIEUW) --- */}
         <TouchableOpacity
-          style={[styles.filterChip, styles.locationChip, selectedLocation !== "all" && styles.filterChipActive]}
+          style={[
+            styles.filterChip,
+            selectedLocation === "local" && styles.filterChipActive,
+          ]}
+          onPress={() => { onFilterChange("all"); onLocationChange("local"); }}
+        >
+          <Text style={[styles.filterChipText, selectedLocation === "local" && styles.filterChipTextActive]}>
+            Lokaal
+          </Text>
+        </TouchableOpacity>
+
+        {/* --- 3. STEDEN DROPDOWN --- */}
+        <TouchableOpacity
+          style={[styles.filterChip, styles.locationChip, selectedLocation !== "all" && selectedLocation !== "local" && styles.filterChipActive]}
           onPress={onDropdownToggle}
         >
-          <Text style={[styles.filterChipText, selectedLocation !== "all" && styles.filterChipTextActive]}>
-            {selectedLocation === "all" ? "Stad" : LOCATION_LABELS[selectedLocation]}
+          <Text style={[styles.filterChipText, selectedLocation !== "all" && selectedLocation !== "local" && styles.filterChipTextActive]}>
+            {selectedLocation === "all" || selectedLocation === "local" ? "Andere stad" : LOCATION_LABELS[selectedLocation]}
           </Text>
           <Ionicons
             name={showLocationDropdown ? "chevron-up" : "chevron-down"}
             size={12}
-            color={selectedLocation !== "all" ? Variables.colors.textInverse : Variables.colors.textLight}
+            color={selectedLocation !== "all" && selectedLocation !== "local" ? Variables.colors.textInverse : Variables.colors.textLight}
           />
         </TouchableOpacity>
 
+        {/* --- 4. TYPE FILTERS (Korting, Gratis, etc.) --- */}
         {filters.filter((f) => f.key !== "all").map((filter) => (
           <TouchableOpacity
             key={filter.key}
@@ -84,13 +100,17 @@ export default function FilterBar({
         ))}
       </ScrollView>
 
+      {/* --- DROPDOWN MENU --- */}
       {showLocationDropdown && (
         <View style={styles.locationDropdown}>
-          {locations.map((loc) => (
+          {locations.filter(loc => loc.key !== "all").map((loc) => (
             <TouchableOpacity
               key={loc.key}
               style={[styles.locationDropdownItem, selectedLocation === loc.key && styles.locationDropdownItemActive]}
-              onPress={() => onLocationChange(loc.key)}
+              onPress={() => {
+                onLocationChange(loc.key);
+                onDropdownToggle(); // Sluit de dropdown na het klikken
+              }}
             >
               <Text style={[styles.locationDropdownText, selectedLocation === loc.key && styles.locationDropdownTextActive]}>
                 {loc.label}

@@ -12,6 +12,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import * as Location from 'expo-location';
+import { Query } from 'react-native-appwrite';
 
 import { useAuthContext } from "@components/functional/Auth/authProvider";
 import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
@@ -57,6 +59,10 @@ export default function ShopScreen() {
 
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  
+  const [currentOrgId, setCurrentOrgId] = useState<string | null>(null);
+ const [currentOrgName, setCurrentOrgName] = useState<string>("Lokaal");
+  const [locationLoading, setLocationLoading] = useState(true);
 
   const locations = Object.entries(LOCATION_LABELS).map(([key, label]) => ({
     key,
@@ -152,14 +158,97 @@ export default function ShopScreen() {
     fetchUserRewards();
   }, [lastUpdate, profile?.$id]);
 
-  // --- Filter rewards ---
+  // --- GPS & Lokale Gemeente Bepalen ---
+  useEffect(() => {
+    const determineLocalMunicipality = async () => {
+      try {
+        setLocationLoading(true);
+        
+        // 1. Vraag toestemming aan de gebruiker
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.log('Geen toestemming voor locatie');
+          setCurrentOrgId(profile?.organization_id || null); // Fallback naar thuis-gemeente
+          return;
+        }
+
+        // 2. Haal de huidige GPS locatie op
+        let location = await Location.getCurrentPositionAsync({});
+        
+        // 3. Vertaal GPS naar een Postcode (Reverse Geocoding)
+        let geocode = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+
+        if (geocode.length > 0) {
+          const postalCode = geocode[0].postalCode; // bijv. "9220"
+          
+          if (postalCode) {
+            // 4. Zoek de gemeente in jouw Appwrite database via de postcode
+            // Let op: controleer of API.config.organizationsCollectionId klopt in jouw api.ts!
+            const orgResponse = await API.database.listDocuments(
+              API.config.databaseId,
+              API.config.organizationsCollectionId, // De collectie met alle gemeentes
+              [Query.search("zip_codes", postalCode)] 
+            );
+
+           if (orgResponse.documents.length > 0) {
+              // Gemeente gevonden!
+             const foundOrg = orgResponse.documents[0];
+              setCurrentOrgId(foundOrg.$id);
+              
+             
+              let cleanName = foundOrg.name;
+              if (cleanName.toLowerCase().startsWith("gemeente ")) {
+                cleanName = cleanName.substring(9);
+              } else if (cleanName.toLowerCase().startsWith("stad ")) {
+                cleanName = cleanName.substring(5); 
+              }
+              
+              setCurrentOrgName(cleanName);
+            } else {
+              setCurrentOrgId(profile?.organization_id || null);
+              setCurrentOrgName("Lokaal"); 
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Fout bij ophalen GPS:", error);
+        setCurrentOrgId(profile?.organization_id || null);
+      } finally {
+        setLocationLoading(false);
+      }
+    };
+
+    determineLocalMunicipality();
+  }, [profile?.organization_id]);
+
+
   const filteredRewards = rewards.filter((r: any) => {
     const typeMatch = selectedFilter === "all" || r.type === selectedFilter;
-    const locationMatch =
-      selectedLocation === "all" ||
-      r.location_filter === selectedLocation ||
-      r.location_filter === "all";
+    
+    let locationMatch = false;
+
+    if (selectedLocation === "all" || selectedLocation === "local") {
+
+      locationMatch = r.location_filter === "all" || (r.organization_id && r.organization_id === currentOrgId);
+    } else {
+   
+      locationMatch = r.location_filter === "all" || r.location_filter === selectedLocation;
+    }
+
     return typeMatch && locationMatch;
+  });
+
+ 
+  const sortedRewards = [...filteredRewards].sort((a, b) => {
+    const aIsLocal = a.organization_id && a.organization_id === currentOrgId;
+    const bIsLocal = b.organization_id && b.organization_id === currentOrgId;
+
+    if (aIsLocal && !bIsLocal) return -1;
+    if (!aIsLocal && bIsLocal) return 1;
+    return 0;
   });
 
   // --- Purchase reward ---
@@ -300,19 +389,26 @@ export default function ShopScreen() {
               color={Variables.colors.primary}
               style={{ marginTop: 40 }}
             />
-          ) : filteredRewards.length === 0 ? (
+          ) : sortedRewards.length === 0 ? (
             <Text style={styles.emptyText}>Geen rewards beschikbaar.</Text>
           ) : (
-            <View style={styles.rewardsGrid}>
-              {filteredRewards.map((reward: any) => (
-                <RewardCard
-                  key={reward.$id}
-                  reward={reward}
-                  points={points}
-                  onPress={() => setSelectedReward(reward)}
-                  onClaim={() => handlePurchase(reward)}
-                />
-              ))}
+          <View style={styles.rewardsGrid}>
+              {sortedRewards.map((reward: any) => {
+                
+                const displayLocation = reward.location_filter === "local" 
+                  ? currentOrgName 
+                  : reward.location_filter;
+
+                return (
+                  <RewardCard
+                    key={reward.$id}
+                    reward={{ ...reward, location_filter: displayLocation }} 
+                    points={points}
+                    onPress={() => setSelectedReward({ ...reward, location_filter: displayLocation })}
+                    onClaim={() => handlePurchase(reward)}
+                  />
+                );
+              })}
             </View>
           )}
 
