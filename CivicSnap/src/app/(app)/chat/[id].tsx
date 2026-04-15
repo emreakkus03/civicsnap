@@ -60,6 +60,26 @@ export default function ChatDetailScreen() {
         fetchMessages();
     }, [id, lastUpdate]);
 
+    
+    useEffect(() => {
+        if (!id) return;
+
+        const markAsRead = async () => {
+            try {
+                await API.database.updateDocument(
+                    API.config.databaseId,
+                    API.config.conversationsCollectionId,
+                    id as string,
+                    { has_unread_user: false } 
+                );
+            } catch (error) {
+                console.error("Fout bij markeren als gelezen:", error);
+            }
+        };
+
+        markAsRead();
+    }, [id]);
+
     const handleSend = async () => {
         if (!newMessage.trim() || isSending) return;
 

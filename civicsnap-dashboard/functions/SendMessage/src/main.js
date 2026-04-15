@@ -66,6 +66,23 @@ export default async ({ req, res, log, error }) => {
 
         log(`Bericht opgeslagen: ${newMsg.$id}`);
 
+        if (sender_id !== conversation.user_id) {
+            await databases.updateDocument(
+                process.env.DATABASE_ID,
+                process.env.CONVERSATIONS_COLLECTION_ID,
+                conversation_id,
+                { has_unread_user: true } 
+            );
+        } else {
+           
+            await databases.updateDocument(
+                process.env.DATABASE_ID,
+                process.env.CONVERSATIONS_COLLECTION_ID,
+                conversation_id,
+                { has_unread_admin: true } 
+            );
+        }
+
         // 5. Pushnotificatie sturen (Alleen als iemand anders dan de burger het stuurt)
         if (sender_id !== conversation.user_id) {
             const userProfile = await databases.getDocument(

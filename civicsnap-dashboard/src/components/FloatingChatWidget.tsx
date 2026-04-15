@@ -2,7 +2,8 @@ import React, { useEffect, useRef } from "react";
 import { useChat } from "@components/context/ChatContext"; // Zorg dat dit pad klopt
 import { useAuth } from "@core/AuthProvider";
 import { useNavigate } from "react-router-dom";
-import { Send, MessageCircle, ChevronLeft, ChevronRight, Minimize2, ExternalLink, Loader2, User, MapPin, Trash2 } from "lucide-react"; // Trash2 toegevoegd
+import { Send, MessageCircle, ChevronLeft, ChevronRight, Minimize2, ExternalLink, Loader2, User, MapPin, Trash2 } from "lucide-react";
+import { databases, appwriteConfig } from "@core/appwrite";
 
 export default function FloatingChatWidget() {
   const {
@@ -20,9 +21,33 @@ export default function FloatingChatWidget() {
     }
   }, [messages, view, isMinimized, isSending]);
 
+
+  const hasUnreadAdmin = conversations.some(c => c.has_unread_admin === true);
+
+  
+  useEffect(() => {
+    if (view === "chat" && activeConversation && activeConversation.has_unread_admin) {
+      const markAsRead = async () => {
+        try {
+          await databases.updateDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.conversationsCollectionId,
+            activeConversation.$id,
+            { has_unread_admin: false }
+          );
+          activeConversation.has_unread_admin = false; 
+        } catch (error) {
+          console.error("Fout bij markeren als gelezen:", error);
+        }
+      };
+      markAsRead();
+    }
+  }, [view, activeConversation]);
+
   if (!profile) return null;
 
-  // ─── 1. Bubble View ───
+
+ 
   if (isMinimized) {
     if (profile?.role === "org_viewer") return null;
     return (
@@ -31,6 +56,10 @@ export default function FloatingChatWidget() {
         className="fixed bottom-6 right-6 w-16 h-16 bg-[#0870C4] rounded-full shadow-xl flex items-center justify-center text-white hover:scale-105 transition-transform z-50 animate-in zoom-in duration-300"
       >
         <MessageCircle size={32} />
+        {/* 👇 Het rode bolletje (zonder de positie van je knop te slopen) */}
+        {hasUnreadAdmin && (
+          <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-white rounded-full"></span>
+        )}
       </button>
     );
   }
@@ -124,24 +153,39 @@ export default function FloatingChatWidget() {
                 Geen {inboxTab === "open" ? "openstaande" : "gesloten"} gesprekken gevonden.
               </div>
             ) : (
-              conversations.map((convo) => (
-                <button
-                  key={convo.$id}
-                  onClick={() => openChat(convo)}
-                  className="p-4 bg-white hover:bg-blue-50/50 text-left transition-colors flex justify-between items-center group"
-                >
-                  <div className="truncate pr-4">
-                    <p className="font-semibold text-gray-800 text-sm truncate">{convo.subject}</p>
-                    <p className="text-xs text-gray-400 mt-1 flex items-center gap-2">
-                      <span className={convo.status === 'open' ? 'text-green-600 font-medium' : 'text-gray-500 font-medium'}>
-                        {convo.status === 'open' ? 'Open' : 'Gesloten'}
-                      </span>
-                      • {new Date(convo.$createdAt).toLocaleDateString('nl-BE')}
-                    </p>
-                  </div>
-                  <ChevronRight size={18} className="text-gray-300 group-hover:text-[#0870C4] transition-colors" />
-                </button>
-              ))
+              conversations.map((convo) => {
+                const isUnread = convo.has_unread_admin === true; // Check de ongelezen status
+
+                return (
+                  <button
+                    key={convo.$id}
+                    onClick={() => openChat(convo)}
+                    // 👇 Maak de achtergrond lichtblauw en zet een blauw lijntje aan de linkerkant als hij ongelezen is
+                    className={`p-4 hover:bg-blue-50/50 text-left transition-colors flex justify-between items-center group ${isUnread ? "bg-blue-50/40 border-l-4 border-[#0870C4]" : "bg-white border-l-4 border-transparent"}`}
+                  >
+                    <div className="truncate pr-4 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className={`text-sm truncate ${isUnread ? "font-bold text-[#0870C4]" : "font-semibold text-gray-800"}`}>
+                          {convo.subject}
+                        </p>
+                       
+                        {isUnread && (
+                          <span className="bg-[#0870C4] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                            NIEUW
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 flex items-center gap-2">
+                        <span className={convo.status === 'open' ? 'text-green-600 font-medium' : 'text-gray-500 font-medium'}>
+                          {convo.status === 'open' ? 'Open' : 'Gesloten'}
+                        </span>
+                        • {new Date(convo.$createdAt).toLocaleDateString('nl-BE')}
+                      </p>
+                    </div>
+                    <ChevronRight size={18} className={`${isUnread ? "text-[#0870C4]" : "text-gray-300"} group-hover:text-[#0870C4] transition-colors`} />
+                  </button>
+                );
+              })
             )}
           </div>
         )}

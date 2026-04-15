@@ -76,24 +76,39 @@ export default function ChatListScreen() {
                     ListEmptyComponent={
                         <Text style={styles.emptyText}>Je hebt nog geen berichten van de gemeente.</Text>
                     }
-                    renderItem={({ item }) => (
-                        <TouchableOpacity
-                            style={styles.card}
-                            onPress={() => router.push({
-                                pathname: `/(app)/chat/[id]`,
-                                params: { id: item.$id, subject: item.subject, status: item.status, org_id: item.organization_id, org_name: item.org_name }
-                            })}
-                        >
-                            <View style={{ flex: 1, paddingRight: 10 }}>
-                                <Text style={styles.orgName}>{item.org_name}</Text>
-                                <Text style={styles.subject} numberOfLines={1}>{item.subject}</Text>
-                                <Text style={[styles.status, { color: item.status === 'open' ? '#388E3C' : Variables.colors.textLight }]}>
-                                    {item.status === 'open' ? 'Gemeente is bereikbaar' : 'Gesprek gesloten'} • {new Date(item.$updatedAt).toLocaleDateString('nl-NL')}
-                                </Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={20} color={Variables.colors.textLight} />
-                        </TouchableOpacity>
-                    )}
+                  renderItem={({ item }) => {
+                        // Check of deze specifieke conversatie het unread veld op 'true' heeft staan
+                        const hasNewMessage = item.has_unread_user === true;
+
+                        return (
+                            <TouchableOpacity
+                                style={[styles.card, hasNewMessage && { borderColor: Variables.colors.primary, borderWidth: 1 }]}
+                                onPress={() => router.push({
+                                    pathname: `/(app)/chat/[id]`,
+                                    params: { id: item.$id, subject: item.subject, status: item.status, org_id: item.organization_id, org_name: item.org_name }
+                                })}
+                            >
+                                <View style={{ flex: 1, paddingRight: 10 }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                                        <Text style={styles.orgName}>{item.org_name}</Text>
+                                        
+                                        {/* NIEUW: Blauw labeltje 'Nieuw Bericht' */}
+                                        {hasNewMessage && (
+                                            <View style={{ backgroundColor: Variables.colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                                                <Text style={{ color: 'white', fontSize: 10, fontFamily: Variables.fonts.bold }}>NIEUW</Text>
+                                            </View>
+                                        )}
+                                    </View>
+                                    
+                                    <Text style={[styles.subject, hasNewMessage && { color: Variables.colors.primary }]} numberOfLines={1}>{item.subject}</Text>
+                                    <Text style={[styles.status, { color: item.status === 'open' ? '#388E3C' : Variables.colors.textLight }]}>
+                                        {item.status === 'open' ? 'Gemeente is bereikbaar' : 'Gesprek gesloten'} • {new Date(item.$updatedAt).toLocaleDateString('nl-NL')}
+                                    </Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color={Variables.colors.textLight} />
+                            </TouchableOpacity>
+                        );
+                    }}
                 />
             )}
         </SafeAreaView>

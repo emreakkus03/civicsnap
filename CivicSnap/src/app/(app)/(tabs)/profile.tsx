@@ -46,6 +46,7 @@ export default function ProfileScreen() {
   );
 
   const animatedProgress = useRef(new Animated.Value(0)).current;
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -113,7 +114,27 @@ export default function ProfileScreen() {
       }
     };
 
+    const checkUnreadMessages = async () => {
+      try {
+        const response = await API.database.listDocuments(
+          API.config.databaseId,
+          API.config.conversationsCollectionId,
+          [
+            Query.equal("user_id", profile.$id),
+            Query.equal("has_unread_user", true) // 👇 Zorg dat je dit veld in Appwrite hebt!
+          ]
+        );
+        
+        setHasUnreadMessages(response.documents.length > 0);
+      } catch (error) {
+        console.log("Error checking unread messages:", error);
+      }
+    };
+
+    
+
     fetchUserReports();
+    checkUnreadMessages();
   }, [profile?.$id, lastUpdate]);
 
   useEffect(() => {
@@ -193,15 +214,16 @@ export default function ProfileScreen() {
           <View style={{ width: 28 }} />
           <Text style={styles.headerTitle}>Profiel</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
-        {/* NIEUW: Chat Knop */}
-        <TouchableOpacity onPress={() => router.push("/(app)/chat" as any)}>
+        
+        <TouchableOpacity onPress={() => router.push("/(app)/chat" as any)} style={{ position: 'relative' }}>
             <Ionicons
                 name="chatbubbles-outline"
                 size={26}
                 color={Variables.colors.textLight}
             />
+            {hasUnreadMessages && <View style={styles.unreadBadge} />}
         </TouchableOpacity>
-        {/* BESTAANDE: Settings Knop */}
+      
         <TouchableOpacity onPress={() => router.push("/(app)/settings" as any)}>
             <Ionicons
                 name="settings-outline"
@@ -691,5 +713,16 @@ const styles = StyleSheet.create({
   statusBadgeText: {
     fontFamily: Variables.fonts.bold,
     fontSize: 13,
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: '#FF3B30', 
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: Variables.colors.background,
   },
 });

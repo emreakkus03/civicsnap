@@ -64,6 +64,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [profile?.organization_id, inboxTab]);
 
 
+ 
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
+
+  
   useEffect(() => {
     if (!isMinimized && view === "list") {
       fetchConversations();
