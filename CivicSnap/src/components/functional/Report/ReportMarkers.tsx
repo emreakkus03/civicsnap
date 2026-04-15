@@ -71,6 +71,7 @@ export default function ReportMarkers({
             Query.equal("organization_id", organizationId),
             Query.equal("status", ["new", "approved", "in_progress"]),
             Query.equal("is_duplicate", false),
+            Query.equal("is_shadowbanned", false),
             Query.orderDesc("$createdAt"),
             Query.limit(50),
           ],
