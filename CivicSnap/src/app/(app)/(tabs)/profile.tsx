@@ -121,17 +121,15 @@ export default function ProfileScreen() {
           API.config.conversationsCollectionId,
           [
             Query.equal("user_id", profile.$id),
-            Query.equal("has_unread_user", true) // 👇 Zorg dat je dit veld in Appwrite hebt!
-          ]
+            Query.equal("has_unread_user", true), // 👇 Zorg dat je dit veld in Appwrite hebt!
+          ],
         );
-        
+
         setHasUnreadMessages(response.documents.length > 0);
       } catch (error) {
         console.log("Error checking unread messages:", error);
       }
     };
-
-    
 
     fetchUserReports();
     checkUnreadMessages();
@@ -189,7 +187,7 @@ export default function ProfileScreen() {
   const { calculatedLevel, progressPercent, pointsNeeded } =
     calculateLevelInfo(currentLevel);
 
-    const currentTitle = getLevelTitle(calculatedLevel);
+  const currentTitle = getLevelTitle(calculatedLevel);
 
   useEffect(() => {
     Animated.timing(animatedProgress, {
@@ -211,28 +209,34 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView bounces={true} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={{ width: 28 }} />
-          <Text style={styles.headerTitle}>Profiel</Text>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
-        
-        <TouchableOpacity onPress={() => router.push("/(app)/chat" as any)} style={{ position: 'relative' }}>
-            <Ionicons
-                name="chatbubbles-outline"
-                size={26}
-                color={Variables.colors.textLight}
-            />
-            {hasUnreadMessages && <View style={styles.unreadBadge} />}
-        </TouchableOpacity>
-      
-        <TouchableOpacity onPress={() => router.push("/(app)/settings" as any)}>
-            <Ionicons
-                name="settings-outline"
-                size={26}
-                color={Variables.colors.textLight}
-            />
-        </TouchableOpacity>
-    </View>
-        </View>
+  {/* Linkerkant: Berichten */}
+  <TouchableOpacity 
+    onPress={() => router.push("/(app)/chat" as any)} 
+    style={styles.headerIconContainer}
+  >
+    <Ionicons
+      name="chatbubbles-outline"
+      size={26}
+      color={Variables.colors.textLight}
+    />
+    {hasUnreadMessages && <View style={styles.unreadBadge} />}
+  </TouchableOpacity>
+
+  {/* Midden: Titel */}
+  <Text style={styles.headerTitle}>Profiel</Text>
+
+  {/* Rechterkant: Settings */}
+  <TouchableOpacity 
+    onPress={() => router.push("/(app)/settings" as any)}
+    style={styles.headerIconContainer}
+  >
+    <Ionicons
+      name="settings-outline"
+      size={26}
+      color={Variables.colors.textLight}
+    />
+  </TouchableOpacity>
+</View>
 
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
@@ -252,11 +256,15 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
-         <Text style={styles.nameText}>{displayName}</Text>
+          <Text style={styles.nameText}>{displayName}</Text>
 
           {/* NIEUW: De Rank / Title Badge */}
           <View style={styles.badgeContainer}>
-            <Ionicons name="shield-checkmark" size={14} color={Variables.colors.primary} />
+            <Ionicons
+              name="shield-checkmark"
+              size={14}
+              color={Variables.colors.primary}
+            />
             <Text style={styles.badgeText}>
               Lvl {calculatedLevel} • {currentTitle}
             </Text>
@@ -468,10 +476,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
+  headerIconContainer: {
+  width: 40, // Geef beide kanten exact dezelfde breedte
+  alignItems: "center",
+  justifyContent: "center",
+},
   headerTitle: {
-    fontFamily: Variables.fonts.bold,
-    fontSize: Variables.textSizes.xl,
-    color: Variables.colors.text,
+    flex: 1, // Neemt alle beschikbare ruimte in het midden in
+  textAlign: "center", // Centreert de tekst binnen die ruimte
+  fontFamily: Variables.fonts.bold,
+  fontSize: Variables.textSizes.xl,
+  color: Variables.colors.text,
   },
   profileSection: {
     alignItems: "center",
@@ -716,13 +731,13 @@ const styles = StyleSheet.create({
   },
   unreadBadge: {
     position: 'absolute',
-    top: -2,
-    right: -2,
-    backgroundColor: '#FF3B30', 
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1.5,
-    borderColor: Variables.colors.background,
+  top: 0,
+  right: 5,
+  backgroundColor: Variables.colors.error, 
+  width: 10,
+  height: 10,
+  borderRadius: 5,
+  borderWidth: 1.5,
+  borderColor: Variables.colors.background,
   },
 });
