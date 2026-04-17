@@ -36,8 +36,8 @@ export default function AppLayout() {
             <Image
               source={
                 focused
-                  ? require("@assets/icons/Home_Bold.png")
-                  : require("@assets/icons/Home.png")
+                  ? require("@assets/icons/Map_Bold.png")
+                  : require("@assets/icons/Map.png")
               }
               style={{
                 width: 24,

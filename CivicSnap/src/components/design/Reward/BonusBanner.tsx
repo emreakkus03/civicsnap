@@ -2,8 +2,11 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Variables } from "@style/theme";
+import { useRouter } from "expo-router";
 
 export default function BonusBanner() {
+  const router = useRouter();
+
   return (
     <LinearGradient
       colors={["#A24291", "#8551A2", "#3A7ECF", "#31ACE4"]}
@@ -17,7 +20,7 @@ export default function BonusBanner() {
         <Text style={styles.bonusSubtitle}>
           Draai aan het rad en win extra punten!
         </Text>
-        <TouchableOpacity style={styles.bonusButton}>
+        <TouchableOpacity style={styles.bonusButton} onPress={() => router.push("/(app)/daily-spin/" as any)}>
           <Text style={styles.bonusButtonText}>SPEEL NU</Text>
         </TouchableOpacity>
       </View>

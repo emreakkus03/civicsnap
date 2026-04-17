@@ -18,6 +18,7 @@ const CONFIG = {
     conversationsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_CONVERSATIONS_COLLECTION_ID || '',
     messagesCollectionId: process.env.EXPO_PUBLIC_APPWRITE_MESSAGES_COLLECTION_ID || '',
     sendMessageFunctionId: process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_SEND_MESSAGE_ID || '',
+    dailySpinFunctionId: process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_DAILY_SPIN_ID || '',
 };
 
 
@@ -54,5 +55,6 @@ export const API = {
         conversationsCollectionId: CONFIG.conversationsCollectionId,
         messagesCollectionId: CONFIG.messagesCollectionId,
         sendMessageFunctionId: CONFIG.sendMessageFunctionId,
+        dailySpinFunctionId: CONFIG.dailySpinFunctionId,
     }
 };

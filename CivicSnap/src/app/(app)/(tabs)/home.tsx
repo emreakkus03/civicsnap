@@ -14,6 +14,7 @@ import { Variables } from "@style/theme";
 
 import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
 import { API } from "@core/networking/api";
+import * as Notifications from 'expo-notifications';
 
 const getLevelTitle = (level: number): string => {
   if (level < 5) return "Scout";
@@ -64,6 +65,28 @@ const [displayName, setDisplayName] = useState(profile?.full_name?.split(" ")[0]
 
     fetchLatestProfile();
   }, [lastUpdate, profile?.$id]);
+
+  useEffect(() => {
+    const requestNotificationPermissions = async () => {
+      // 1. Check of we al toestemming hebben
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      // 2. Zo niet, vraag het nu aan de gebruiker met de pop-up
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      // 3. Als ze weigeren, doen we (voor nu) even niets, we respecteren hun keuze
+      if (finalStatus !== 'granted') {
+        console.log('Gebruiker heeft notificaties geweigerd.');
+        return;
+      }
+    };
+
+    requestNotificationPermissions();
+  }, []); // De lege array [] zorgt dat dit alleen gebeurt als de pagina voor het eerst laadt
 
   const calculateLevel = (totalXp: number) => {
     let tempLevel = 1;

@@ -23,6 +23,7 @@ export default function AppLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="report" />
         <Stack.Screen name="chat" />
+        <Stack.Screen name="daily-spin" />
       </Stack>
     </RealtimeProvider>
   );
