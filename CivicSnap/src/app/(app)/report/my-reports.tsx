@@ -116,17 +116,17 @@ useEffect(() => {
         let bgColor = "#E3F2FD";
         let iconColor = "#1976D2";
         let iconName = "document-text";
-        let statusText = "Reported";
+        let statusText = "Gemeld";
 
         if (isInvalid) {
             bgColor = "#FFEBEE"; iconColor = "#D32F2F";
-            iconName = "close-circle"; statusText = "Rejected";
+            iconName = "close-circle"; statusText = "Afgewezen";
         } else if (isResolved) {
             bgColor = "#E8F5E9"; iconColor = "#388E3C";
-            iconName = "checkmark-circle"; statusText = "Resolved";
+            iconName = "checkmark-circle"; statusText = "Opgelost";
         } else if (isInProgress) {
             bgColor = "#FFF3E0"; iconColor = "#F57C00";
-            iconName = "build"; statusText = "In progress";
+            iconName = "build"; statusText = "In behandeling";
         }
 
         return (

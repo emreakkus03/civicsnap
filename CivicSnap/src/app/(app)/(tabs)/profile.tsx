@@ -258,7 +258,7 @@ export default function ProfileScreen() {
 
           <Text style={styles.nameText}>{displayName}</Text>
 
-          {/* NIEUW: De Rank / Title Badge */}
+        
           <View style={styles.badgeContainer}>
             <Ionicons
               name="shield-checkmark"
