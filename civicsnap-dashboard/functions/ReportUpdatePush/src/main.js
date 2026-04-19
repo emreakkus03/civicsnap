@@ -24,9 +24,9 @@ export default async ({ req, res, log, error }) => {
     const newStatus = payload.status;
     const pointsAwarded = payload.points_awarded || 0;
 
-    // 1. Filter: we sturen alleen push berichten bij deze specifieke statussen
-    const positiveStatuses = ['approved', 'in_progress', 'resolved'];
-    if (!positiveStatuses.includes(newStatus)) {
+    // 1. Filter: Nu staat 'rejected' er ook tussen!
+    const notifyStatuses = ['approved', 'in_progress', 'resolved', 'rejected'];
+    if (!notifyStatuses.includes(newStatus)) {
         log(`Status is '${newStatus}', we sturen geen notificatie.`);
         return res.json({ success: true, message: 'Geen notificatie nodig' });
     }
@@ -39,23 +39,39 @@ export default async ({ req, res, log, error }) => {
     const databases = new Databases(client);
 
     try {
-        // 2. Haal profiel van de melder op om de push_token te vinden
+        // 2. Haal profiel van de melder op om de push_token EN shadowban status te vinden
         const userProfile = await databases.getDocument(
             process.env.DATABASE_ID,
             process.env.PROFILES_COLLECTION_ID,
             updatedUserId
         );
 
+        // 🛡️ EXTRA VEILIGHEID: Shadowbanned users krijgen NOOIT deze updates!
+        if (userProfile.is_shadowbanned) {
+            log(`Gebruiker ${updatedUserId} is shadowbanned. Geen notificatie gestuurd.`);
+            return res.json({ success: true, message: 'User shadowbanned, push ignored' });
+        }
+
         // 3. Stuur bericht als ze een token hebben
         if (userProfile.push_token) {
             let body = "";
-            if (newStatus === 'approved') body = `Je melding is goedgekeurd! Je ontving ${pointsAwarded} punten. 💎`;
-            else if (newStatus === 'in_progress') body = `Je melding wordt behandeld! Je ontving ${pointsAwarded} punten. 💎`;
-            else if (newStatus === 'resolved') body = `Je melding is opgelost! Je ontving ${pointsAwarded} punten. 💎`;
+            let title = "Update over je melding! 🔔";
+
+            if (newStatus === 'approved') {
+                body = `Je melding is goedgekeurd! Je ontving ${pointsAwarded} punten. 💎`;
+            } else if (newStatus === 'in_progress') {
+                body = `Je melding wordt behandeld! Je ontving ${pointsAwarded} punten. 💎`;
+            } else if (newStatus === 'resolved') {
+                body = `Je melding is opgelost! Je ontving ${pointsAwarded} punten. 💎`;
+            } else if (newStatus === 'rejected') {
+                // 👇 HIER IS DE NIEUWE TEKST VOOR AFGEWEZEN
+                title = "Melding afgewezen ❌";
+                body = "Helaas voldoet je melding niet aan de richtlijnen of kunnen we er niets mee doen.";
+            }
 
             await sendPushNotification(
                 userProfile.push_token, 
-                "Update over je melding! 🔔", 
+                title, 
                 body, 
                 process.env.EXPO_PUSH_URL
             );
