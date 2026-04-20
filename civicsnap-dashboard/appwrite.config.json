@@ -369,6 +369,54 @@
                 ".npm"
             ],
             "path": "functions/dailyReminder"
+        },
+        {
+            "$id": "69e5fd9000011aa1fd26",
+            "name": "NotifyNewReport",
+            "runtime": "node-25",
+            "specification": "s-0.5vcpu-512mb",
+            "execute": [
+                "any"
+            ],
+            "events": [],
+            "scopes": [
+                "users.read"
+            ],
+            "schedule": "",
+            "timeout": 15,
+            "enabled": true,
+            "logging": true,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "ignore": [
+                "node_modules",
+                ".npm"
+            ],
+            "path": "functions/NotifyNewReport"
+        },
+        {
+            "$id": "69e5feda0025da396168",
+            "name": "NotifyInternalNote",
+            "runtime": "node-25",
+            "specification": "s-0.5vcpu-512mb",
+            "execute": [
+                "any"
+            ],
+            "events": [],
+            "scopes": [
+                "users.read"
+            ],
+            "schedule": "",
+            "timeout": 15,
+            "enabled": true,
+            "logging": true,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "ignore": [
+                "node_modules",
+                ".npm"
+            ],
+            "path": "functions/NotifyInternalNote"
         }
     ],
     "tablesDB": [

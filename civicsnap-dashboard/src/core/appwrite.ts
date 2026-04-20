@@ -15,7 +15,10 @@ export const appwriteConfig = {
     messagesCollectionId: process.env.REACT_APP_APPWRITE_MESSAGES_COLLECTION_ID || "",
     startChatFunctionId: process.env.REACT_APP_APPWRITE_FUNCTION_START_CHAT_ID || "",
     sendMessageFunctionId: process.env.REACT_APP_APPWRITE_FUNCTION_SEND_MESSAGE_ID || "",
-    deleteConversationFunctionId: process.env.REACT_APP_APPWRITE_FUNCTION_DELETE_CONVERSATION_ID || ""
+    deleteConversationFunctionId: process.env.REACT_APP_APPWRITE_FUNCTION_DELETE_CONVERSATION_ID || "",
+
+    dashboardNotificationsCollectionId: process.env.REACT_APP_APPWRITE_DASHBOARD_NOTIFICATIONS_COLLECTION_ID || "",
+    notifyInternalNoteFunctionId: process.env.REACT_APP_APPWRITE_FUNCTION_NOTIFY_INTERNAL_NOTE_ID || ""
 };
 
 

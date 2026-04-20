@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 
 import { databases, appwriteConfig } from "@core/appwrite";
 
+import NotificationBell from "@components/NotificationBell";
+
 /**
  * Header component displayed at the top of the dashboard.
  * Shows the organization logo (or fallback text) on the left,
@@ -72,51 +74,55 @@ export default function Header() {
                         </div>
                     )
                 )}
+
             </div>
 
-            {/* Right section: User profile button and dropdown menu */}
-            <div className="relative">
-                {/* Button that toggles the dropdown menu on click */}
-                <button
-                    onClick={() => setShowDropdown(!showDropdown)}
-                    className="flex items-center justify-center hover:opacity-80 transition-opacity focus:outline-none"
-                >
-                    {profile?.avatar_url ? (
-                        // Show the user's avatar image if available
-                        <img
-                            src={profile.avatar_url}
-                            alt="profile"
-                            className="w-10 h-10 rounded-full border-2 border-white object-cover bg-white"
-                        />
-                    ) : (
-                        // Fallback: show a generic placeholder when no avatar is set
-                        <div className="bg-gray-100 rounded-full text-gray-400 border-2 border-transparent hover:border-white transition-all">
-                            {t('header.unknownUser')}
+             
+
+           {/* Right section: Notifications & User profile */}
+            <div className="flex items-center gap-4">
+                
+                {/* Notificatie Belletje staat nu netjes rechts */}
+                <NotificationBell orgId={profile?.organization_id} />
+
+                {/* User profile button and dropdown menu */}
+                <div className="relative">
+                    {/* Button that toggles the dropdown menu on click */}
+                    <button
+                        onClick={() => setShowDropdown(!showDropdown)}
+                        className="flex items-center justify-center hover:opacity-80 transition-opacity focus:outline-none"
+                    >
+                        {profile?.avatar_url ? (
+                            <img
+                                src={profile.avatar_url}
+                                alt="profile"
+                                className="w-10 h-10 rounded-full border-2 border-white object-cover bg-white"
+                            />
+                        ) : (
+                            <div className="bg-gray-100 rounded-full text-gray-400 border-2 border-transparent hover:border-white transition-all">
+                                {t('header.unknownUser')}
+                            </div>
+                        )}
+                    </button>
+
+                    {showDropdown && (
+                        <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl py-2 z-50 text-gray-800 border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200">
+                            {/* User info section at the top of the dropdown */}
+                            <div className="px-4 py-3 border-b border-gray-100">
+                                <p className="text-sm font-inter-bold truncate">{profile?.full_name || t('header.fallbackName')}</p>
+                                <p className="text-xs text-gray-500 capitalize">{profile?.role.replace('_', ' ')}</p>
+                            </div>
+
+                            {/* Logout button */}
+                            <button
+                                onClick={logout}
+                                className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 flex items-center gap-3 text-sm font-inter-semibold transition-colors"
+                            >
+                                {t('general.logoutButton')}
+                            </button>
                         </div>
                     )}
-                </button>
-
-                {/* Dropdown menu — only rendered when showDropdown is true */}
-                {showDropdown && (
-                    <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl py-2 z-50 text-gray-800 border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200">
-
-                        {/* User info section at the top of the dropdown */}
-                        <div className="px-4 py-3 border-b border-gray-100">
-                            {/* Display the user's full name, or a fallback if not available */}
-                            <p className="text-sm font-inter-bold truncate">{profile?.full_name || t('header.fallbackName')}</p>
-                            {/* Display the user's role in a human-readable format */}
-                            <p className="text-xs text-gray-500 capitalize">{profile?.role.replace('_', ' ')}</p>
-                        </div>
-
-                        {/* Logout button at the bottom of the dropdown */}
-                        <button
-                            onClick={logout}
-                            className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 flex items-center gap-3 text-sm font-inter-semibold transition-colors"
-                        >
-                            {t('general.logoutButton')}
-                        </button>
-                    </div>
-                )}
+                </div>
             </div>
         </header>
     );

@@ -5,6 +5,7 @@ import {
   databases,
   appwriteConfig,
   googleMapsApiKey,
+  functions
 } from "@core/appwrite";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 
@@ -166,6 +167,23 @@ export default function ReportDetail() {
           points_awarded: newPointsAwarded,
         },
       );
+
+      // 👇 --- NIEUW: Trigger de notificatie voor collega's als er een notitie is --- 👇
+      if (adminNote && adminNote.trim() !== "") {
+        try {
+          await functions.createExecution(
+            appwriteConfig.notifyInternalNoteFunctionId,
+            JSON.stringify({
+              report_id: id,
+              org_id: profile?.organization_id,
+              author_name: profile?.full_name || "Een collega"
+            })
+          );
+        } catch (funcError) {
+          console.error("Kon notificatie niet sturen:", funcError);
+        }
+      }
+      // 👆 --- EINDE NIEUWE CODE --- 👆
 
       // --- Propagate status and notes to all duplicate reports ---
       if (duplicates && duplicates.length > 0) {
