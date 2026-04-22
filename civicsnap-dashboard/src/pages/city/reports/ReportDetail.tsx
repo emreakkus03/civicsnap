@@ -106,158 +106,26 @@ export default function ReportDetail() {
     fetchReportAndDuplicates();
   }, [id, t]);
 
-  /**
-   * Save handler: updates report status, admin notes, awards points
-   * to the original reporter (and duplicate reporters), and syncs
-   * the status/notes to all duplicate reports.
-   */
   const handleSave = async () => {
     if (!id) return;
 
     try {
-      // --- Statuses that qualify the reporter for receiving points ---
-      const positiveStatuses = ["approved", "in_progress", "resolved"];
-
-      // --- Check if points were already awarded for this report ---
-      const pointsAlreadyAwarded = report.points_awarded > 0;
-      let newPointsAwarded = report.points_awarded;
-
-      // --- Track how many points are being awarded right now ---
-      let pointsAwardedNow = 0;
-
-      // --- Award points to the original reporter if applicable ---
-      if (positiveStatuses.includes(status) && !pointsAlreadyAwarded) {
-        // Fetch the category to get the default point value
-        const categoryDocument = await databases.getDocument(
-          appwriteConfig.databaseId,
-          appwriteConfig.categoriesCollectionId,
-          report.category_id,
-        );
-        pointsAwardedNow = categoryDocument.default_points;
-
-        // Fetch the reporter's profile to get their current points
-        const userProfile = await databases.getDocument(
-          appwriteConfig.databaseId,
-          appwriteConfig.profilesCollectionId,
-          report.user_id,
-        );
-
-        // Update the reporter's profile with the new point total
-        await databases.updateDocument(
-          appwriteConfig.databaseId,
-          appwriteConfig.profilesCollectionId,
-          report.user_id,
-          {
-            current_points:
-              (userProfile.current_points || 0) + pointsAwardedNow,
-          },
-        );
-
-        newPointsAwarded = pointsAwardedNow;
-      }
-
-      // --- Update the main report document with new status, notes, and points ---
-      await databases.updateDocument(
-        appwriteConfig.databaseId,
-        appwriteConfig.reportsCollectionId,
-        id,
-        {
+      // Roep de server-side functie aan in plaats van zelf de database te updaten
+      await functions.createExecution(
+        appwriteConfig.handleReportUpdateFunctionId, // Voeg dit ID toe aan je config
+        JSON.stringify({
+          reportId: id,
           status: status,
-          admin_notes: adminNote,
-          points_awarded: newPointsAwarded,
-        },
+          adminNote: adminNote,
+          profileId: profile?.$id,
+          fullName: profile?.full_name
+        })
       );
 
-      // 👇 --- NIEUW: Trigger de notificatie voor collega's als er een notitie is --- 👇
-      if (adminNote && adminNote.trim() !== "") {
-        try {
-          await functions.createExecution(
-            appwriteConfig.notifyInternalNoteFunctionId,
-            JSON.stringify({
-              report_id: id,
-              org_id: profile?.organization_id,
-              author_name: profile?.full_name || "Een collega"
-            })
-          );
-        } catch (funcError) {
-          console.error("Kon notificatie niet sturen:", funcError);
-        }
-      }
-      // 👆 --- EINDE NIEUWE CODE --- 👆
-
-      // --- Propagate status and notes to all duplicate reports ---
-      if (duplicates && duplicates.length > 0) {
-        // Duplicate reporters receive a fixed smaller reward
-        const duplicateReward = 5;
-
-        for (const dup of duplicates) {
-          const dupAlreadyAwarded = dup.points_awarded > 0;
-          let dupPointsToAward = 0;
-
-          // --- Award points to the duplicate reporter if not already awarded ---
-          if (positiveStatuses.includes(status) && !dupAlreadyAwarded) {
-            dupPointsToAward = duplicateReward;
-
-            try {
-              // Fetch the duplicate reporter's profile
-              const dupUserProfile = await databases.getDocument(
-                appwriteConfig.databaseId,
-                appwriteConfig.profilesCollectionId,
-                dup.user_id,
-              );
-
-              // Update their point total
-              await databases.updateDocument(
-                appwriteConfig.databaseId,
-                appwriteConfig.profilesCollectionId,
-                dup.user_id,
-                {
-                  current_points:
-                    (dupUserProfile.current_points || 0) + dupPointsToAward,
-                },
-              );
-            } catch (error) {
-              console.error("Error updating duplicate user profile:", error);
-            }
-          }
-
-          // --- Sync the duplicate report's status and admin notes ---
-          try {
-            await databases.updateDocument(
-              appwriteConfig.databaseId,
-              appwriteConfig.reportsCollectionId,
-              dup.$id,
-              {
-                status: status,
-                admin_notes: adminNote
-                  ? `${t("reportsDetail.adminNotes.linkedToMain")} ${adminNote}`
-                  : t("reportsDetail.adminNotes.handledViaOriginal"),
-                points_awarded: dupAlreadyAwarded
-                  ? dup.points_awarded
-                  : dupPointsToAward,
-              },
-            );
-          } catch (error) {
-            console.error("Error updating duplicate report:", error);
-          }
-        }
-      }
-
-      // --- Show appropriate success toast ---
-      if (pointsAwardedNow > 0) {
-        toast.success(
-          t("reportsDetail.pointsAwardedSuccess", {
-            pointsAwardedNow: pointsAwardedNow,
-          }),
-        );
-      } else {
-        toast.success(t("reportsDetail.updateSuccess"));
-      }
-
-      // --- Navigate back to the reports list ---
+      toast.success(t("reportsDetail.updateSuccess"));
       navigate("/reports");
     } catch (error) {
-      console.error("Error saving report:", error);
+      console.error("Error saving report via function:", error);
       toast.error(t("reportsDetail.toast.saveError"));
     }
   };

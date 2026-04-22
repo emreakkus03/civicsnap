@@ -417,6 +417,30 @@
                 ".npm"
             ],
             "path": "functions/NotifyInternalNote"
+        },
+        {
+            "$id": "69e8ed000000db336807",
+            "name": "HandleReportUpdate",
+            "runtime": "node-25",
+            "specification": "s-0.5vcpu-512mb",
+            "execute": [
+                "any"
+            ],
+            "events": [],
+            "scopes": [
+                "users.read"
+            ],
+            "schedule": "",
+            "timeout": 15,
+            "enabled": true,
+            "logging": true,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "ignore": [
+                "node_modules",
+                ".npm"
+            ],
+            "path": "functions/HandleReportUpdate"
         }
     ],
     "tablesDB": [
