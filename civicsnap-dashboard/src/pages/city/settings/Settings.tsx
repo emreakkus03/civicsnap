@@ -7,135 +7,86 @@ import {
   appwriteConfig,
   teams,
 } from "@core/appwrite";
-import { ID } from "appwrite";
+import { ID, Query, Permission, Role  } from "appwrite";
 import toast from "react-hot-toast";
 
 import Header from "@components/Header";
 import Sidebar from "@components/Sidebar";
 
-import { User, Camera, Lock, Shield, Eye, EyeOff } from "lucide-react";
+import { User, Camera, Lock, Shield, Eye, EyeOff, Plug } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+
+
+// ─── Types ───────────────────────────────────────────────────
+type AuthType = "api_key" | "bearer" | "basic";
+
+interface SystemType {
+  key: string;
+  label: string;
+}
+
 export default function Settings() {
-  // Get the current user's profile from the auth context
   const { profile } = useAuth();
-  // Translation hook for i18n support
   const { t } = useTranslation();
+  const orgId = profile.organization_id!;
 
   // ─── Tab State ───────────────────────────────────────────────
-  // Controls which settings tab is currently visible
   const [activeTab, setActiveTab] = useState<
-    "profile" | "organization" | "organization_info"
+    "profile" | "organization" | "organization_info" | "integrations"
   >("profile");
 
   // ─── Profile Fields ──────────────────────────────────────────
-  // User's display name, pre-filled from their profile
   const [name, setName] = useState(profile?.full_name);
-
-  // Password change fields
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  // Toggle visibility of each password field
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // Avatar upload state
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  // Hidden file input ref so we can trigger it programmatically
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ─── Team / Organization Members ─────────────────────────────
-  // List of members in the current organization team
   const [members, setMembers] = useState<any[]>([]);
-  // Loading indicator while fetching members
   const [loadingMembers, setLoadingMembers] = useState(false);
-
-  // Invite form fields
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("org_officer");
   const [inviteLoading, setInviteLoading] = useState(false);
 
   // ─── Organization Info Fields ────────────────────────────────
-  // Organization name and logo (only editable by org_admin)
   const [orgName, setOrgName] = useState("");
   const [orgLogoUrl, setOrgLogoUrl] = useState("");
   const [selectedOrgFile, setSelectedOrgFile] = useState<File | null>(null);
-  // Hidden file input ref for the organization logo upload
   const orgFileInputRef = useRef<HTMLInputElement>(null);
 
-  // ─── Fetch Organization Members ──────────────────────────────
-  // Retrieves all members of the user's organization team,
-  // enriches each member with profile data (name, email),
-  // and filters out the super-admin account.
-  const fetchOrganizationMembers = async () => {
-    setLoadingMembers(true);
+  // ─── Permit Integration Fields ───────────────────────────────
+  const [integrationId, setIntegrationId] = useState<string | null>(null);
+  const [loadingIntegration, setLoadingIntegration] = useState(false);
+  const [savingIntegration, setSavingIntegration] = useState(false);
+  const [availableSystemTypes, setAvailableSystemTypes] = useState<SystemType[]>([]);
+  const [systemType, setSystemType] = useState("");
+  const [apiUrl, setApiUrl] = useState("");
+  const [authType, setAuthType] = useState<AuthType>("api_key");
+  const [apiKey, setApiKey] = useState("");
+  const [bearerToken, setBearerToken] = useState("");
+  const [integrationUsername, setIntegrationUsername] = useState("");
+  const [integrationPassword, setIntegrationPassword] = useState("");
+  const [isIntegrationActive, setIsIntegrationActive] = useState(true);
 
-    try {
-      // Get all teams the current user belongs to
-      const myOrganization = await teams.list();
-      if (myOrganization.teams.length === 0) {
-        setMembers([]);
-        return;
-      }
-
-      // Use the first team as the user's organization
-      const myOrganizationId = myOrganization.teams[0].$id;
-
-      // Fetch all memberships for that team
-      const membersList = await teams.listMemberships(myOrganizationId);
-
-      // For each membership, look up the user's profile document
-      // to get their full name and email
-      const membersWithUserData = await Promise.all(
-        membersList.memberships.map(async (member) => {
-          try {
-            const profileData = await databases.getDocument(
-              appwriteConfig.databaseId,
-              appwriteConfig.profilesCollectionId,
-              member.userId,
-            );
-
-            return {
-              ...member,
-              userName: profileData.full_name,
-              userEmail: profileData.email,
-            };
-          } catch (error) {
-            // If the profile document doesn't exist, fall back to empty strings
-            console.error(t("settings.toast.fetchUserError"), error);
-            return { ...member, userName: "", userEmail: "" };
-          }
-        }),
-      );
-
-      // Filter out the super-admin email so it doesn't appear in the list
-      const filteredMembers = membersWithUserData.filter(
-        (member) =>
-          member.userEmail?.toLowerCase().trim() !==
-          "civicsnapadminsuper@gmail.com",
-      );
-
-      setMembers(filteredMembers);
-    } catch (error) {
-      console.error(t("settings.toast.fetchOrgError"), error);
-    } finally {
-      setLoadingMembers(false);
-    }
-  };
-
-  // ─── Effect: Load members when the "organization" (team) tab is activated
+  // ─── Effects ─────────────────────────────────────────────────
   useEffect(() => {
     if (activeTab === "organization") {
       fetchOrganizationMembers();
     }
+    if (activeTab === "integrations") {
+      fetchSystemTypes();
+      fetchIntegration();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  // ─── Effect: Load organization details (name, logo) when the profile loads
   useEffect(() => {
     const fetchOrgDetails = async () => {
       if (profile?.organization_id) {
@@ -158,41 +109,210 @@ export default function Settings() {
 
   useEffect(() => {
     if (profile?.avatar_url && !avatarUrl) {
-        setAvatarUrl(profile.avatar_url);
+      setAvatarUrl(profile.avatar_url);
     }
-}, [profile?.avatar_url, avatarUrl]);
+  }, [profile?.avatar_url, avatarUrl]);
 
-  // ─── Invite a New Member ─────────────────────────────────────
-  // Creates a new team membership and sends an invitation email.
-  // Only org_admin users are allowed to invite.
+  // ─── Organization Members ─────────────────────────────────────
+  const fetchOrganizationMembers = async () => {
+    setLoadingMembers(true);
+    try {
+      const myOrganization = await teams.list();
+      if (myOrganization.teams.length === 0) {
+        setMembers([]);
+        return;
+      }
+      const myOrganizationId = myOrganization.teams[0].$id;
+      const membersList = await teams.listMemberships(myOrganizationId);
+      const membersWithUserData = await Promise.all(
+        membersList.memberships.map(async (member) => {
+          try {
+            const profileData = await databases.getDocument(
+              appwriteConfig.databaseId,
+              appwriteConfig.profilesCollectionId,
+              member.userId,
+            );
+            return {
+              ...member,
+              userName: profileData.full_name,
+              userEmail: profileData.email,
+            };
+          } catch (error) {
+            console.error(t("settings.toast.fetchUserError"), error);
+            return { ...member, userName: "", userEmail: "" };
+          }
+        }),
+      );
+      const filteredMembers = membersWithUserData.filter(
+        (member) =>
+          member.userEmail?.toLowerCase().trim() !==
+          "civicsnapadminsuper@gmail.com",
+      );
+      setMembers(filteredMembers);
+    } catch (error) {
+      console.error(t("settings.toast.fetchOrgError"), error);
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  // ─── Permit Integration ───────────────────────────────────────
+
+  // Haalt beschikbare system types op uit de database
+  // Zo hoef je nooit de Settings pagina aan te passen als je een nieuwe gemeente toevoegt
+  const fetchSystemTypes = async () => {
+  try {
+    const res = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.permitSystemTypesCollectionId,
+      [
+        Query.equal("is_active", true),
+        Query.or([
+          // Specifiek voor deze organisatie
+          Query.equal("organization_id", profile?.organization_id ?? ""),
+          // OF generiek beschikbaar voor iedereen
+          Query.isNull("organization_id"),
+        ])
+      ]
+    );
+    const types = res.documents.map((doc) => ({
+      key: doc.key,
+      label: doc.label,
+    }));
+    setAvailableSystemTypes(types);
+    if (types.length > 0 && !systemType) {
+      setSystemType(types[0].key);
+    }
+  } catch (err) {
+    console.error("Fout bij laden system types", err);
+  }
+};
+
+  // Haalt de bestaande integratie op voor deze organisatie (als die bestaat)
+  const fetchIntegration = async () => {
+    if (!profile?.organization_id) return;
+    setLoadingIntegration(true);
+    try {
+      const res = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.integrationsCollectionId,
+        [
+          Query.equal("organization_id", profile.organization_id),
+          Query.equal("service_type", "permits"),
+          Query.limit(1),
+        ]
+      );
+      if (res.documents.length > 0) {
+        const doc = res.documents[0];
+        setIntegrationId(doc.$id);
+        setSystemType(doc.system_type);
+        setApiUrl(doc.api_url);
+        setIsIntegrationActive(doc.is_active);
+        const creds =
+          typeof doc.auth_credentials === "string"
+            ? JSON.parse(doc.auth_credentials)
+            : doc.auth_credentials;
+        setAuthType(creds.type);
+        setApiKey(creds.key ?? "");
+        setBearerToken(creds.token ?? "");
+        setIntegrationUsername(creds.username ?? "");
+        setIntegrationPassword(creds.password ?? "");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingIntegration(false);
+    }
+  };
+
+  const buildCredentials = () => {
+    switch (authType) {
+      case "api_key":
+        return { type: "api_key", key: apiKey };
+      case "bearer":
+        return { type: "bearer", token: bearerToken };
+      case "basic":
+        return {
+          type: "basic",
+          username: integrationUsername,
+          password: integrationPassword,
+        };
+    }
+  };
+
+const handleSaveIntegration = async () => {
+  // Gebruik een lokale variabele om er 100% zeker van te zijn dat we een ID hebben
+  const currentOrgId = profile?.organization_id;
+  
+  if (!currentOrgId) {
+    toast.error("Geen organisatie gevonden. Vernieuw de pagina.");
+    return;
+  }
+
+  setSavingIntegration(true);
+  try {
+    // PAYLOAD: Zorg dat deze namen EXACT (letter voor letter) overeenkomen 
+    // met de "Attribute ID" in je Appwrite Console.
+    const payload = {
+      organization_id: currentOrgId,
+      service_type: "permits",
+      system_type: systemType,
+      api_url: apiUrl, // Moet een geldige URL zijn (bijv. https://...)
+      auth_credentials: JSON.stringify(buildCredentials()),
+      is_active: isIntegrationActive
+    };
+
+    if (integrationId) {
+      // UPDATE
+      await databases.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.integrationsCollectionId,
+        integrationId,
+        payload
+      );
+    } else {
+      // CREATE
+      const newDoc = await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.integrationsCollectionId,
+        ID.unique(),
+        payload,
+        [
+          Permission.read(Role.team(currentOrgId)),
+          Permission.update(Role.team(currentOrgId, 'org_admin')),
+          Permission.update(Role.team(currentOrgId, 'owner')),
+          Permission.delete(Role.team(currentOrgId, 'owner')),
+          Permission.delete(Role.team(currentOrgId, 'org_admin')),
+        ]
+      );
+      setIntegrationId(newDoc.$id);
+    }
+    toast.success("Integratie opgeslagen!");
+  } catch (err: any) {
+    console.error("Appwrite Error:", err);
+    // Dit helpt je exact te zien welk veld hij niet herkent
+    toast.error(err.message || "Fout bij opslaan");
+  } finally {
+    setSavingIntegration(false);
+  }
+};
+
+  // ─── Invite / Remove Members ──────────────────────────────────
   const handleInviteMember = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Guard: only admins can invite
-    if (profile?.role !== "org_admin") {
+    if (!["org_admin", "super_admin"].includes(profile?.role)){
       toast.error(t("settings.toast.inviteAdminOnly"));
       return;
     }
-
     if (!inviteEmail) return;
     setInviteLoading(true);
-
     const toastId = toast.loading(t("settings.toast.inviteSending"));
-
     try {
-      // Get the current user's organization team
       const myOrganization = await teams.list();
       const myOrganizationId = myOrganization.teams[0].$id;
-
-      // The URL the invited user will be redirected to after accepting
       const loginUrl = `${window.location.origin}/login`;
-
-      // If the invited role is "org_admin", also assign the "owner" role
-      // so they have full team management permissions in Appwrite
       const rolesToAssign =
         inviteRole === "org_admin" ? [inviteRole, "owner"] : [inviteRole];
-
-      // Send the invitation via Appwrite Teams API
       await teams.createMembership(
         myOrganizationId,
         rolesToAssign,
@@ -200,14 +320,13 @@ export default function Settings() {
         undefined,
         undefined,
         loginUrl,
-        "Nieuwe Collega", // Name shown in the invitation email
+        "Nieuwe Collega",
       );
-
-      toast.success(t("settings.toast.inviteSuccess", { email: inviteEmail }), {
-        id: toastId,
-      });
+      toast.success(
+        t("settings.toast.inviteSuccess", { email: inviteEmail }),
+        { id: toastId },
+      );
       setInviteEmail("");
-      // Refresh the members list to show the new pending member
       fetchOrganizationMembers();
     } catch (error) {
       toast.error(t("settings.toast.inviteError"), { id: toastId });
@@ -216,41 +335,27 @@ export default function Settings() {
     }
   };
 
-  // ─── Remove a Member ─────────────────────────────────────────
-  // Deletes a team membership and also removes the user's profile
-  // document from the database. Only org_admin can remove members.
   const handleRemoveMember = async (
     membershipId: string,
     memberName: string,
   ) => {
-    // Guard: only admins can remove members
     if (profile?.role !== "org_admin") {
       toast.error(t("settings.toast.removeAdminOnly"));
       return;
     }
-
-    // Confirm before proceeding with removal
     if (
       !window.confirm(t("settings.team.removeConfirm", { name: memberName }))
-    ) {
+    )
       return;
-    }
-
     const toastId = toast.loading(t("settings.toast.removing"));
     try {
       const myOrganization = await teams.list();
       const myOrganizationId = myOrganization.teams[0].$id;
-
-      // Look up the membership to get the userId before deleting
       const memberships = await teams.listMemberships(myOrganizationId);
       const memberToDelete = memberships.memberships.find(
         (m) => m.$id === membershipId,
       );
-
-      // Remove the membership from the team
       await teams.deleteMembership(myOrganizationId, membershipId);
-
-      // Also delete the user's profile document from the database
       if (memberToDelete?.userId) {
         try {
           await databases.deleteDocument(
@@ -259,94 +364,70 @@ export default function Settings() {
             memberToDelete.userId,
           );
         } catch (dbError) {
-          // Profile may have already been deleted — that's okay
-          console.error("Profile was already missing from the database", dbError);
+          console.error(
+            "Profile was already missing from the database",
+            dbError,
+          );
         }
       }
       toast.success(t("settings.toast.removeSuccess"), { id: toastId });
-      // Refresh the table
       fetchOrganizationMembers();
     } catch (error) {
       toast.error(t("settings.toast.removeError"), { id: toastId });
     }
   };
 
-  // ─── Handle Avatar File Selection ────────────────────────────
-  // When the user picks a file, store it and show a local preview
+  // ─── Avatar / File Handlers ───────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      // Create a temporary object URL for instant preview
       setAvatarUrl(URL.createObjectURL(file));
     }
   };
 
-  // ─── Save All Settings ───────────────────────────────────────
-  // Handles saving profile info, password changes, avatar uploads,
-  // and organization info (name + logo) when on that tab.
+  // ─── Save Profile / Org Info ──────────────────────────────────
   const handleSave = async () => {
     if (!profile) return;
     const toastId = toast.loading(t("settings.toast.saving"));
-
     try {
       let finalAvatarUrl = avatarUrl;
-
-      // Upload the new avatar file to Appwrite storage if one was selected
       if (selectedFile) {
         const uploadedFile = await storage.createFile(
           appwriteConfig.storageBucketId,
           ID.unique(),
           selectedFile,
         );
-
-        // Build the public URL for the uploaded file
         const endpoint = appwriteConfig.endpoint;
         const projectId = appwriteConfig.projectId;
         finalAvatarUrl = `${endpoint}/storage/buckets/${appwriteConfig.storageBucketId}/files/${uploadedFile.$id}/view?project=${projectId}`;
       }
-
-      // ── Password Change Logic ──────────────────────────────
-      // Only attempt a password change if any password field was filled in
       if (oldPassword || newPassword || confirmPassword) {
         if (newPassword !== confirmPassword) {
           toast.error(t("settings.toast.passwordMismatch"), { id: toastId });
           return;
         }
         if (!oldPassword) {
-          toast.error(t("settings.toast.oldPasswordRequired"), { id: toastId });
+          toast.error(t("settings.toast.oldPasswordRequired"), {
+            id: toastId,
+          });
           return;
         }
         if (newPassword.length < 6) {
           toast.error(t("settings.toast.passwordLength"), { id: toastId });
           return;
         }
-
-        // Update the password via the Appwrite account API
         await account.updatePassword(newPassword, oldPassword);
       }
-
-      // ── Update display name in Appwrite Auth if it changed ─
-      if (name !== profile.full_name) {
-        await account.updateName(name);
-      }
-
-      // ── Update the user's profile document in the database ─
+      if (name !== profile.full_name) await account.updateName(name);
       await databases.updateDocument(
         appwriteConfig.databaseId,
         appwriteConfig.profilesCollectionId,
         profile.$id,
-        {
-          full_name: name,
-          avatar_url: finalAvatarUrl,
-        },
+        { full_name: name, avatar_url: finalAvatarUrl },
       );
-
-      // ── Organization Info Save (only for org_admin on that tab) ─
       if (activeTab === "organization_info" && profile?.role === "org_admin") {
         let finalOrgLogoUrl = orgLogoUrl;
-
-        // Upload the new org logo if one was selected
         if (selectedOrgFile) {
           const uploadedOrgFile = await storage.createFile(
             appwriteConfig.storageBucketId,
@@ -355,22 +436,14 @@ export default function Settings() {
           );
           finalOrgLogoUrl = `${appwriteConfig.endpoint}/storage/buckets/${appwriteConfig.storageBucketId}/files/${uploadedOrgFile.$id}/view?project=${appwriteConfig.projectId}`;
         }
-
-        // Update the organization document in the database
         await databases.updateDocument(
           appwriteConfig.databaseId,
           appwriteConfig.organizationsCollectionId,
           profile.organization_id!,
-          {
-            name: orgName,
-            logo_url: finalOrgLogoUrl,
-          },
+          { name: orgName, logo_url: finalOrgLogoUrl },
         );
       }
-
       toast.success(t("settings.toast.saveSuccess"), { id: toastId });
-
-      // Reset password fields and file selection after successful save
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -383,17 +456,11 @@ export default function Settings() {
   // ─── Render ──────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#F5F7FA] font-inter">
-      {/* Top navigation bar */}
       <Header />
-
       <div className="flex">
-        {/* Left sidebar with "settings" highlighted */}
         <Sidebar activeItem="settings" />
-
-        {/* Main content area */}
         <main className="flex-1 p-8 overflow-y-auto">
           <div className="max-w-5xl mx-auto">
-            {/* Page title */}
             <h1 className="text-3xl font-bold text-gray-900 mb-8">
               {t("settings.title")}
             </h1>
@@ -411,7 +478,7 @@ export default function Settings() {
               >
                 {t("settings.tabs.profile")}
                 {activeTab === "profile" && (
-                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0870C4] rounded-t-full"></span>
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0870C4] rounded-t-full" />
                 )}
               </button>
 
@@ -427,7 +494,7 @@ export default function Settings() {
                 >
                   {t("settings.tabs.organization")}
                   {activeTab === "organization_info" && (
-                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0870C4] rounded-t-full"></span>
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0870C4] rounded-t-full" />
                   )}
                 </button>
               )}
@@ -444,7 +511,24 @@ export default function Settings() {
                 >
                   {t("settings.tabs.team")}
                   {activeTab === "organization" && (
-                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0870C4] rounded-t-full"></span>
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0870C4] rounded-t-full" />
+                  )}
+                </button>
+              )}
+
+              {/* Integraties tab — only visible to org_admin */}
+              {(profile?.role === "org_admin" || profile?.role === "owner") && (
+                <button
+                  onClick={() => setActiveTab("integrations")}
+                  className={`pb-4 px-4 text-sm font-semibold transition-colors relative ${
+                    activeTab === "integrations"
+                      ? "text-[#0870C4]"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Integraties
+                  {activeTab === "integrations" && (
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0870C4] rounded-t-full" />
                   )}
                 </button>
               )}
@@ -453,9 +537,7 @@ export default function Settings() {
             {/* ── Profile Tab Content ─────────────────────────── */}
             {activeTab === "profile" && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex flex-col md:flex-row gap-12">
-                {/* Left column: Avatar upload */}
                 <div className="flex flex-col items-center md:w-1/3">
-                  {/* Hidden file input for avatar selection */}
                   <input
                     type="file"
                     accept="image/*"
@@ -463,14 +545,11 @@ export default function Settings() {
                     ref={fileInputRef}
                     onChange={handleFileChange}
                   />
-
-                  {/* Avatar preview circle — clicking opens file picker */}
                   <div
                     className="w-32 h-32 rounded-full bg-gray-100 border-4 border-white shadow-md flex items-center justify-center mb-6 relative overflow-hidden group cursor-pointer"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    {/* Show avatar image if available, otherwise show placeholder icon */}
-                    {avatarUrl  ? (
+                    {avatarUrl ? (
                       <img
                         src={avatarUrl}
                         alt={t("settings.profile.altAvatar")}
@@ -479,12 +558,10 @@ export default function Settings() {
                     ) : (
                       <User size={48} className="text-gray-400" />
                     )}
-                    {/* Camera overlay that appears on hover */}
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <Camera size={24} className="text-white" />
                     </div>
                   </div>
-                  {/* Button to trigger the file input */}
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className="bg-[#0870C4] text-white font-semibold py-2 px-6 rounded-full hover:bg-blue-700 transition-colors shadow-sm"
@@ -492,10 +569,7 @@ export default function Settings() {
                     {t("settings.profile.changePhoto")}
                   </button>
                 </div>
-
-                {/* Right column: Name and password fields */}
                 <div className="flex-1 max-w-lg">
-                  {/* Full name input */}
                   <div className="mb-6">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       {t("settings.profile.nameLabel")}
@@ -507,17 +581,13 @@ export default function Settings() {
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0870C4]"
                     />
                   </div>
-
                   <hr className="my-8 border-gray-100" />
-
-                  {/* Password change section */}
                   <div className="mb-8">
                     <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
                       <Lock size={16} className="text-gray-500" />{" "}
                       {t("settings.profile.passwordTitle")}
                     </h3>
                     <div className="space-y-4">
-                      {/* Old / current password input */}
                       <div className="relative">
                         <input
                           type={showOldPassword ? "text" : "password"}
@@ -526,7 +596,6 @@ export default function Settings() {
                           onChange={(e) => setOldPassword(e.target.value)}
                           className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0870C4] pr-12"
                         />
-                        {/* Toggle visibility button */}
                         <button
                           type="button"
                           onClick={() => setShowOldPassword(!showOldPassword)}
@@ -539,8 +608,6 @@ export default function Settings() {
                           )}
                         </button>
                       </div>
-
-                      {/* New password input */}
                       <div className="relative">
                         <input
                           type={showNewPassword ? "text" : "password"}
@@ -549,7 +616,6 @@ export default function Settings() {
                           onChange={(e) => setNewPassword(e.target.value)}
                           className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0870C4] pr-12"
                         />
-                        {/* Toggle visibility button */}
                         <button
                           type="button"
                           onClick={() => setShowNewPassword(!showNewPassword)}
@@ -562,8 +628,6 @@ export default function Settings() {
                           )}
                         </button>
                       </div>
-
-                      {/* Confirm new password input */}
                       <div className="relative">
                         <input
                           type={showConfirmPassword ? "text" : "password"}
@@ -572,7 +636,6 @@ export default function Settings() {
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0870C4] pr-12"
                         />
-                        {/* Toggle visibility button */}
                         <button
                           type="button"
                           onClick={() =>
@@ -589,10 +652,7 @@ export default function Settings() {
                       </div>
                     </div>
                   </div>
-
                   <hr className="my-8 border-gray-100" />
-
-                  {/* Save button for profile changes */}
                   <div className="flex justify-end">
                     <button
                       onClick={handleSave}
@@ -608,8 +668,7 @@ export default function Settings() {
             {/* ── Team Management Tab Content ─────────────────── */}
             {activeTab === "organization" && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                {/* Invite form — only visible to org_admin users */}
-                {profile?.role === "org_admin" && (
+                {(profile?.role === "org_admin" || profile?.role === "super_admin") && (
                   <>
                     <div className="mb-8">
                       <h2 className="text-xl font-bold text-gray-900 mb-2">
@@ -618,13 +677,10 @@ export default function Settings() {
                       <p className="text-sm text-gray-500 mb-6">
                         {t("settings.team.inviteSubtitle")}
                       </p>
-
-                      {/* Invite form: email, role selector, and submit button */}
                       <form
                         onSubmit={handleInviteMember}
                         className="flex flex-col md:flex-row gap-4 bg-gray-50 p-6 rounded-xl border border-gray-100"
                       >
-                        {/* Email input for the new member */}
                         <div className="flex-1">
                           <label className="block text-xs font-semibold text-gray-700 mb-1">
                             {t("settings.team.emailLabel")}
@@ -638,7 +694,6 @@ export default function Settings() {
                             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0870C4]"
                           />
                         </div>
-                        {/* Role selector dropdown */}
                         <div className="md:w-1/3">
                           <label className="block text-xs font-semibold text-gray-700 mb-1">
                             {t("settings.team.roleLabel")}
@@ -659,7 +714,6 @@ export default function Settings() {
                             </option>
                           </select>
                         </div>
-                        {/* Submit / invite button */}
                         <div className="flex items-end">
                           <button
                             type="submit"
@@ -676,22 +730,17 @@ export default function Settings() {
                     <hr className="border-gray-100 my-8" />
                   </>
                 )}
-
-                {/* Members table — visible to all non-viewer users */}
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 mb-6">
                     {t("settings.team.tableTitle", { count: members.length })}
                   </h2>
-
                   {loadingMembers ? (
-                    /* Loading state while fetching members */
                     <div className="text-center text-gray-500 py-8">
                       {t("settings.team.tableLoading")}
                     </div>
                   ) : (
                     <div className="border border-gray-100 rounded-xl overflow-hidden">
                       <table className="w-full text-left border-collapse">
-                        {/* Table header */}
                         <thead className="bg-gray-50 text-gray-600 text-sm">
                           <tr>
                             <th className="py-3 px-4 font-semibold">
@@ -703,7 +752,6 @@ export default function Settings() {
                             <th className="py-3 px-4 font-semibold">
                               {t("settings.team.table.status")}
                             </th>
-                            {/* Actions column only shown to admins */}
                             {profile?.role === "org_admin" && (
                               <th className="py-3 px-4 font-semibold text-right">
                                 {t("settings.team.table.actions")}
@@ -717,10 +765,8 @@ export default function Settings() {
                               key={member.$id}
                               className="border-t border-gray-100 hover:bg-gray-50/50"
                             >
-                              {/* Member name and email */}
                               <td className="py-3 px-4">
                                 <div className="font-medium text-gray-900">
-                                  {/* Priority: 1) database name, 2) auth name, 3) status fallback */}
                                   {member.profileName ||
                                     member.userName ||
                                     (member.confirm
@@ -731,7 +777,6 @@ export default function Settings() {
                                   {member.userEmail}
                                 </div>
                               </td>
-                              {/* Member role — show only the first word of the role label */}
                               <td className="py-3 px-4 text-sm text-gray-700">
                                 {member.roles.includes("org_admin")
                                   ? t("settings.team.roles.admin").split(" ")[0]
@@ -743,7 +788,6 @@ export default function Settings() {
                                         " ",
                                       )[0]}
                               </td>
-                              {/* Member status badge: active (confirmed) or pending */}
                               <td className="py-3 px-4">
                                 {member.confirm ? (
                                   <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
@@ -755,8 +799,6 @@ export default function Settings() {
                                   </span>
                                 )}
                               </td>
-
-                              {/* Remove button — only shown to admins, and not for their own row */}
                               {profile?.role === "org_admin" && (
                                 <td className="py-3 px-4 text-right">
                                   {(!member.userId ||
@@ -777,7 +819,6 @@ export default function Settings() {
                               )}
                             </tr>
                           ))}
-                          {/* Empty state when there are no members */}
                           {members.length === 0 && (
                             <tr>
                               <td
@@ -797,13 +838,10 @@ export default function Settings() {
             )}
 
             {/* ── Organization Info Tab Content ───────────────── */}
-            {/* Only rendered for org_admin users */}
             {activeTab === "organization_info" &&
               profile?.role === "org_admin" && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex flex-col md:flex-row gap-12">
-                  {/* Left column: Organization logo upload */}
                   <div className="flex flex-col items-center md:w-1/3">
-                    {/* Hidden file input for org logo selection */}
                     <input
                       type="file"
                       accept="image/*"
@@ -813,67 +851,261 @@ export default function Settings() {
                         const file = e.target.files?.[0];
                         if (file) {
                           setSelectedOrgFile(file);
-                          // Create a temporary preview URL
                           setOrgLogoUrl(URL.createObjectURL(file));
                         }
                       }}
                     />
-
-                    {/* Logo preview box — clicking opens file picker */}
                     <div
                       className="w-32 h-32 rounded-xl bg-gray-100 border-4 border-white shadow-md flex items-center justify-center mb-6 relative overflow-hidden group cursor-pointer"
                       onClick={() => orgFileInputRef.current?.click()}
                     >
-                      {/* Show logo if available, otherwise show placeholder shield icon */}
                       {orgLogoUrl ? (
                         <img
                           src={orgLogoUrl}
-                          alt={t('settings.organization.altLogo')}
+                          alt={t("settings.organization.altLogo")}
                           className="w-full h-full object-contain p-2 bg-white"
                         />
                       ) : (
                         <Shield size={48} className="text-gray-400" />
                       )}
-                      {/* Camera overlay on hover */}
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <Camera size={24} className="text-white" />
                       </div>
                     </div>
-                    {/* Button to trigger the org logo file input */}
                     <button
                       onClick={() => orgFileInputRef.current?.click()}
                       className="bg-gray-100 text-gray-700 font-semibold py-2 px-6 rounded-full hover:bg-gray-200 transition-colors shadow-sm"
                     >
-                      {t('settings.organization.uploadLogo')}
+                      {t("settings.organization.uploadLogo")}
                     </button>
                   </div>
-
-                  {/* Right column: Organization name field and save button */}
                   <div className="flex-1 max-w-lg">
-                    {/* Organization name input */}
                     <div className="mb-6">
-                     <label className="block text-sm font-semibold text-gray-700 mb-2">{t('settings.organization.nameLabel')}</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {t("settings.organization.nameLabel")}
+                      </label>
                       <input
                         type="text"
                         value={orgName}
                         onChange={(e) => setOrgName(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0870C4]"
-                        placeholder={t('settings.organization.namePlaceholder')}
+                        placeholder={t("settings.organization.namePlaceholder")}
                       />
                     </div>
-
-                    {/* Save button for organization info */}
                     <div className="flex justify-end mt-12">
                       <button
                         onClick={handleSave}
                         className="bg-[#0870C4] text-white font-bold py-3 px-8 rounded-xl hover:bg-blue-700 transition-colors shadow-md shadow-blue-200"
                       >
-                        {t('general.saveButton').toUpperCase()}
+                        {t("general.saveButton").toUpperCase()}
                       </button>
                     </div>
                   </div>
                 </div>
               )}
+
+            {activeTab === "integrations" && (profile?.role === "org_admin" || profile?.role === "owner") && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                <div className="flex items-center gap-3 mb-2">
+                  <Plug size={20} className="text-[#0870C4]" />
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Vergunningen API koppeling
+                  </h2>
+                </div>
+                <p className="text-sm text-gray-500 mb-8">
+                  Koppel de vergunningendatabank van uw gemeente aan CivicSnap.
+                  Meldingen op adressen met een actieve vergunning worden
+                  automatisch doorgestuurd naar de juiste aannemer.
+                </p>
+
+                {loadingIntegration ? (
+                  <div className="flex items-center gap-3 text-gray-400 py-8">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium">
+                      Integratie laden...
+                    </span>
+                  </div>
+                ) : (
+                  <div className="max-w-lg space-y-5">
+                    {/* Systeem type — dynamisch uit permit_system_types collectie */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Systeem type
+                      </label>
+                      <select
+                        value={systemType}
+                        onChange={(e) => setSystemType(e.target.value)}
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0870C4] bg-white"
+                      >
+                        {availableSystemTypes.length === 0 ? (
+                          <option value="">Geen systemen beschikbaar</option>
+                        ) : (
+                          availableSystemTypes.map((type) => (
+                            <option key={type.key} value={type.key}>
+                              {type.label}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Het systeem type bepaalt hoe CivicSnap communiceert met
+                        de API van uw gemeente.
+                      </p>
+                    </div>
+
+                    {/* API URL */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        API URL
+                      </label>
+                      <input
+                        type="url"
+                        value={apiUrl}
+                        onChange={(e) => setApiUrl(e.target.value)}
+                        placeholder="https://api.uwgemeente.be/v1"
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0870C4]"
+                      />
+                    </div>
+
+                    {/* Auth type */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Authenticatie type
+                      </label>
+                      <select
+                        value={authType}
+                        onChange={(e) =>
+                          setAuthType(e.target.value as AuthType)
+                        }
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0870C4] bg-white"
+                      >
+                        <option value="api_key">API Key</option>
+                        <option value="bearer">Bearer Token</option>
+                        <option value="basic">
+                          Gebruikersnaam &amp; Wachtwoord
+                        </option>
+                      </select>
+                    </div>
+
+                    {/* Dynamische auth velden */}
+                    {authType === "api_key" && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                          API Key
+                        </label>
+                        <input
+                          type="password"
+                          value={apiKey}
+                          onChange={(e) => setApiKey(e.target.value)}
+                          placeholder="••••••••••••••••"
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#0870C4]"
+                        />
+                      </div>
+                    )}
+                    {authType === "bearer" && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                          Bearer Token
+                        </label>
+                        <input
+                          type="password"
+                          value={bearerToken}
+                          onChange={(e) => setBearerToken(e.target.value)}
+                          placeholder="••••••••••••••••"
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#0870C4]"
+                        />
+                      </div>
+                    )}
+                    {authType === "basic" && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            Gebruikersnaam
+                          </label>
+                          <input
+                            type="text"
+                            value={integrationUsername}
+                            onChange={(e) =>
+                              setIntegrationUsername(e.target.value)
+                            }
+                            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0870C4]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            Wachtwoord
+                          </label>
+                          <input
+                            type="password"
+                            value={integrationPassword}
+                            onChange={(e) =>
+                              setIntegrationPassword(e.target.value)
+                            }
+                            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0870C4]"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <hr className="border-gray-100" />
+
+                    {/* Actief toggle */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-700">
+                          Integratie actief
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Zet uit om de koppeling tijdelijk te pauzeren
+                        </p>
+                      </div>
+                      <button
+                        onClick={() =>
+                          setIsIntegrationActive(!isIntegrationActive)
+                        }
+                        className={`relative w-11 h-6 rounded-full transition-colors ${
+                          isIntegrationActive ? "bg-[#0870C4]" : "bg-gray-200"
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                            isIntegrationActive
+                              ? "translate-x-5"
+                              : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Opslaan */}
+                    <div className="flex justify-end pt-2">
+                      <button
+                        onClick={handleSaveIntegration}
+                        disabled={savingIntegration}
+                        className="bg-[#0870C4] text-white text-sm font-bold py-3 px-8 rounded-xl hover:bg-blue-700 transition-colors shadow-md shadow-blue-200 disabled:opacity-50"
+                      >
+                        {savingIntegration ? "Opslaan..." : "Integratie opslaan"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </main>
       </div>

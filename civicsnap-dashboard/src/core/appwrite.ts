@@ -20,6 +20,9 @@ export const appwriteConfig = {
     dashboardNotificationsCollectionId: process.env.REACT_APP_APPWRITE_DASHBOARD_NOTIFICATIONS_COLLECTION_ID || "",
     notifyInternalNoteFunctionId: process.env.REACT_APP_APPWRITE_FUNCTION_NOTIFY_INTERNAL_NOTE_ID || "",
     handleReportUpdateFunctionId: process.env.REACT_APP_APPWRITE_FUNCTION_HANDLE_REPORT_UPDATE_ID || "",
+    integrationsCollectionId: process.env.REACT_APP_APPWRITE_INTEGRATIONS_COLLECTION_ID || "",
+    permitMailLogsCollectionId: process.env.REACT_APP_APPWRITE_PERMIT_MAIL_LOGS_COLLECTION_ID || "",
+    permitSystemTypesCollectionId: process.env.REACT_APP_APPWRITE_PERMIT_SYSTEM_TYPES_COLLECTION_ID || "",
 };
 
 
