@@ -1,6 +1,10 @@
 import { Client, Account, Databases, Storage, Avatars, Functions } from 'react-native-appwrite';
 
-
+console.log("--- ENV DEBUG START ---");
+console.log("Endpoint:", process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT);
+console.log("Project ID:", process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID);
+console.log("Daily Spin ID:", process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_DAILY_SPIN_ID);
+console.log("--- ENV DEBUG END ---");
 const CONFIG = {
     endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT || '',
     projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID || '',
