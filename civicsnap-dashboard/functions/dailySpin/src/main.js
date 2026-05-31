@@ -1,7 +1,7 @@
 import { Client, Databases } from 'node-appwrite';
 
 export default async ({ req, res, log, error }) => {
-    // 1. Setup Appwrite Client
+   
     const client = new Client()
         .setEndpoint(process.env.APPWRITE_FUNCTION_ENDPOINT)
         .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
@@ -9,7 +9,7 @@ export default async ({ req, res, log, error }) => {
 
     const databases = new Databases(client);
     
-    // 2. Veilig parsen van de body
+   
     let payload;
     try {
         payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
@@ -27,7 +27,7 @@ export default async ({ req, res, log, error }) => {
             userId
         );
 
-        // 3. Datum Check (Server-tijd)
+        
         const nu = new Date();
         const vandaag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate()).getTime();
 
@@ -40,26 +40,25 @@ export default async ({ req, res, log, error }) => {
             }
         }
 
-        // 4. Het Rad (8 vakjes) & STRENGE Kansen
-        // Indexen: 0=Helaas, 1=5pt, 2=Helaas, 3=15pt, 4=Helaas, 5=50pt, 6=5pt, 7=100pt
+       
         const rand = Math.random() * 100;
         let winst = 0;
         let index = 0;
 
-        if (rand > 99.5) { winst = 100; index = 7; }    // 0,5% kans: Jackpot (Vakje 7)
-        else if (rand > 97) { winst = 50; index = 5; }  // 2,5% kans: Groot (Vakje 5)
-        else if (rand > 85) { winst = 15; index = 3; }  // 12% kans: Mooi (Vakje 3)
+        if (rand > 99.5) { winst = 100; index = 7; }    
+        else if (rand > 97) { winst = 50; index = 5; }  
+        else if (rand > 85) { winst = 15; index = 3; }  
         else if (rand > 60) { 
             winst = 5; 
-            index = Math.random() > 0.5 ? 1 : 6;        // 25% kans: Klein (Vakje 1 of 6)
+            index = Math.random() > 0.5 ? 1 : 6;        
         } 
         else { 
             winst = 0; 
-            const empty = [0, 2, 4];                    // 60% kans: NIETS (Vakjes 0, 2, 4)
+            const empty = [0, 2, 4];                   
             index = empty[Math.floor(Math.random() * empty.length)];
         }
 
-        // 5. Database updaten
+        
         await databases.updateDocument(
             process.env.DATABASE_ID,
             process.env.PROFILES_COLLECTION_ID,

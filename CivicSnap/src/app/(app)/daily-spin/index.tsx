@@ -11,8 +11,6 @@ import { API } from "@core/networking/api";
 import { Variables } from "@/style/theme";
 import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
 
-// --- ONZE PRIJZEN & KLEUREN ---
-// Jij kunt deze lijst later aanpassen zoveel je wilt!
 const PRIZES = [
   { label: "Helaas", color: "#E0E0E0", text: "#333", value: 0 },
   { label: "5 💎", color: "#31ACE4", text: "#FFF", value: 5 },
@@ -21,10 +19,10 @@ const PRIZES = [
   { label: "Helaas", color: "#E0E0E0", text: "#333", value: 0 },
   { label: "50 💎", color: "#8551A2", text: "#FFF", value: 50 },
   { label: "5 💎", color: "#31ACE4", text: "#FFF", value: 5 },
-  { label: "100 💎", color: "#A24291", text: "#FFF", value: 100 }, // Jackpot
+  { label: "100 💎", color: "#A24291", text: "#FFF", value: 100 },
 ];
 
-// --- WISKUNDE VOOR HET TEKENEN VAN HET RAD ---
+
 const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
   const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
   return {
@@ -65,7 +63,7 @@ export default function DailySpinScreen() {
         lastSpin.getFullYear() === today.getFullYear();
 
       if (isToday) {
-        setHasSpun(true); // Zet de knop direct uit als het vandaag is!
+        setHasSpun(true); 
       }
     }
   }, [profile?.last_daily_spin]);
@@ -84,20 +82,21 @@ export default function DailySpinScreen() {
 
       if (result.success) {
         const segmentAngle = 360 / PRIZES.length; 
-        const targetAngle = 1800 + (360 - (result.wheelIndex * segmentAngle)); 
 
-        Animated.timing(spinValue, {
-          toValue: targetAngle,
-          duration: 4000, 
-          easing: Easing.out(Easing.cubic), 
-          useNativeDriver: true,
-        }).start(async () => { // 👇 Maak deze callback async
+const targetAngle = 1080 + (360 - (result.wheelIndex * segmentAngle)); 
+
+Animated.timing(spinValue, {
+  toValue: targetAngle,
+  duration: 1500, 
+  easing: Easing.out(Easing.cubic), 
+  useNativeDriver: true,
+}).start(async () => {
           setSpinning(false);
           setHasSpun(true);
           
           const wonPrize = PRIZES[result.wheelIndex];
 
-          // 1. Toon de winst
+          
           if (wonPrize.value > 0) {
             Alert.alert("Gefeliciteerd! 🎉", `Je hebt ${wonPrize.value} diamanten gewonnen!`);
             if (triggerUpdate) triggerUpdate(); 
@@ -105,14 +104,13 @@ export default function DailySpinScreen() {
             Alert.alert("Helaas", "Niets gewonnen! Probeer het morgen opnieuw. 😢");
           }
 
-          // 2. 👇 PLAN HIER DE NOTIFICATIE IN (voor over 24 uur)
-          // Omdat de spin nu écht gelukt is
-          await Notifications.cancelAllScheduledNotificationsAsync(); // Verwijder eerst oude herinneringen
+          
+          await Notifications.cancelAllScheduledNotificationsAsync(); 
           await Notifications.scheduleNotificationAsync({
             content: {
               title: "🎰 Tijd om te draaien!",
               body: "Je nieuwe diamanten liggen klaar. Kom ze claimen!",
-              data: { screen: "/daily-spin" }, // Handig voor later: direct naar het rad sturen
+              data: { screen: "/daily-spin" }, 
             },
             trigger: { 
               type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
@@ -136,7 +134,7 @@ export default function DailySpinScreen() {
     outputRange: ["0deg", "3600deg"],
   });
 
-  // Functie om de loeischerpe SVG te tekenen
+  
   const renderSvgWheel = () => {
     const size = 300;
     const radius = size / 2;
@@ -148,21 +146,21 @@ export default function DailySpinScreen() {
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <G>
           {PRIZES.map((prize, i) => {
-            // Dit zorgt dat het midden van slice 0 exact recht omhoog wijst
+            
             const startAngle = i * anglePerSlice - anglePerSlice / 2;
             const endAngle = startAngle + anglePerSlice;
             const pathData = createPieSlice(cx, cy, radius, startAngle, endAngle);
             
-            // Positie van de tekst (iets meer naar de buitenkant van het rad)
+            
             const textAngle = i * anglePerSlice;
             const textRadius = radius * 0.70; 
             const { x, y } = polarToCartesian(cx, cy, textRadius, textAngle);
 
             return (
               <G key={i}>
-                {/* Het gekleurde vlak */}
+                
                 <Path d={pathData} fill={prize.color} stroke="#FFFFFF" strokeWidth="3" />
-                {/* De tekst */}
+                
                 <SvgText
                   x={x}
                   y={y}
@@ -201,11 +199,11 @@ export default function DailySpinScreen() {
         </Text>
 
         <View style={styles.wheelWrapper}>
-          {/* De pijl bovenaan het rad */}
+        
           <Ionicons name="caret-down" size={45} color={Variables.colors.primary} style={styles.pointer} />
           
           <Animated.View style={[styles.wheelContainer, { transform: [{ rotate: spinTransform }] }]}>
-             {/* Hier laden we geen wazig plaatje, maar onze scherpe SVG functie! */}
+      
              {renderSvgWheel()}
           </Animated.View>
         </View>
