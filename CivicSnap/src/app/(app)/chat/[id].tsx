@@ -8,7 +8,6 @@ import { Query } from "react-native-appwrite";
 import { useAuthContext } from "@components/functional/Auth/authProvider";
 import { API } from "@core/networking/api";
 import { Variables } from "@/style/theme";
-import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
 
 export default function ChatDetailScreen() {
     const router = useRouter();
@@ -16,14 +15,12 @@ export default function ChatDetailScreen() {
     const { profile } = useAuthContext();
     
     const insets = useSafeAreaInsets(); 
-    const { lastUpdate } = useRealtime(); 
 
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
-    // Luister of het toetsenbord open of dicht is (voor de perfecte padding onderaan)
     useEffect(() => {
         const keyboardWillShow = Keyboard.addListener(
             Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
@@ -58,9 +55,33 @@ export default function ChatDetailScreen() {
             }
         };
         fetchMessages();
-    }, [id, lastUpdate]);
+    }, [id]);
 
-    
+    useEffect(() => {
+        if (!id) return;
+
+        const channels = [
+            `databases.${API.config.databaseId}.collections.${API.config.messagesCollectionId}.documents`
+        ];
+
+        const unsubscribe = API.client.subscribe(channels, (response) => {
+            if (response.events.some(e => e.includes('create'))) {
+                const payload = response.payload as any;
+                
+                if (payload.conversation_id === id) {
+                    setMessages((prev) => {
+                        if (prev.some(m => m.$id === payload.$id)) return prev;
+                        return [payload, ...prev];
+                    });
+                }
+            }
+        });
+
+        return () => {
+            unsubscribe();
+        };
+    }, [id]);
+
     useEffect(() => {
         if (!id) return;
 
@@ -78,7 +99,7 @@ export default function ChatDetailScreen() {
         };
 
         markAsRead();
-    }, [id]);
+    }, [id, messages]);
 
     const handleSend = async () => {
         if (!newMessage.trim() || isSending) return;
@@ -99,7 +120,13 @@ export default function ChatDetailScreen() {
             );
 
             const result = JSON.parse(response.responseBody);
-            if (!result.success) {
+            
+            if (result.success) {
+               setMessages((prev) => {
+                   if (prev.some(m => m.$id === result.message.$id)) return prev;
+                   return [result.message, ...prev];
+               });
+            } else {
                 setNewMessage(textToSend); 
             }
         } catch (error) {
@@ -111,11 +138,10 @@ export default function ChatDetailScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={["top"]}>
-            {/* We zetten de KeyboardAvoidingView rondom ALLES, inclusief de header */}
             <KeyboardAvoidingView 
                 style={{ flex: 1 }} 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0} // Een kleine offset voor iOS
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0} 
             >
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => router.back()} style={{ padding: 5 }}>
@@ -136,7 +162,7 @@ export default function ChatDetailScreen() {
                     data={messages}
                     keyExtractor={(item) => item.$id}
                     inverted 
-                    keyboardShouldPersistTaps="handled" // Zorgt dat je nog knoppen kunt indrukken als keyboard open is
+                    keyboardShouldPersistTaps="handled" 
                     contentContainerStyle={{ padding: 15, paddingTop: 30 }}
                     renderItem={({ item }) => {
                         const isMe = item.sender_id === profile?.$id;
@@ -156,7 +182,6 @@ export default function ChatDetailScreen() {
                 {status === 'open' ? (
                     <View style={[
                         styles.inputContainer, 
-                        // Als het toetsenbord open is, hoeven we de 'bottom notch' padding van iPhones niet meer toe te voegen
                         { paddingBottom: isKeyboardVisible ? 15 : Math.max(insets.bottom, 15) }
                     ]}>
                         <TextInput

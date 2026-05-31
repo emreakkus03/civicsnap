@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback} from "react";
-import { databases, appwriteConfig, functions } from "@core/appwrite";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import client, { databases, appwriteConfig, functions } from "@core/appwrite";
 import { Query } from "appwrite";
 import { useAuth } from "@core/AuthProvider";
 import toast from "react-hot-toast";
@@ -33,7 +33,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const [isMinimized, setIsMinimized] = useState(true);
   const [view, setView] = useState<"list" | "chat">("list");
-  const [inboxTab, setInboxTab] = useState<"open" | "closed">("open"); // NIEUW: Tab state
+  const [inboxTab, setInboxTab] = useState<"open" | "closed">("open");
   const [conversations, setConversations] = useState<any[]>([]);
   
   const [activeConversation, setActiveConversation] = useState<any | null>(null);
@@ -42,8 +42,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
 
-
- // NIEUW: useCallback toegevoegd zodat ESLint/Vercel blij is
   const fetchConversations = useCallback(async () => {
     if (!profile?.organization_id) return;
     try {
@@ -59,24 +57,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
       setConversations(res.documents);
     } catch (err) {
-      console.error("Fout bij laden gesprekken:", err);
+      console.error(err);
     }
   }, [profile?.organization_id, inboxTab]);
 
-
- 
-  useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
-
-  
   useEffect(() => {
     if (!isMinimized && view === "list") {
       fetchConversations();
     }
-  }, [isMinimized, view, fetchConversations]);
+  }, [isMinimized, view, fetchConversations, inboxTab]);
 
- 
   useEffect(() => {
     if (activeConversation && view === "chat") {
       const fetchMessages = async () => {
@@ -91,7 +81,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           );
           setMessages(res.documents);
         } catch (err) {
-          console.error("Fout bij laden berichten:", err);
+          console.error(err);
         }
       };
 
@@ -108,7 +98,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             location: reportRes?.address || reportRes?.location || "Bekijk melding voor locatie"
           });
         } catch (error) {
-          console.error("Fout bij ophalen details", error);
+          console.error(error);
         }
       };
 
@@ -119,6 +109,44 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setActiveChatDetails(null);
     }
   }, [activeConversation, view]);
+
+  useEffect(() => {
+    if (!profile?.organization_id) return;
+
+    const channels = [
+      `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.conversationsCollectionId}.documents`,
+      `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.messagesCollectionId}.documents`
+    ];
+
+    const unsubscribe = client.subscribe(channels, (response) => {
+      if (response.events.some(e => e.includes(`collections.${appwriteConfig.conversationsCollectionId}.documents`))) {
+         const updatedConvo = response.payload as any;
+         
+         if(updatedConvo.organization_id === profile.organization_id) {
+           fetchConversations();
+
+           if (activeConversation && updatedConvo.$id === activeConversation.$id) {
+             setActiveConversation(updatedConvo);
+           }
+         }
+      }
+
+      if (response.events.some(e => e.includes(`collections.${appwriteConfig.messagesCollectionId}.documents.create`))) {
+         const newMsg = response.payload as any;
+         
+         if (activeConversation && newMsg.conversation_id === activeConversation.$id) {
+             setMessages((prev) => {
+                 if (prev.some(m => m.$id === newMsg.$id)) return prev;
+                 return [...prev, newMsg];
+             });
+         }
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [profile?.organization_id, activeConversation, fetchConversations]);
 
   const toggleMinimize = () => {
     setIsMinimized((prev) => !prev);
@@ -151,7 +179,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           appwriteConfig.conversationsCollectionId,
           result.conversation_id
         );
-        setInboxTab("open"); // Zorg dat we in de open tab staan
+        setInboxTab("open");
         await fetchConversations();
         openChat(convo);
       }
@@ -211,14 +239,13 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // NIEUW: Gesprek definitief verwijderen (via de Server Function)
   const deleteConversation = async (conversationId: string) => {
     if (!window.confirm("Weet je zeker dat je dit hele gesprek en alle berichten permanent wilt verwijderen? Dit kan niet ongedaan worden gemaakt.")) return;
 
     const toastId = toast.loading("Gesprek verwijderen...");
     try {
       const response = await functions.createExecution(
-        appwriteConfig.deleteConversationFunctionId, // ZORG DAT DEZE IN JE APPWRITE.TS STAAT!
+        appwriteConfig.deleteConversationFunctionId,
         JSON.stringify({ conversation_id: conversationId })
       );
 

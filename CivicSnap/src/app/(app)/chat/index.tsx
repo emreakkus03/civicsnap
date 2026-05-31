@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -8,53 +8,72 @@ import { Query } from "react-native-appwrite";
 import { useAuthContext } from "@components/functional/Auth/authProvider";
 import { API } from "@core/networking/api";
 import { Variables } from "@/style/theme";
-// NIEUW: Importeer jouw eigen realtime provider!
-import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
 
 export default function ChatListScreen() {
     const router = useRouter();
     const { profile } = useAuthContext();
-    const { lastUpdate } = useRealtime(); // NIEUW: Haal de trigger op
     
     const [conversations, setConversations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const fetchChats = useCallback(async () => {
+        if (!profile?.$id) return;
+        try {
+            const res = await API.database.listDocuments(
+                API.config.databaseId,
+                API.config.conversationsCollectionId,
+                [
+                    Query.equal("user_id", profile.$id),
+                    Query.orderDesc("$updatedAt")
+                ]
+            );
+
+            const convosWithOrg = await Promise.all(res.documents.map(async (convo) => {
+                try {
+                    const org = await API.database.getDocument(
+                        API.config.databaseId,
+                        API.config.organizationsCollectionId,
+                        convo.organization_id
+                    );
+                    return { ...convo, org_name: org.name };
+                } catch (e) {
+                    return { ...convo, org_name: "Gemeente" };
+                }
+            }));
+
+            setConversations(convosWithOrg);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    }, [profile?.$id]);
+
     useEffect(() => {
-        const fetchChats = async () => {
-            if (!profile?.$id) return;
-            try {
-                const res = await API.database.listDocuments(
-                    API.config.databaseId,
-                    API.config.conversationsCollectionId,
-                    [
-                        Query.equal("user_id", profile.$id),
-                        Query.orderDesc("$updatedAt") // Realtime zorgt dat de nieuwste direct bovenaan springt
-                    ]
-                );
-
-                const convosWithOrg = await Promise.all(res.documents.map(async (convo) => {
-                    try {
-                        const org = await API.database.getDocument(
-                            API.config.databaseId,
-                            API.config.organizationsCollectionId,
-                            convo.organization_id
-                        );
-                        return { ...convo, org_name: org.name };
-                    } catch (e) {
-                        return { ...convo, org_name: "Gemeente" };
-                    }
-                }));
-
-                setConversations(convosWithOrg);
-            } catch (error) {
-                console.error("Fout bij ophalen chats:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchChats();
-    }, [profile?.$id, lastUpdate]); // NIEUW: lastUpdate toegevoegd aan dependency array!
+    }, [fetchChats]);
+
+    useEffect(() => {
+        if (!profile?.$id) return;
+
+        const channels = [
+            `databases.${API.config.databaseId}.collections.${API.config.conversationsCollectionId}.documents`
+        ];
+
+        const unsubscribe = API.client.subscribe(channels, (response) => {
+            if (response.events.some(e => e.includes('update') || e.includes('create'))) {
+                const payload = response.payload as any;
+                
+                if (payload.user_id === profile.$id) {
+                    fetchChats();
+                }
+            }
+        });
+
+        return () => {
+            unsubscribe();
+        };
+    }, [profile?.$id, fetchChats]);
 
     return (
         <SafeAreaView style={styles.container} edges={["top"]}>
@@ -76,8 +95,7 @@ export default function ChatListScreen() {
                     ListEmptyComponent={
                         <Text style={styles.emptyText}>Je hebt nog geen berichten van de gemeente.</Text>
                     }
-                  renderItem={({ item }) => {
-                        // Check of deze specifieke conversatie het unread veld op 'true' heeft staan
+                    renderItem={({ item }) => {
                         const hasNewMessage = item.has_unread_user === true;
 
                         return (
@@ -92,7 +110,6 @@ export default function ChatListScreen() {
                                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                                         <Text style={styles.orgName}>{item.org_name}</Text>
                                         
-                                        {/* NIEUW: Blauw labeltje 'Nieuw Bericht' */}
                                         {hasNewMessage && (
                                             <View style={{ backgroundColor: Variables.colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
                                                 <Text style={{ color: 'white', fontSize: 10, fontFamily: Variables.fonts.bold }}>NIEUW</Text>
