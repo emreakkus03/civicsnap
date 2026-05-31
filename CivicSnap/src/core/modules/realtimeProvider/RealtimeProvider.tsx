@@ -7,6 +7,8 @@ import React, {
 } from "react";
 import { AppState, AppStateStatus } from "react-native";
 
+import { API } from "@core/networking/api"; 
+
 interface RealtimeContextType {
   lastUpdate: number;
   triggerUpdate: () => void;
@@ -26,18 +28,12 @@ export const RealtimeProvider = ({
   const appStateRef = useRef<AppStateStatus>("active");
 
   const triggerUpdate = () => {
-    console.log("🔄 Handmatige refresh getriggerd...");
+    console.log("🔄 Data refresh getriggerd...");
     setLastUpdate(Date.now());
   };
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      // Only poll when the app is active
-      if (appStateRef.current === "active") {
-        setLastUpdate(Date.now());
-      }
-    }, 5000);
-
+    // 1. AppState listener (voor als app uit achtergrond ontwaakt)
     const subscription = AppState.addEventListener(
       "change",
       (nextAppState: AppStateStatus) => {
@@ -49,14 +45,27 @@ export const RealtimeProvider = ({
       },
     );
 
+    const channels = [
+      `databases.${API.config.databaseId}.collections.${API.config.reportsCollectionId}.documents`
+    ];
+
+
+    const unsubscribeRealtime = API.client.subscribe(channels, (response) => {
+      console.log("⚡ Appwrite Realtime event ontvangen!", response.events);
+      
+      if (appStateRef.current === "active") {
+        triggerUpdate();
+      }
+    });
+
     return () => {
-      clearInterval(intervalId);
       subscription.remove();
+      unsubscribeRealtime(); 
     };
   }, []);
 
   return (
-    <RealtimeContext.Provider value={{ lastUpdate, triggerUpdate}}>
+    <RealtimeContext.Provider value={{ lastUpdate, triggerUpdate }}>
       {children}
     </RealtimeContext.Provider>
   );
