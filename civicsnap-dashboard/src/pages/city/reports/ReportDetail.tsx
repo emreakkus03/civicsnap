@@ -36,6 +36,7 @@ export default function ReportDetail() {
   const { t } = useTranslation();
 
   const [report, setReport] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [duplicates, setDuplicates] = useState<any[]>([]);
   const [selectedDuplicate, setSelectedDuplicate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -104,6 +105,7 @@ export default function ReportDetail() {
   const handleSave = async () => {
     if (!id) return;
 
+    setIsSaving(true);
     try {
       await functions.createExecution(
         appwriteConfig.handleReportUpdateFunctionId, 
@@ -113,7 +115,8 @@ export default function ReportDetail() {
           adminNote: adminNote,
           profileId: profile?.$id,
           fullName: profile?.full_name
-        })
+        }),
+        true
       );
 
       toast.success(t("reportsDetail.updateSuccess"));
@@ -121,6 +124,7 @@ export default function ReportDetail() {
     } catch (error) {
       console.error("Error saving report via function:", error);
       toast.error(t("reportsDetail.toast.saveError"));
+      setIsSaving(false);
     }
   };
 
@@ -333,11 +337,16 @@ export default function ReportDetail() {
                 {profile?.role !== "org_viewer" && (
                   <div className="flex flex-col gap-3 mt-4">
                     <button
-                      onClick={handleSave}
-                      className="w-full bg-[#0870C4] text-white font-bold py-3 px-4 rounded-xl hover:bg-blue-700 transition-colors shadow-md shadow-blue-200"
-                    >
-                      {t("general.saveButton")}
-                    </button>
+    onClick={handleSave}
+    disabled={isSaving}
+    className={`w-full text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-md ${
+      isSaving 
+        ? "bg-blue-300 cursor-not-allowed shadow-none" 
+        : "bg-[#0870C4] hover:bg-blue-700 shadow-blue-200"
+    }`}
+  >
+    {isSaving ? "Bezig met opslaan..." : t("general.saveButton")}
+  </button>
 
                     <button
                       onClick={handleShadowbanUser}
