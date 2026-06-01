@@ -58,6 +58,7 @@
     "menu": {
       "dashboard": "Dashboard",
       "reports": "Meldingen",
+      "statistics": "Statistieken",
       "users": "Gebruikers",
       "announcements": "Aankondigingen",
       "settings": "Instellingen",
@@ -455,6 +456,33 @@
         "passwordMismatch": "De wachtwoorden komen niet overeen.",
         "passwordLength": "Je wachtwoord moet minimaal 8 tekens bevatten.",
         "fallback": "Er is een fout opgetreden. Vraag een nieuwe herstelmail aan."
+    }
+},
+"statistics": {
+    "title": "Statistieken & Inzichten",
+    "loading": "Statistieken laden...",
+    "unknown": "Onbekend",
+    "filter": {
+      "month": "Deze Maand",
+      "year": "Dit Jaar",
+      "all": "Altijd (Sinds start)"
+    },
+    "kpi": {
+      "total": "Totaal Gemeld",
+      "resolved": "Totaal Opgelost",
+      "periodDescription": "In de geselecteerde periode"
+    },
+    "charts": {
+      "categoriesTitle": "Meldingen per Categorie",
+      "trendTitle": "Trend: Gemeld vs Opgelost",
+      "incoming": "Binnen",
+      "resolved": "Opgelost",
+      "reportsCount": "meldingen",
+      "countLabel": "Aantal",
+      "noData": "Geen data beschikbaar"
+    },
+    "toast": {
+      "loadError": "Fout bij laden van statistieken"
     }
 }
 }

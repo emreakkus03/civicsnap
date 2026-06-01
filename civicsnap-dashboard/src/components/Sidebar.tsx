@@ -2,14 +2,14 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 
 // Import icons from the lucide-react icon library
-import { LayoutDashboard, FileText, Megaphone, Settings,  Gift, Building2 } from "lucide-react";
+import { LayoutDashboard, FileText, Megaphone, Settings,  Gift, Building2, BarChart3 } from "lucide-react";
 
 import { useAuth } from "@core/AuthProvider";
 
 // Define the props interface for the Sidebar component
 // activeItem determines which menu item is currently highlighted
 interface SidebarProps {
-    activeItem: 'dashboard' | 'reports' | 'users' | 'announcements' | 'settings' | 'rewards' | 'organizations';
+    activeItem: 'dashboard' | 'reports' | 'users' | 'announcements' | 'settings' | 'rewards' | 'organizations' | 'statistics';
 }
 
 // Sidebar component: renders a vertical navigation menu on the left side of the page
@@ -23,6 +23,7 @@ export default function Sidebar({ activeItem }: SidebarProps) {
     const cityMenuItems = [
             { label: t('dashboard.menu.dashboard'), icon: LayoutDashboard, href: '/', active: activeItem === 'dashboard' },
             { label: t('dashboard.menu.reports'), icon: FileText, href: '/reports', active: activeItem === 'reports' },
+                { label: t('dashboard.menu.statistics'), icon: BarChart3, href: '/statistics', active: activeItem === 'statistics' },
             { label: t('dashboard.menu.announcements'), icon: Megaphone, href: '/announcements', active: activeItem === 'announcements' },
             { label: t('dashboard.menu.rewards'), icon: Gift, href: '/rewards', active: activeItem === 'rewards' },
             { label: t('dashboard.menu.settings'), icon: Settings, href: '/settings', active: activeItem === 'settings'},

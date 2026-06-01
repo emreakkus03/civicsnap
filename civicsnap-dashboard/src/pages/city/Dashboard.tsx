@@ -6,24 +6,21 @@ import {
     Marker,
     InfoWindow,
 } from "@react-google-maps/api";
-import { MapPin, FileText } from "lucide-react";
+// --- AANGEPAST: AlertCircle en CheckCircle2 toegevoegd ---
+import { MapPin, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 // --- Importing core utilities ---
 import { useAuth } from "@core/AuthProvider";
 import { databases, appwriteConfig, googleMapsApiKey } from "@core/appwrite";
-import { useRealtime } from "@components/context/RealtimeProvider"; // --- NIEUW: Realtime import ---
+import { useRealtime } from "@components/context/RealtimeProvider"; 
 
 // --- Importing UI components ---
 import Header from "@components/Header";
 import Sidebar from "@components/Sidebar";
 import { toast } from "react-hot-toast";
 
-/**
- * Report interface extending the Appwrite Document model.
- * Represents a citizen report with location, status, and category info.
- */
 interface Report extends Models.Document {
     description: string;
     address: string;
@@ -32,61 +29,43 @@ interface Report extends Models.Document {
     status: "new" | "approved" | "in_progress" | "resolved" | "invalid" | string;
     organization_id: string;
     category_id: string;
-    category_name?: string; // Resolved category name (not stored in DB, added client-side)
+    category_name?: string; 
     created_at: string;
     photo_url?: string;
     is_duplicate: boolean;
 }
 
-/** Styling for the Google Map container */
 const mapContainerStyle = {
     width: "100%",
     height: "100%",
     borderRadius: "0.75rem",
 };
 
-/**
- * Dashboard page component for city officials.
- * Displays a map with report markers and a table of the latest reports
- * filtered by the organization's zip codes.
- */
 export default function Dashboard() {
-    // Get the authenticated user's profile from the auth context
     const { profile } = useAuth();
-    // Translation hook for i18n support
     const { t } = useTranslation();
-    // Navigation hook for programmatic routing
     const navigate = useNavigate();
-    
-    // --- NIEUW: Realtime hook aanroepen ---
     const { lastUpdate } = useRealtime();
 
-    // State: list of reports fetched from the database
     const [reports, setReports] = useState<Report[]>([]);
-    // State: loading indicator while fetching data
     const [loading, setLoading] = useState(true);
-    // State: currently selected report (for the map InfoWindow popup)
     const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
-    // Load the Google Maps JavaScript API
+    // --- NIEUW: State voor de KPI getallen ---
+    const [kpi, setKpi] = useState({ open: 0, resolvedThisMonth: 0 });
+
     const { isLoaded } = useJsApiLoader({
         id: "google-map-script",
         googleMapsApiKey: googleMapsApiKey,
     });
 
-    /**
-     * Effect: Fetch reports belonging to the user's organization.
-     * Runs when the organization ID changes.
-     */
     useEffect(() => {
         const fetchReportsForOrganization = async () => {
-            // Exit early if the user has no associated organization
             if (!profile?.organization_id) return;
 
             setLoading(true);
 
             try {
-                // Step 1: Fetch the organization document to get its zip codes
                 const orgResponse = await databases.getDocument(
                     appwriteConfig.databaseId,
                     appwriteConfig.organizationsCollectionId,
@@ -95,7 +74,6 @@ export default function Dashboard() {
 
                 const zipCodes = orgResponse.zip_codes;
 
-                // If no zip codes are configured, there are no reports to show
                 if (!zipCodes) {
                     console.log("No zip codes found for organization");
                     setReports([]);
@@ -103,13 +81,11 @@ export default function Dashboard() {
                     return;
                 }
 
-                // Step 2: Parse the comma-separated zip codes into an array
                 const zipCodesArray = zipCodes
                     .split(",")
                     .map((zip: string) => zip.trim());
 
-                // Step 3: Query reports that match the organization's zip codes,
-                // are new, not duplicates, sorted by newest first, limited to 10
+                // 1. Haal laatste 10 meldingen op voor de kaart en tabel
                 const response = await databases.listDocuments(
                     appwriteConfig.databaseId,
                     appwriteConfig.reportsCollectionId,
@@ -118,13 +94,46 @@ export default function Dashboard() {
                         Query.equal("status", "new"),
                         Query.equal("is_duplicate", false),
                         Query.equal("is_shadowbanned", false),
-
                         Query.orderDesc("$createdAt"),
                         Query.limit(10),
                     ],
                 );
 
-                // Step 4: Build a category ID -> name dictionary for display purposes
+                // --- NIEUW: 2. Tel alle openstaande meldingen ---
+                const openReportsResponse = await databases.listDocuments(
+                    appwriteConfig.databaseId,
+                    appwriteConfig.reportsCollectionId,
+                    [
+                        Query.equal("zip_code", zipCodesArray),
+                        Query.equal("status", ["new", "in_progress"]),
+                        Query.equal("is_duplicate", false),
+                        Query.equal("is_shadowbanned", false),
+                        Query.limit(1) // Beperk data, we willen alleen het '.total' getal
+                    ]
+                );
+
+                // --- NIEUW: 3. Tel alle opgeloste meldingen van deze maand ---
+                const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+                const resolvedResponse = await databases.listDocuments(
+                    appwriteConfig.databaseId,
+                    appwriteConfig.reportsCollectionId,
+                    [
+                        Query.equal("zip_code", zipCodesArray),
+                        Query.equal("status", "resolved"),
+                        Query.greaterThanEqual("$updatedAt", startOfMonth),
+                        Query.equal("is_duplicate", false),
+                        Query.equal("is_shadowbanned", false),
+                        Query.limit(1)
+                    ]
+                );
+
+                // Update de KPI state met de resultaten
+                setKpi({
+                    open: openReportsResponse.total,
+                    resolvedThisMonth: resolvedResponse.total
+                });
+
+                // 4. Verwerk de categorie namen
                 const categoryDictionary: Record<string, string> = {};
                 try {
                     const categoriesResponse = await databases.listDocuments(
@@ -132,7 +141,6 @@ export default function Dashboard() {
                         appwriteConfig.categoriesCollectionId,
                     );
 
-                    // Map each category document ID to its name
                     categoriesResponse.documents.forEach((category) => {
                         categoryDictionary[category.$id] = category.name;
                     });
@@ -140,7 +148,6 @@ export default function Dashboard() {
                     console.error("Error fetching categories:", error);
                 }
 
-                // Step 5: Enrich each report with its resolved category name
                 const reportsWithCategoryName = response.documents.map(
                     (report: any) => ({
                         ...report,
@@ -148,23 +155,18 @@ export default function Dashboard() {
                     }),
                 );
 
-                // Update state with the enriched reports
                 setReports(reportsWithCategoryName as unknown as Report[]);
             } catch (error) {
-                // Show an error toast if fetching fails
                 console.error(t("dashboard.toast.fetchError"), error);
                 toast.error(t("dashboard.toast.fetchError"));
             } finally {
-                // Always stop the loading indicator
                 setLoading(false);
             }
         };
 
         fetchReportsForOrganization();
-    }, [profile?.organization_id, t, lastUpdate]); // --- NIEUW: lastUpdate toegevoegd ---
+    }, [profile?.organization_id, t, lastUpdate]);
 
-    // Determine the default map center: use the last report's location,
-    // or fall back to Ghent, Belgium coordinates
     const defaultCenter =
         reports.length > 0
             ? {
@@ -173,10 +175,6 @@ export default function Dashboard() {
                 }
             : { lat: 51.0543, lng: 3.7174 };
 
-    /**
-     * Returns Tailwind CSS color classes based on the report status.
-     * Used for styling status badges in the table and elsewhere.
-     */
     const getStatusColor = (status: string) => {
         switch (status) {
             case "new":
@@ -184,6 +182,7 @@ export default function Dashboard() {
             case "approved":
                 return { text: "text-blue-600", dot: "bg-blue-500", bg: "bg-blue-50" };
             case "in progress":
+            case "in_progress":
                 return {
                     text: "text-orange-600",
                     dot: "bg-orange-500",
@@ -202,10 +201,6 @@ export default function Dashboard() {
         }
     };
 
-    /**
-     * Returns a translated, human-readable display label for a given status string.
-     * Normalizes the status to lowercase before matching.
-     */
     const getDisplayStatus = (status: string) => {
         const normStatus = status.toLowerCase().trim();
         switch (normStatus) {
@@ -225,10 +220,6 @@ export default function Dashboard() {
         }
     };
 
-    /**
-     * Formats an ISO date string into a localized short date (Belgian Dutch locale).
-     * Example output: "05 jan. 2025"
-     */
     const formatDate = (dateString: string) => {
         if (!dateString) return "";
         const date = new Date(dateString);
@@ -242,25 +233,53 @@ export default function Dashboard() {
 
     return (
         <div className="min-h-screen bg-[#F5F7FA] font-inter">
-            {/* Top navigation header */}
             <Header />
 
             <div className="flex">
-                {/* Left sidebar navigation with "dashboard" highlighted as the active item */}
                 <Sidebar activeItem="dashboard" />
 
-                {/* Main content area */}
                 <main className="flex-1 flex flex-col min-w-0 overflow-hidden p-8">
                     <div className="max-w-6xl w-full mx-auto space-y-8">
-                        {/* Page title */}
                         <h1 className="text-2xl font-bold text-gray-900">
                             {t("dashboard.title")}
                         </h1>
 
+                        {/* --- NIEUW: KPI BLOKJES SECTIE --- */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* KPI 1: Openstaande Meldingen */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+                                    <AlertCircle size={28} className="text-orange-500" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                        Openstaande Meldingen
+                                    </p>
+                                    <p className="text-3xl font-bold text-gray-900">
+                                        {kpi.open}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* KPI 2: Opgelost Deze Maand */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                                    <CheckCircle2 size={28} className="text-green-500" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                        Opgelost Deze Maand
+                                    </p>
+                                    <p className="text-3xl font-bold text-gray-900">
+                                        {kpi.resolvedThisMonth}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* ===== MAP SECTION ===== */}
                         <div className="w-full h-[420px] bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
                             {isLoaded ? (
-                                // Render the Google Map once the API has loaded
                                 <GoogleMap
                                     mapContainerStyle={mapContainerStyle}
                                     center={defaultCenter}
@@ -268,13 +287,11 @@ export default function Dashboard() {
                                     options={{
                                         disableDefaultUI: false,
                                         zoomControl: true,
-                                        // Hide points of interest for a cleaner map
                                         styles: [
                                             { featureType: "poi", stylers: [{ visibility: "off" }] },
                                         ],
                                     }}
                                 >
-                                    {/* Place a marker on the map for each report */}
                                     {reports.map((report) => (
                                         <Marker
                                             key={report.$id}
@@ -286,7 +303,6 @@ export default function Dashboard() {
                                         />
                                     ))}
 
-                                    {/* Show an InfoWindow popup when a marker is clicked */}
                                     {selectedReport && (
                                         <InfoWindow
                                             position={{
@@ -296,29 +312,25 @@ export default function Dashboard() {
                                             onCloseClick={() => setSelectedReport(null)}
                                         >
                                             <div className="p-1 max-w-[200px]">
-                                                {/* Display the report photo if available, otherwise show a placeholder */}
                                                 {selectedReport.photo_url ? (
                                                     <img
                                                         src={selectedReport.photo_url}
                                                         alt={t("dashboard.map.imageAlt")}
-                                                        className="w-full h-full object-cover"
+                                                        className="w-full h-full object-cover rounded-md mb-2"
                                                     />
                                                 ) : (
-                                                    <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full h-full flex items-center justify-center">
+                                                    <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full h-24 mb-2 flex items-center justify-center">
                                                         <FileText className="text-gray-300" size={24} />
                                                     </div>
                                                 )}
-                                                {/* Report category name */}
                                                 <h3 className="font-bold text-sm text-gray-900 mb-1 truncate">
                                                     {selectedReport.category_name ||
                                                         t("dashboard.categoryUnknown")}
                                                 </h3>
-                                                {/* Report address */}
                                                 <p className="text-xs text-gray-500 truncate mb-3">
                                                     {selectedReport.address ||
                                                         t("dashboard.addressUnknown")}
                                                 </p>
-                                                {/* Button to navigate to the full report detail page */}
                                                 <button
                                                     onClick={() =>
                                                         navigate(`/reports/${selectedReport.$id}`)
@@ -332,7 +344,6 @@ export default function Dashboard() {
                                     )}
                                 </GoogleMap>
                             ) : (
-                                // Show a loading placeholder while the Google Maps API is loading
                                 <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 rounded-xl">
                                     <MapPin className="text-gray-300 mb-2" size={32} />
                                     <span className="text-gray-400 text-sm font-medium">
@@ -344,16 +355,13 @@ export default function Dashboard() {
 
                         {/* ===== REPORTS TABLE SECTION ===== */}
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                            {/* Table header / title */}
                             <div className="px-6 py-5 border-b border-gray-100">
                                 <h2 className="text-lg font-bold text-gray-900">
                                     {t("dashboard.latest_reports")}
                                 </h2>
                             </div>
 
-                            {/* Conditional rendering: loading spinner, empty state, or the data table */}
                             {loading ? (
-                                // Loading state: show a spinner with a message
                                 <div className="flex items-center justify-center py-16">
                                     <div className="flex items-center gap-3 text-gray-400">
                                         <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -378,7 +386,6 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                             ) : reports.length === 0 ? (
-                                // Empty state: no reports found for this organization
                                 <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                                     <FileText size={40} className="mb-3 text-gray-300" />
                                     <span className="text-sm font-medium">
@@ -386,10 +393,8 @@ export default function Dashboard() {
                                     </span>
                                 </div>
                             ) : (
-                                // Data table: list of reports with details and action buttons
                                 <div className="overflow-x-auto">
                                     <table className="w-full">
-                                        {/* Table column headers */}
                                         <thead>
                                             <tr className="bg-gray-50">
                                                 <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -410,25 +415,20 @@ export default function Dashboard() {
                                             </tr>
                                         </thead>
 
-                                        {/* Table body: one row per report */}
                                         <tbody className="divide-y divide-gray-100">
                                             {reports.map((report) => {
-                                                // Get the color scheme for this report's status
                                                 const statusColors = getStatusColor(report.status);
                                                 return (
                                                     <tr
                                                         key={report.$id}
                                                         className="hover:bg-gray-50 transition-colors duration-150"
                                                     >
-                                                        {/* Date column */}
                                                         <td className="py-4 px-6 text-sm text-gray-600">
                                                             {formatDate(report.$createdAt)}
                                                         </td>
-                                                        {/* Category/type column */}
                                                         <td className="py-4 px-6 text-sm text-gray-600">
                                                             {report.category_name}
                                                         </td>
-                                                        {/* Address/location column */}
                                                         <td className="py-4 px-6">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="text-sm text-gray-600">
@@ -436,19 +436,16 @@ export default function Dashboard() {
                                                                 </span>
                                                             </div>
                                                         </td>
-                                                        {/* Status badge column */}
                                                         <td className="py-4 px-6">
                                                             <span
                                                                 className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${statusColors.bg} ${statusColors.text}`}
                                                             >
-                                                                {/* Small colored dot indicator */}
                                                                 <span
                                                                     className={`w-1.5 h-1.5 rounded-full ${statusColors.dot}`}
                                                                 ></span>
                                                                 {getDisplayStatus(report.status)}
                                                             </span>
                                                         </td>
-                                                        {/* Action button column: navigates to the report detail page */}
                                                         <td className="py-4 px-6">
                                                             <button
                                                                 onClick={() =>

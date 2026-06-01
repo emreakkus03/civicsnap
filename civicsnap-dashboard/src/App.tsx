@@ -21,6 +21,7 @@ import Announcements from "@pages/city/announcements/Announcements";
 import ResetPassword from "@pages/ResetPassword";
 import Rewards from "@pages/superadmin/Rewards";
 import ResetPasswordDashboard from "@pages/ResetPasswordDashboard";
+import Statistics from "@pages/city/statistics/Statistics";
 
 import FloatingChatWidget from "@components/FloatingChatWidget";
 
@@ -105,6 +106,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Reports />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/statistics"
+        element={
+          <ProtectedRoute>
+            <Statistics />
           </ProtectedRoute>
         }
       />
