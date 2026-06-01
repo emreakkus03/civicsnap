@@ -20,6 +20,7 @@ import {
   ArrowUp,
   MapPin,
   Copy,
+  Download // --- NIEUW: Download icon toegevoegd ---
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -210,6 +211,63 @@ export default function Reports() {
     }
   };
 
+  // --- NIEUW: Export to CSV functie ---
+  const exportToCSV = () => {
+    if (reports.length === 0) {
+      toast.error(t("general.noReports") || "Geen data om te exporteren.");
+      return;
+    }
+
+    // Definieer de headers voor het CSV bestand
+    const headers = [
+      t("reports.table.date") || "Datum",
+      t("reports.table.type") || "Categorie",
+      t("reports.table.location") || "Adres",
+      t("reports.table.status") || "Status",
+      "Omschrijving" // Extra kolom, handig voor Excel!
+    ];
+
+    // Helper functie om te zorgen dat kommas in tekst de CSV niet breken
+    const escapeCSV = (str: string | undefined) => {
+      if (!str) return '""';
+      // Vervang quotes door dubbele quotes en omsluit met quotes
+      return `"${str.replace(/"/g, '""')}"`;
+    };
+
+    // Bouw de rijen op
+    const csvRows = reports.map(report => {
+      return [
+        escapeCSV(formatDate(report.$createdAt)),
+        escapeCSV(report.category_name),
+        escapeCSV(report.address),
+        escapeCSV(getDisplayStatus(report.status)),
+        escapeCSV(report.description)
+      ].join(",");
+    });
+
+    // Combineer headers en rijen
+    const csvContent = [
+      headers.join(","),
+      ...csvRows
+    ].join("\n");
+
+    // Maak een Blob en download link
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    
+    // Bepaal een duidelijke bestandsnaam met de huidige datum
+    const dateString = new Date().toISOString().split('T')[0];
+    link.setAttribute("download", `CivicSnap_Export_${activeTab}_${dateString}.csv`);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Export succesvol gedownload!");
+  };
+
   return (
     <div className="min-h-screen bg-[#F5F7FA] font-inter">
       {/* --- Top navigation header --- */}
@@ -222,10 +280,22 @@ export default function Reports() {
         {/* --- Main content area --- */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden p-8">
           <div className="max-w-6xl w-full mx-auto space-y-6">
-            {/* --- Page title --- */}
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">
-              {t("reports.title")}
-            </h1>
+            
+            {/* --- Page title EN Export Knop --- */}
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-3xl font-bold text-gray-900">
+                {t("reports.title")}
+              </h1>
+              
+              {/* Export Knop */}
+              <button
+                onClick={exportToCSV}
+                className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 hover:text-[#0870C4] transition-colors shadow-sm"
+              >
+                <Download size={18} />
+                <span>Exporteer CSV</span>
+              </button>
+            </div>
 
             {/* --- Tab switcher: Active reports vs Archived reports --- */}
             <div className="flex border-b border-gray-200 mb-6">
