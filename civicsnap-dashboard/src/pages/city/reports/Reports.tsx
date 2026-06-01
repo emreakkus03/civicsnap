@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@core/AuthProvider";
+import { useRealtime } from "@components/context/RealtimeProvider";
 
 import { Models } from "appwrite";
 
@@ -42,6 +43,8 @@ interface Report extends Models.Document {
 export default function Reports() {
   // --- Auth context to get the current user's profile ---
   const { profile } = useAuth();
+
+  const { lastUpdate } = useRealtime();
 
   // --- i18n translation hook ---
   const { t } = useTranslation();
@@ -140,6 +143,7 @@ export default function Reports() {
     currentPage,
     categories.length,
     t,
+    lastUpdate,
   ]);
 
   /**

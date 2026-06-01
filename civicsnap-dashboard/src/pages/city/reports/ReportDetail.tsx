@@ -22,6 +22,7 @@ import { Sparkles, ArrowLeft, Image as ImageIcon, User } from "lucide-react";
 // --- Auth context hook ---
 import { useAuth } from "@core/AuthProvider";
 import { useChat } from "@components/context/ChatContext";
+import { useRealtime } from "@components/context/RealtimeProvider";
 
 /**
  * ReportDetail page component.
@@ -43,6 +44,8 @@ export default function ReportDetail() {
   
   // --- NIEUW: State voor de gegevens van de melder ---
   const [reporter, setReporter] = useState<any>(null);
+
+  const { lastUpdate } = useRealtime();
 
   const { startNewChat } = useChat();
 
@@ -96,7 +99,7 @@ export default function ReportDetail() {
       }
     };
     fetchReportAndDuplicates();
-  }, [id, t]);
+  }, [id, t, lastUpdate]);
 
   const handleSave = async () => {
     if (!id) return;

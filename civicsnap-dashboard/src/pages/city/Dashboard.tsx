@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 // --- Importing core utilities ---
 import { useAuth } from "@core/AuthProvider";
 import { databases, appwriteConfig, googleMapsApiKey } from "@core/appwrite";
+import { useRealtime } from "@components/context/RealtimeProvider"; // --- NIEUW: Realtime import ---
 
 // --- Importing UI components ---
 import Header from "@components/Header";
@@ -56,6 +57,9 @@ export default function Dashboard() {
     const { t } = useTranslation();
     // Navigation hook for programmatic routing
     const navigate = useNavigate();
+    
+    // --- NIEUW: Realtime hook aanroepen ---
+    const { lastUpdate } = useRealtime();
 
     // State: list of reports fetched from the database
     const [reports, setReports] = useState<Report[]>([]);
@@ -157,7 +161,7 @@ export default function Dashboard() {
         };
 
         fetchReportsForOrganization();
-    }, [profile?.organization_id, t]);
+    }, [profile?.organization_id, t, lastUpdate]); // --- NIEUW: lastUpdate toegevoegd ---
 
     // Determine the default map center: use the last report's location,
     // or fall back to Ghent, Belgium coordinates

@@ -25,6 +25,7 @@ import ResetPasswordDashboard from "@pages/ResetPasswordDashboard";
 import FloatingChatWidget from "@components/FloatingChatWidget";
 
 import { ChatProvider } from "@components/context/ChatContext";
+import { RealtimeProvider } from "@components/context/RealtimeProvider";
 
 function DashboardRouter() {
   const { profile } = useAuth();
@@ -145,10 +146,12 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <ChatProvider>
-          <AppRoutes />
-          <FloatingChatWidget />
-        </ChatProvider>
+        <RealtimeProvider>
+          <ChatProvider>
+            <AppRoutes />
+            <FloatingChatWidget />
+          </ChatProvider>
+        </RealtimeProvider>
       </BrowserRouter>
       <Toaster position="top-right" toastOptions={{ duration: 5000 }} />
     </AuthProvider>
