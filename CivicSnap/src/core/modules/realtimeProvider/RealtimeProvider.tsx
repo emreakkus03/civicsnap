@@ -36,7 +36,8 @@ export const RealtimeProvider = ({
   useEffect(() => {
     const channels = [
       `databases.${API.config.databaseId}.collections.${API.config.reportsCollectionId}.documents`,
-      `databases.${API.config.databaseId}.collections.${API.config.announcementsCollectionId}.documents`
+      `databases.${API.config.databaseId}.collections.${API.config.announcementsCollectionId}.documents`,
+      `databases.${API.config.databaseId}.collections.${API.config.profilesCollectionId}.documents`
     ];
 
     const unsubscribeRealtime = API.client.subscribe(channels, (response) => {
