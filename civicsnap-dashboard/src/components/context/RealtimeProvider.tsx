@@ -19,24 +19,49 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   useEffect(() => {
+    let unsubscribe: (() => void) | null = null;
+    
     const channels = [
       `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.reportsCollectionId}.documents`
     ];
 
-    const unsubscribe = client.subscribe(channels, (response) => {
-      triggerUpdate();
-    });
+    // Helper functie om de WebSocket vers op te starten
+    const connectRealtime = () => {
+      if (!unsubscribe) {
+        unsubscribe = client.subscribe(channels, (response) => {
+          triggerUpdate();
+        });
+      }
+    };
 
+    // Helper functie om de WebSocket netjes af te breken
+    const disconnectRealtime = () => {
+      if (unsubscribe) {
+        unsubscribe();
+        unsubscribe = null;
+      }
+    };
+
+    // 1. Start de connectie als de component mount
+    connectRealtime();
+
+    // 2. Beheer de connectie op basis van tab-zichtbaarheid
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        triggerUpdate();
+        // Gebruiker is terug: maak een frisse connectie en haal laatste data op
+        connectRealtime();
+        triggerUpdate(); 
+      } else {
+        // Tab is onzichtbaar/naar de achtergrond: verbreek de connectie om zombie-sockets te voorkomen
+        disconnectRealtime();
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
+    // 3. Cleanup als de hele provider unmount
     return () => {
-      unsubscribe();
+      disconnectRealtime();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
@@ -46,6 +71,6 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       {children}
     </RealtimeContext.Provider>
   );
-};
+}
 
 export const useRealtime = () => useContext(RealtimeContext);

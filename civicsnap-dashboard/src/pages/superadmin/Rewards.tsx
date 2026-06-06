@@ -45,12 +45,18 @@ export default function Rewards() {
     const [imagePreview, setImagePreview] = useState<string>("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // --- State voor de mobiele sidebar toegevoegd ---
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
     const fetchRewards = useCallback(async () => {
         setLoading(true);
         try {
-           const queries = [];
-            // Als het géén super_admin is, filter dan op de organisatie van de ambtenaar
+            // FIX 1: Voeg altijd een ruime limiet toe!
+            const queries = [
+                Query.limit(100) 
+            ];
             
+            // Als het géén super_admin is, filter dan op de organisatie van de ambtenaar
             if (profile?.role !== "super_admin" && profile?.organization_id) {
                 queries.push(Query.equal("organization_id", profile.organization_id));
             }
@@ -58,33 +64,30 @@ export default function Rewards() {
             const response = await databases.listDocuments(
                 appwriteConfig.databaseId,
                 appwriteConfig.rewardsCollectionId,
-                queries // <-- Geef de queries mee
+                queries 
             );
+            
             const now = new Date();
-            const processedRewards = await Promise.all(
-                response.documents.map(async (doc: any) => {
-                    if (doc.valid_until && new Date(doc.valid_until) < now && doc.is_active) {
-                        await databases.updateDocument(
-                            appwriteConfig.databaseId,
-                            appwriteConfig.rewardsCollectionId,
-                            doc.$id,
-                            { is_active: false },
-                        );
-                        return { ...doc, is_active: false };
-                    }
-                    return doc;
-                }),
-            );
+            
+            // FIX 2: Geen zware database-updates meer in de frontend!
+            // We passen de array alleen lokaal (visueel) aan zodat de tabel direct laadt.
+            const processedRewards = response.documents.map((doc: any) => {
+                if (doc.valid_until && new Date(doc.valid_until) < now && doc.is_active) {
+                    return { ...doc, is_active: false }; // Puur visueel tonen als inactief
+                }
+                return doc;
+            });
+            
             setRewards(processedRewards as unknown as Reward[]);
         } catch (error) {
             toast.error(t("rewards.toast.fetchError"));
         } finally {
             setLoading(false);
         }
-    },[t, profile?.organization_id, profile?.role]);
+    }, [t, profile?.organization_id, profile?.role]);
 
     useEffect(() => {
-    fetchRewards();
+        fetchRewards();
     }, [fetchRewards]);
 
     const handleOpenCreate = () => {
@@ -213,19 +216,27 @@ export default function Rewards() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F5F7FA] font-inter">
-            <Header />
-            <div className="flex">
-                <Sidebar activeItem="rewards" />
-                <main className="flex-1 p-8">
-                    <div className="max-w-6xl mx-auto">
+        // --- AANGEPAST: Vaste scherm layout ---
+        <div className="flex flex-col h-screen bg-[#F5F7FA] font-inter">
+            <Header onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+            
+            <div className="flex flex-1 overflow-hidden">
+                <Sidebar 
+                    activeItem="rewards" 
+                    isOpen={isSidebarOpen} 
+                    onClose={() => setIsSidebarOpen(false)} 
+                />
+                
+                {/* --- AANGEPAST: Scrollbare main content met responsive padding --- */}
+                <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 w-full">
+                    <div className="max-w-7xl mx-auto space-y-6">
 
                         {/* --- Header --- */}
-                        <div className="flex justify-between items-center mb-8">
-                            <h1 className="text-3xl font-bold text-gray-900">{t("rewards.title")}</h1>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{t("rewards.title")}</h1>
                             <button
                                 onClick={handleOpenCreate}
-                                className="flex items-center gap-2 px-5 py-3 bg-[#0870C4] text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+                                className="flex items-center justify-center gap-2 px-4 md:px-5 py-2.5 md:py-3 bg-[#0870C4] text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm w-full sm:w-auto text-sm md:text-base"
                             >
                                 <Plus size={18} />
                                 {t("rewards.addButton")}
@@ -239,69 +250,71 @@ export default function Rewards() {
                             ) : rewards.length === 0 ? (
                                 <div className="p-10 text-center text-gray-500">{t("rewards.empty")}</div>
                             ) : (
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="border-b border-gray-100 text-gray-800 font-bold text-sm bg-gray-50">
-                                            <th className="py-4 px-6">{t("rewards.table.image")}</th>
-                                            <th className="py-4 px-6">{t("rewards.table.title")}</th>
-                                            <th className="py-4 px-6">{t("rewards.table.business")}</th>
-                                            <th className="py-4 px-6">{t("rewards.table.cost")}</th>
-                                            <th className="py-4 px-6">{t("rewards.table.location")}</th>
-                                            <th className="py-4 px-6">{t("rewards.table.validUntil")}</th>
-                                            <th className="py-4 px-6">{t("rewards.table.active")}</th>
-                                            <th className="py-4 px-6 text-center">{t("rewards.table.actions")}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {rewards.map((reward) => (
-                                            <tr key={reward.$id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                                                <td className="py-3 px-6">
-                                                    {reward.image_url ? (
-                                                        <img src={reward.image_url} alt={reward.title} className="w-14 h-14 rounded-xl object-cover border border-gray-100" />
-                                                    ) : (
-                                                        <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
-                                                            {t("rewards.table.noPhoto")}
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="py-3 px-6">
-                                                    <p className="font-semibold text-gray-900">{reward.title}</p>
-                                                    <p className="text-xs text-gray-400 line-clamp-1">{reward.description}</p>
-                                                </td>
-                                                <td className="py-3 px-6 text-gray-600">{reward.business_name}</td>
-                                                <td className="py-3 px-6">
-                                                    <span className="bg-blue-50 text-blue-700 font-bold px-3 py-1 rounded-full text-sm">
-                                                        {reward.cost_points} 💎
-                                                    </span>
-                                                </td>
-                                                <td className="py-3 px-6 text-gray-600">
-                                                    {t(`rewards.form.locations.${reward.location_filter}`, { defaultValue: reward.location_filter })}
-                                                </td>
-                                                <td className="py-3 px-6 text-gray-600">
-                                                    {reward.valid_until ? new Date(reward.valid_until).toLocaleDateString("nl-BE") : "—"}
-                                                </td>
-                                                <td className="py-3 px-6">
-                                                    <button
-                                                        onClick={() => handleToggleActive(reward)}
-                                                        className={`w-12 h-6 rounded-full relative transition-colors duration-300 focus:outline-none ${reward.is_active ? "bg-[#0F9D58]" : "bg-gray-300"}`}
-                                                    >
-                                                        <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 shadow-sm transition-transform duration-300 ${reward.is_active ? "translate-x-6 left-[1px]" : "translate-x-0.5"}`} />
-                                                    </button>
-                                                </td>
-                                                <td className="py-3 px-6">
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        <button onClick={() => handleOpenEdit(reward)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                                            <Edit size={16} />
-                                                        </button>
-                                                        <button onClick={() => handleDelete(reward)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
-                                                </td>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse min-w-[900px]">
+                                        <thead>
+                                            <tr className="border-b border-gray-100 text-gray-800 font-bold text-xs md:text-sm bg-gray-50 uppercase tracking-wider">
+                                                <th className="py-3 md:py-4 px-4 md:px-6 whitespace-nowrap">{t("rewards.table.image")}</th>
+                                                <th className="py-3 md:py-4 px-4 md:px-6 whitespace-nowrap">{t("rewards.table.title")}</th>
+                                                <th className="py-3 md:py-4 px-4 md:px-6 whitespace-nowrap">{t("rewards.table.business")}</th>
+                                                <th className="py-3 md:py-4 px-4 md:px-6 whitespace-nowrap">{t("rewards.table.cost")}</th>
+                                                <th className="py-3 md:py-4 px-4 md:px-6 whitespace-nowrap">{t("rewards.table.location")}</th>
+                                                <th className="py-3 md:py-4 px-4 md:px-6 whitespace-nowrap">{t("rewards.table.validUntil")}</th>
+                                                <th className="py-3 md:py-4 px-4 md:px-6 whitespace-nowrap">{t("rewards.table.active")}</th>
+                                                <th className="py-3 md:py-4 px-4 md:px-6 text-center whitespace-nowrap">{t("rewards.table.actions")}</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {rewards.map((reward) => (
+                                                <tr key={reward.$id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                                    <td className="py-3 md:py-4 px-4 md:px-6">
+                                                        {reward.image_url ? (
+                                                            <img src={reward.image_url} alt={reward.title} className="w-12 h-12 md:w-14 md:h-14 rounded-xl object-cover border border-gray-100" />
+                                                        ) : (
+                                                            <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 text-[10px] md:text-xs">
+                                                                {t("rewards.table.noPhoto")}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-3 md:py-4 px-4 md:px-6">
+                                                        <p className="font-semibold text-gray-900 text-sm md:text-base">{reward.title}</p>
+                                                        <p className="text-xs text-gray-400 line-clamp-1 max-w-[150px] md:max-w-xs">{reward.description}</p>
+                                                    </td>
+                                                    <td className="py-3 md:py-4 px-4 md:px-6 text-gray-600 text-sm md:text-base whitespace-nowrap">{reward.business_name}</td>
+                                                    <td className="py-3 md:py-4 px-4 md:px-6">
+                                                        <span className="bg-blue-50 text-blue-700 font-bold px-2 md:px-3 py-1 rounded-full text-xs md:text-sm whitespace-nowrap">
+                                                            {reward.cost_points} 💎
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-3 md:py-4 px-4 md:px-6 text-gray-600 text-sm md:text-base whitespace-nowrap">
+                                                        {t(`rewards.form.locations.${reward.location_filter}`, { defaultValue: reward.location_filter })}
+                                                    </td>
+                                                    <td className="py-3 md:py-4 px-4 md:px-6 text-gray-600 text-sm md:text-base whitespace-nowrap">
+                                                        {reward.valid_until ? new Date(reward.valid_until).toLocaleDateString("nl-BE") : "—"}
+                                                    </td>
+                                                    <td className="py-3 md:py-4 px-4 md:px-6">
+                                                        <button
+                                                            onClick={() => handleToggleActive(reward)}
+                                                            className={`w-10 md:w-12 h-5 md:h-6 rounded-full relative transition-colors duration-300 focus:outline-none ${reward.is_active ? "bg-[#0F9D58]" : "bg-gray-300"}`}
+                                                        >
+                                                            <div className={`w-4 h-4 md:w-5 md:h-5 bg-white rounded-full absolute top-[2px] shadow-sm transition-transform duration-300 ${reward.is_active ? "translate-x-5 md:translate-x-6 left-[1px]" : "translate-x-0.5"}`} />
+                                                        </button>
+                                                    </td>
+                                                    <td className="py-3 md:py-4 px-4 md:px-6">
+                                                        <div className="flex items-center justify-center gap-1 md:gap-2">
+                                                            <button onClick={() => handleOpenEdit(reward)} className="p-1.5 md:p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                                                <Edit size={16} className="md:w-5 md:h-5" />
+                                                            </button>
+                                                            <button onClick={() => handleDelete(reward)} className="p-1.5 md:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                                <Trash2 size={16} className="md:w-5 md:h-5" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -311,9 +324,10 @@ export default function Rewards() {
             {/* --- Create/Edit Modal --- */}
             {showForm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center p-6 border-b border-gray-100">
-                            <h2 className="text-xl font-bold text-gray-900">
+                    {/* --- AANGEPAST: flex flex-col toegevoegd zodat de header gefixeerd blijft en de form scrolt op mobiel --- */}
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="flex justify-between items-center p-4 md:p-6 border-b border-gray-100 flex-shrink-0">
+                            <h2 className="text-lg md:text-xl font-bold text-gray-900">
                                 {editingReward ? t("rewards.form.titleEdit") : t("rewards.form.titleCreate")}
                             </h2>
                             <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
@@ -321,46 +335,50 @@ export default function Rewards() {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSave} className="p-6 flex flex-col gap-4">
-                            <div className="grid grid-cols-2 gap-4">
+                        {/* --- AANGEPAST: overflow-y-auto op de form --- */}
+                        <form onSubmit={handleSave} className="p-4 md:p-6 overflow-y-auto flex flex-col gap-4">
+                            
+                            {/* --- AANGEPAST: grid-cols-1 op mobiel, md:grid-cols-2 op desktop --- */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1">
                                     <label className="text-sm font-semibold text-gray-700">{t("rewards.form.titleLabel")}</label>
-                                    <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4]" required />
+                                    <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="p-2.5 md:p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] text-sm md:text-base" required />
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label className="text-sm font-semibold text-gray-700">{t("rewards.form.businessLabel")}</label>
-                                    <input type="text" value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4]" required />
+                                    <input type="text" value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} className="p-2.5 md:p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] text-sm md:text-base" required />
                                 </div>
                             </div>
 
                             <div className="flex flex-col gap-1">
                                 <label className="text-sm font-semibold text-gray-700">{t("rewards.form.descriptionLabel")}</label>
-                                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] resize-none h-24" required />
+                                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="p-2.5 md:p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] resize-none h-20 md:h-24 text-sm md:text-base" required />
                             </div>
 
                             <div className="flex flex-col gap-1">
                                 <label className="text-sm font-semibold text-gray-700">{t("rewards.form.imageLabel")}</label>
                                 <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} className="hidden" />
-                                <div onClick={() => fileInputRef.current?.click()} className="w-full h-32 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-[#0870C4] transition-colors overflow-hidden">
+                                <div onClick={() => fileInputRef.current?.click()} className="w-full h-24 md:h-32 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-[#0870C4] transition-colors overflow-hidden">
                                     {imagePreview || form.image_url ? (
                                         <img src={imagePreview || form.image_url} alt="preview" className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="text-center text-gray-400">
                                             <Plus size={24} className="mx-auto mb-1" />
-                                            <p className="text-sm">{t("rewards.form.imageUploadText")}</p>
+                                            <p className="text-xs md:text-sm">{t("rewards.form.imageUploadText")}</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4">
+                            {/* --- AANGEPAST: grid-cols-1 op mobiel, sm:grid-cols-2 en lg:grid-cols-3 naarmate het scherm groter wordt --- */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                 <div className="flex flex-col gap-1">
                                     <label className="text-sm font-semibold text-gray-700">{t("rewards.form.costLabel")}</label>
-                                    <input type="number" value={form.cost_points} onChange={(e) => setForm({ ...form, cost_points: Number(e.target.value) })} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4]" min={0} required />
+                                    <input type="number" value={form.cost_points} onChange={(e) => setForm({ ...form, cost_points: Number(e.target.value) })} className="p-2.5 md:p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] text-sm md:text-base" min={0} required />
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label className="text-sm font-semibold text-gray-700">{t("rewards.form.typeLabel")}</label>
-                                    <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] bg-white">
+                                    <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="p-2.5 md:p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] bg-white text-sm md:text-base">
                                         <option value="discount">{t("rewards.form.types.discount")}</option>
                                         <option value="free_product">{t("rewards.form.types.free_product")}</option>
                                         <option value="ticket">{t("rewards.form.types.ticket")}</option>
@@ -368,32 +386,32 @@ export default function Rewards() {
                                         <option value="good_cause">{t("rewards.form.types.good_cause")}</option>
                                     </select>
                                 </div>
-                               {profile?.role === "super_admin" && (
-    <div className="flex flex-col gap-1">
-        <label className="text-sm font-semibold text-gray-700">{t("rewards.form.locationLabel")}</label>
-        <select value={form.location_filter} onChange={(e) => setForm({ ...form, location_filter: e.target.value })} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] bg-white">
-            <option value="all">{t("rewards.form.locations.all")}</option>
-            <option value="antwerp">{t("rewards.form.locations.antwerp")}</option>
-            <option value="ghent">{t("rewards.form.locations.ghent")}</option>
-            <option value="brussels">{t("rewards.form.locations.brussels")}</option>
-            <option value="bruges">{t("rewards.form.locations.bruges")}</option>
-            <option value="hasselt">{t("rewards.form.locations.hasselt")}</option>
-            <option value="courtrai">{t("rewards.form.locations.courtrai")}</option>
-            <option value="namur">{t("rewards.form.locations.namur")}</option>
-            <option value="liege">{t("rewards.form.locations.liege")}</option>
-            <option value="charleroi">{t("rewards.form.locations.charleroi")}</option>
-        </select>
-    </div>
-)}
+                                {profile?.role === "super_admin" && (
+                                    <div className="flex flex-col gap-1 sm:col-span-2 md:col-span-1">
+                                        <label className="text-sm font-semibold text-gray-700">{t("rewards.form.locationLabel")}</label>
+                                        <select value={form.location_filter} onChange={(e) => setForm({ ...form, location_filter: e.target.value })} className="p-2.5 md:p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] bg-white text-sm md:text-base">
+                                            <option value="all">{t("rewards.form.locations.all")}</option>
+                                            <option value="antwerp">{t("rewards.form.locations.antwerp")}</option>
+                                            <option value="ghent">{t("rewards.form.locations.ghent")}</option>
+                                            <option value="brussels">{t("rewards.form.locations.brussels")}</option>
+                                            <option value="bruges">{t("rewards.form.locations.bruges")}</option>
+                                            <option value="hasselt">{t("rewards.form.locations.hasselt")}</option>
+                                            <option value="courtrai">{t("rewards.form.locations.courtrai")}</option>
+                                            <option value="namur">{t("rewards.form.locations.namur")}</option>
+                                            <option value="liege">{t("rewards.form.locations.liege")}</option>
+                                            <option value="charleroi">{t("rewards.form.locations.charleroi")}</option>
+                                        </select>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                                 <div className="flex flex-col gap-1">
                                     <label className="text-sm font-semibold text-gray-700">{t("rewards.form.validUntilLabel")}</label>
-                                    <input type="date" value={form.valid_until} onChange={(e) => setForm({ ...form, valid_until: e.target.value })} min={new Date().toISOString().split("T")[0]} className="p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4]" />
+                                    <input type="date" value={form.valid_until} onChange={(e) => setForm({ ...form, valid_until: e.target.value })} min={new Date().toISOString().split("T")[0]} className="p-2.5 md:p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] text-sm md:text-base" />
                                 </div>
-                                <div className="flex flex-col gap-1 justify-end">
-                                    <label className="flex items-center gap-3 cursor-pointer">
+                                <div className="flex flex-col gap-1 sm:justify-end">
+                                    <label className="flex items-center gap-3 cursor-pointer mt-2 sm:mt-0 pb-2">
                                         <span className="text-sm font-semibold text-gray-700">{t("rewards.form.activeLabel")}</span>
                                         <div onClick={() => setForm({ ...form, is_active: !form.is_active })} className={`w-12 h-6 rounded-full relative transition-colors duration-300 cursor-pointer ${form.is_active ? "bg-[#0F9D58]" : "bg-gray-300"}`}>
                                             <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 shadow-sm transition-transform duration-300 ${form.is_active ? "translate-x-6 left-[1px]" : "translate-x-0.5"}`} />
@@ -402,11 +420,12 @@ export default function Rewards() {
                                 </div>
                             </div>
 
-                            <div className="flex gap-4 mt-4">
-                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-colors">
+                            {/* --- AANGEPAST: flex-col-reverse op mobiel (opslaan bovenaan), flex-row op desktop --- */}
+                            <div className="flex flex-col-reverse sm:flex-row gap-3 mt-4 pt-4 border-t border-gray-100 flex-shrink-0">
+                                <button type="button" onClick={() => setShowForm(false)} className="w-full sm:w-auto px-6 py-2.5 md:py-3 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-colors text-sm md:text-base">
                                     {t("rewards.form.cancelButton")}
                                 </button>
-                                <button type="submit" disabled={isSaving} className="flex-1 py-3 rounded-xl bg-[#0870C4] text-white font-bold hover:bg-blue-700 transition-colors disabled:opacity-50">
+                                <button type="submit" disabled={isSaving} className="w-full flex-1 py-2.5 md:py-3 rounded-xl bg-[#0870C4] text-white font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm md:text-base flex items-center justify-center">
                                     {isSaving ? t("rewards.form.savingButton") : editingReward ? t("rewards.form.updateButton") : t("rewards.form.saveButton")}
                                 </button>
                             </div>

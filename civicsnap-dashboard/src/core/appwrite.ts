@@ -23,6 +23,7 @@ export const appwriteConfig = {
     integrationsCollectionId: process.env.REACT_APP_APPWRITE_INTEGRATIONS_COLLECTION_ID || "",
     permitMailLogsCollectionId: process.env.REACT_APP_APPWRITE_PERMIT_MAIL_LOGS_COLLECTION_ID || "",
     permitSystemTypesCollectionId: process.env.REACT_APP_APPWRITE_PERMIT_SYSTEM_TYPES_COLLECTION_ID || "",
+    statsCollectionId: process.env.REACT_APP_APPWRITE_STATS_COLLECTION_ID || "",
 };
 
 

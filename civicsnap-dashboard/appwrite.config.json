@@ -489,6 +489,84 @@
                 ".npm"
             ],
             "path": "functions/PermitReminderCheck"
+        },
+        {
+            "$id": "6a20008d0019d41796ec",
+            "name": "DeleteOldAnnouncements",
+            "runtime": "node-25",
+            "buildSpecification": "s-0.5vcpu-512mb",
+            "runtimeSpecification": "s-0.5vcpu-512mb",
+            "execute": [
+                "any"
+            ],
+            "events": [],
+            "scopes": [
+                "users.read"
+            ],
+            "schedule": "",
+            "timeout": 15,
+            "enabled": true,
+            "logging": true,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "ignore": [
+                "node_modules",
+                ".npm"
+            ],
+            "deploymentRetention": 0,
+            "path": "functions/deleteoldannouncements"
+        },
+        {
+            "$id": "6a2440a100321d672e42",
+            "name": "DeleteOldRewards",
+            "runtime": "node-25",
+            "buildSpecification": "s-0.5vcpu-512mb",
+            "runtimeSpecification": "s-0.5vcpu-512mb",
+            "execute": [
+                "any"
+            ],
+            "events": [],
+            "scopes": [
+                "users.read"
+            ],
+            "schedule": "",
+            "timeout": 15,
+            "enabled": true,
+            "logging": true,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "ignore": [
+                "node_modules",
+                ".npm"
+            ],
+            "deploymentRetention": 0,
+            "path": "functions/deleteoldrewards"
+        },
+        {
+            "$id": "6a2447040021e6aa4cce",
+            "name": "CalculateStats",
+            "runtime": "node-25",
+            "buildSpecification": "s-0.5vcpu-512mb",
+            "runtimeSpecification": "s-0.5vcpu-512mb",
+            "execute": [
+                "any"
+            ],
+            "events": [],
+            "scopes": [
+                "users.read"
+            ],
+            "schedule": "",
+            "timeout": 15,
+            "enabled": true,
+            "logging": true,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "ignore": [
+                "node_modules",
+                ".npm"
+            ],
+            "deploymentRetention": 0,
+            "path": "functions/calculatestats"
         }
     ],
     "tablesDB": [
@@ -1640,6 +1718,5 @@
             "total": 1,
             "prefs": {}
         }
-    ],
-    "topics": []
+    ]
 }

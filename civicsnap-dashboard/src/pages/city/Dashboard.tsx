@@ -6,7 +6,6 @@ import {
     Marker,
     InfoWindow,
 } from "@react-google-maps/api";
-// --- AANGEPAST: AlertCircle en CheckCircle2 toegevoegd ---
 import { MapPin, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -51,8 +50,8 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
-    // --- NIEUW: State voor de KPI getallen ---
     const [kpi, setKpi] = useState({ open: 0, resolvedThisMonth: 0 });
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const { isLoaded } = useJsApiLoader({
         id: "google-map-script",
@@ -99,7 +98,7 @@ export default function Dashboard() {
                     ],
                 );
 
-                // --- NIEUW: 2. Tel alle openstaande meldingen ---
+                // 2. Tel alle openstaande meldingen
                 const openReportsResponse = await databases.listDocuments(
                     appwriteConfig.databaseId,
                     appwriteConfig.reportsCollectionId,
@@ -108,11 +107,11 @@ export default function Dashboard() {
                         Query.equal("status", ["new", "in_progress"]),
                         Query.equal("is_duplicate", false),
                         Query.equal("is_shadowbanned", false),
-                        Query.limit(1) // Beperk data, we willen alleen het '.total' getal
+                        Query.limit(1)
                     ]
                 );
 
-                // --- NIEUW: 3. Tel alle opgeloste meldingen van deze maand ---
+                // 3. Tel alle opgeloste meldingen van deze maand
                 const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
                 const resolvedResponse = await databases.listDocuments(
                     appwriteConfig.databaseId,
@@ -127,7 +126,6 @@ export default function Dashboard() {
                     ]
                 );
 
-                // Update de KPI state met de resultaten
                 setKpi({
                     open: openReportsResponse.total,
                     resolvedThisMonth: resolvedResponse.total
@@ -232,53 +230,56 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F5F7FA] font-inter">
-            <Header />
+        <div className="flex flex-col h-screen bg-[#F5F7FA] font-inter">
+            <Header onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
 
-            <div className="flex">
-                <Sidebar activeItem="dashboard" />
+            <div className="flex flex-1 overflow-hidden">
+                <Sidebar 
+                    activeItem="dashboard" 
+                    isOpen={isSidebarOpen} 
+                    onClose={() => setIsSidebarOpen(false)} 
+                />
 
-                <main className="flex-1 flex flex-col min-w-0 overflow-hidden p-8">
-                    <div className="max-w-6xl w-full mx-auto space-y-8">
-                        <h1 className="text-2xl font-bold text-gray-900">
+                {/* --- AANGEPAST: Responsive padding, overflow scroll en main layout wrapper --- */}
+                <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 w-full">
+                    {/* Max width zorgt voor centrering op hele grote schermen */}
+                    <div className="max-w-7xl w-full mx-auto space-y-6 md:space-y-8">
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-900">
                             {t("dashboard.title")}
                         </h1>
 
-                        {/* --- NIEUW: KPI BLOKJES SECTIE --- */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* KPI 1: Openstaande Meldingen */}
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center gap-4">
-                                <div className="w-14 h-14 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
-                                    <AlertCircle size={28} className="text-orange-500" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6 flex items-center gap-4">
+                                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+                                    <AlertCircle size={24} className="text-orange-500 md:w-7 md:h-7" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                    <p className="text-xs md:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">
                                         Openstaande Meldingen
                                     </p>
-                                    <p className="text-3xl font-bold text-gray-900">
+                                    <p className="text-2xl md:text-3xl font-bold text-gray-900">
                                         {kpi.open}
                                     </p>
                                 </div>
                             </div>
 
-                            {/* KPI 2: Opgelost Deze Maand */}
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center gap-4">
-                                <div className="w-14 h-14 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
-                                    <CheckCircle2 size={28} className="text-green-500" />
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6 flex items-center gap-4">
+                                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                                    <CheckCircle2 size={24} className="text-green-500 md:w-7 md:h-7" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                    <p className="text-xs md:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">
                                         Opgelost Deze Maand
                                     </p>
-                                    <p className="text-3xl font-bold text-gray-900">
+                                    <p className="text-2xl md:text-3xl font-bold text-gray-900">
                                         {kpi.resolvedThisMonth}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* ===== MAP SECTION ===== */}
-                        <div className="w-full h-[420px] bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
+                        {/* --- AANGEPAST: Variabele hoogte voor de Google Map afhankelijk van schermgrootte --- */}
+                        <div className="w-full h-[300px] md:h-[420px] bg-white rounded-2xl shadow-sm border border-gray-100 p-2 md:p-3">
                             {isLoaded ? (
                                 <GoogleMap
                                     mapContainerStyle={mapContainerStyle}
@@ -311,7 +312,7 @@ export default function Dashboard() {
                                             }}
                                             onCloseClick={() => setSelectedReport(null)}
                                         >
-                                            <div className="p-1 max-w-[200px]">
+                                            <div className="p-1 max-w-[180px] md:max-w-[200px]">
                                                 {selectedReport.photo_url ? (
                                                     <img
                                                         src={selectedReport.photo_url}
@@ -319,7 +320,7 @@ export default function Dashboard() {
                                                         className="w-full h-full object-cover rounded-md mb-2"
                                                     />
                                                 ) : (
-                                                    <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full h-24 mb-2 flex items-center justify-center">
+                                                    <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full h-20 md:h-24 mb-2 flex items-center justify-center">
                                                         <FileText className="text-gray-300" size={24} />
                                                     </div>
                                                 )}
@@ -355,30 +356,18 @@ export default function Dashboard() {
 
                         {/* ===== REPORTS TABLE SECTION ===== */}
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="px-6 py-5 border-b border-gray-100">
-                                <h2 className="text-lg font-bold text-gray-900">
+                            <div className="px-4 md:px-6 py-4 md:py-5 border-b border-gray-100">
+                                <h2 className="text-base md:text-lg font-bold text-gray-900">
                                     {t("dashboard.latest_reports")}
                                 </h2>
                             </div>
 
                             {loading ? (
-                                <div className="flex items-center justify-center py-16">
+                                <div className="flex items-center justify-center py-12 md:py-16">
                                     <div className="flex items-center gap-3 text-gray-400">
                                         <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                                            <circle
-                                                className="opacity-25"
-                                                cx="12"
-                                                cy="12"
-                                                r="10"
-                                                stroke="currentColor"
-                                                strokeWidth="4"
-                                                fill="none"
-                                            />
-                                            <path
-                                                className="opacity-75"
-                                                fill="currentColor"
-                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                                            />
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                         </svg>
                                         <span className="text-sm font-medium">
                                             {t("general.reportsLoading")}
@@ -386,30 +375,31 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                             ) : reports.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                                <div className="flex flex-col items-center justify-center py-12 md:py-16 text-gray-400">
                                     <FileText size={40} className="mb-3 text-gray-300" />
                                     <span className="text-sm font-medium">
                                         {t("general.noReports")}
                                     </span>
                                 </div>
                             ) : (
+                                // --- AANGEPAST: Table overflow en whitespace nowrap ---
                                 <div className="overflow-x-auto">
-                                    <table className="w-full">
+                                    <table className="w-full min-w-[700px]">
                                         <thead>
                                             <tr className="bg-gray-50">
-                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                <th className="text-left py-3 px-4 md:px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                                     {t("dashboard.reportsTable.date")}
                                                 </th>
-                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                <th className="text-left py-3 px-4 md:px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                                     {t("dashboard.reportsTable.type")}
                                                 </th>
-                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                <th className="text-left py-3 px-4 md:px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                                     {t("dashboard.reportsTable.location")}
                                                 </th>
-                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                <th className="text-left py-3 px-4 md:px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                                     {t("dashboard.reportsTable.status")}
                                                 </th>
-                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                <th className="text-left py-3 px-4 md:px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                                     {t("dashboard.reportsTable.actions")}
                                                 </th>
                                             </tr>
@@ -423,35 +413,33 @@ export default function Dashboard() {
                                                         key={report.$id}
                                                         className="hover:bg-gray-50 transition-colors duration-150"
                                                     >
-                                                        <td className="py-4 px-6 text-sm text-gray-600">
+                                                        <td className="py-3 md:py-4 px-4 md:px-6 text-sm text-gray-600 whitespace-nowrap">
                                                             {formatDate(report.$createdAt)}
                                                         </td>
-                                                        <td className="py-4 px-6 text-sm text-gray-600">
+                                                        <td className="py-3 md:py-4 px-4 md:px-6 text-sm text-gray-600 whitespace-nowrap">
                                                             {report.category_name}
                                                         </td>
-                                                        <td className="py-4 px-6">
+                                                        <td className="py-3 md:py-4 px-4 md:px-6">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="text-sm text-gray-600">
+                                                                <span className="text-sm text-gray-600 line-clamp-1">
                                                                     {report.address}
                                                                 </span>
                                                             </div>
                                                         </td>
-                                                        <td className="py-4 px-6">
+                                                        <td className="py-3 md:py-4 px-4 md:px-6 whitespace-nowrap">
                                                             <span
-                                                                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${statusColors.bg} ${statusColors.text}`}
+                                                                className={`inline-flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1 rounded-full text-xs font-semibold ${statusColors.bg} ${statusColors.text}`}
                                                             >
-                                                                <span
-                                                                    className={`w-1.5 h-1.5 rounded-full ${statusColors.dot}`}
-                                                                ></span>
+                                                                <span className={`w-1.5 h-1.5 rounded-full ${statusColors.dot}`}></span>
                                                                 {getDisplayStatus(report.status)}
                                                             </span>
                                                         </td>
-                                                        <td className="py-4 px-6">
+                                                        <td className="py-3 md:py-4 px-4 md:px-6 whitespace-nowrap">
                                                             <button
                                                                 onClick={() =>
                                                                     navigate(`/reports/${report.$id}`)
                                                                 }
-                                                                className="inline-flex items-center px-4 py-2 text-sm font-semibold text-[#0870C4] bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200"
+                                                                className="inline-flex items-center px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold text-[#0870C4] bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200"
                                                             >
                                                                 {t("general.reportActionButtonTitle")}
                                                             </button>

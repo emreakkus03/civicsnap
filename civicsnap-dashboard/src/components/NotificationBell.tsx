@@ -22,7 +22,8 @@ export default function NotificationBell({ orgId }: { orgId: string }) {
                 [
                     Query.equal('org_id', orgId),
                     Query.equal('is_read', false),
-                    Query.orderDesc('$createdAt')
+                    Query.orderDesc('$createdAt'),
+                    Query.limit(50)
                 ]
             );
             setUnreadCount(response.total);
@@ -47,7 +48,6 @@ export default function NotificationBell({ orgId }: { orgId: string }) {
         return () => unsubscribe();
     }, [fetchNotifications]);
 
-
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -58,24 +58,16 @@ export default function NotificationBell({ orgId }: { orgId: string }) {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // --- HIER GEBEURT HET: De klik op een specifieke melding ---
     const handleNotificationClick = async (notif: any) => {
-        console.log("Klik op melding:", notif.$id, "voor rapport:", notif.report_id);
-        
         try {
-            // 1. Markeer deze SPECIFIEKE melding als gelezen in de database
             await databases.updateDocument(
                 appwriteConfig.databaseId,
                 appwriteConfig.dashboardNotificationsCollectionId,
-                notif.$id, // Gebruik het ID van de notificatie zelf
+                notif.$id, 
                 { is_read: true }
             );
             
-            // 2. Sluit het menu
             setIsOpen(false);
-            
-            // 3. Navigeer direct naar de detailpagina van dit specifieke rapport
-            // Jouw route in App.tsx is "/reports/:id"
             navigate(`/reports/${notif.report_id}`); 
 
         } catch (error) {
@@ -84,26 +76,31 @@ export default function NotificationBell({ orgId }: { orgId: string }) {
     };
 
     return (
-        <div className="relative bg-blue rounded-full " ref={dropdownRef}>
-            <div 
+        <div className="relative" ref={dropdownRef}>
+            <button 
                 onClick={() => setIsOpen(!isOpen)} 
-                className="relative cursor-pointer p-2 rounded-full hover:bg-gray-100 transition"
+                className="relative flex items-center justify-center p-2 rounded-full hover:bg-white/20 transition-colors focus:outline-none"
+                aria-label="Notificaties"
             >
-                <Bell className="h-6 w-6 hover:text-blue-500" />
+                <Bell className="h-6 w-6 text-white" />
+                
                 {unreadCount > 0 && (
-                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-red-500 rounded-full">
-                        {unreadCount}
+                    <span className="absolute top-1 right-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-red-500 rounded-full border-2 border-[#0870C4]">
+                        {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                 )}
-            </div>
+            </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-                    <div className="p-4 bg-gray-50 border-b border-gray-100 font-bold text-gray-800">
+                // --- DE FIX ZIT IN DEZE CLASSES ---
+                // fixed inset-x-4 top-20: Zet hem vast op het scherm, gecentreerd met wat marge aan de zijkanten, net onder de header.
+                // sm:absolute sm:inset-auto sm:-right-2 sm:top-full sm:mt-3 sm:w-80: Herstelt het normale dropdown gedrag op grotere schermen.
+                <div className="fixed inset-x-4 top-[72px] sm:absolute sm:inset-auto sm:-right-2 sm:top-full sm:mt-3 sm:w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="p-3 sm:p-4 bg-gray-50 border-b border-gray-100 font-bold text-gray-800 text-sm sm:text-base">
                         Nieuwe Berichten
                     </div>
                     
-                    <div className="max-h-96 overflow-y-auto">
+                    <div className="max-h-[60vh] sm:max-h-96 overflow-y-auto">
                         {notifications.length === 0 ? (
                             <div className="p-6 text-center text-gray-500 text-sm">
                                 Geen ongelezen berichten.
@@ -113,10 +110,12 @@ export default function NotificationBell({ orgId }: { orgId: string }) {
                                 <div 
                                     key={notif.$id} 
                                     onClick={() => handleNotificationClick(notif)}
-                                    className="p-4 border-b border-gray-50 hover:bg-blue-50 cursor-pointer transition-colors"
+                                    className="p-3 sm:p-4 border-b border-gray-50 hover:bg-blue-50 cursor-pointer transition-colors"
                                 >
-                                    <p className="text-sm text-gray-800 font-medium">{notif.message}</p>
-                                    <p className="text-xs text-gray-400 mt-1">
+                                    <p className="text-xs sm:text-sm text-gray-800 font-medium break-words leading-relaxed">
+                                        {notif.message}
+                                    </p>
+                                    <p className="text-[10px] sm:text-xs text-gray-400 mt-1.5">
                                         {new Date(notif.$createdAt).toLocaleString('nl-BE')}
                                     </p>
                                 </div>

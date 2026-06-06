@@ -8,7 +8,23 @@ import React, {
 import { AppState, AppStateStatus, LogBox } from "react-native";
 import { API } from "@core/networking/api"; 
 
-LogBox.ignoreLogs(["realtime got disconnected", "Software caused connection abort"]);
+if (global.WebSocket) {
+  const originalSend = global.WebSocket.prototype.send;
+  global.WebSocket.prototype.send = function (data) {
+    try {
+      if (this.readyState === 1) {
+        originalSend.call(this, data);
+      }
+    } catch (error) {
+    }
+  };
+}
+
+LogBox.ignoreLogs([
+  "realtime got disconnected", 
+  "Software caused connection abort",
+  "Invalid state error"
+]);
 
 interface RealtimeContextType {
   lastUpdate: number;
@@ -26,44 +42,60 @@ export const RealtimeProvider = ({
   children: React.ReactNode;
 }) => {
   const [lastUpdate, setLastUpdate] = useState(Date.now());
-  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   const triggerUpdate = () => {
     console.log("🔄 Data refresh getriggerd...");
     setLastUpdate(Date.now());
   };
 
-  useEffect(() => {
+  const subscribeToRealtime = () => {
+    if (unsubscribeRef.current) return;
+
+    console.log("🔌 Verbinden met Appwrite Realtime...");
     const channels = [
       `databases.${API.config.databaseId}.collections.${API.config.reportsCollectionId}.documents`,
       `databases.${API.config.databaseId}.collections.${API.config.announcementsCollectionId}.documents`,
       `databases.${API.config.databaseId}.collections.${API.config.profilesCollectionId}.documents`
     ];
 
-    const unsubscribeRealtime = API.client.subscribe(channels, (response) => {
-      console.log("⚡ Appwrite Realtime event ontvangen!", response.events);
-      if (appStateRef.current === "active") {
-        triggerUpdate();
-      }
+    unsubscribeRef.current = API.client.subscribe(channels, () => {
+      console.log("⚡ Appwrite Realtime event ontvangen!");
+      triggerUpdate();
     });
+  };
+
+  const unsubscribeFromRealtime = () => {
+    if (unsubscribeRef.current) {
+      try {
+        unsubscribeRef.current();
+        console.log("🛑 Verbinding met Appwrite Realtime netjes verbroken...");
+      } catch (error) {
+      }
+      unsubscribeRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    subscribeToRealtime();
 
     const subscription = AppState.addEventListener(
       "change",
       (nextAppState: AppStateStatus) => {
-        if (
-          appStateRef.current.match(/inactive|background/) &&
-          nextAppState === "active"
-        ) {
-          console.log("📱 App back in focus! Forceer een data update...");
-          triggerUpdate(); 
+        if (nextAppState === "active") {
+          console.log("📱 App back in focus! Verse connectie opzetten...");
+          subscribeToRealtime();
+          triggerUpdate();
+        } else if (nextAppState === "background") {
+          console.log("🌙 App gaat slapen, realtime opruimen...");
+          unsubscribeFromRealtime();
         }
-        appStateRef.current = nextAppState;
       }
     );
 
     return () => {
       subscription.remove();
-      unsubscribeRealtime(); 
+      unsubscribeFromRealtime();
     };
   }, []);
 

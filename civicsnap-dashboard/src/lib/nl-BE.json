@@ -380,10 +380,10 @@
     }
   },
   "rewards": {
-    "title": "Rewards",
-    "addButton": "Reward toevoegen",
+    "title": "Beloningen",
+    "addButton": "Beloning toevoegen",
     "loading": "Laden...",
-    "empty": "Nog geen rewards toegevoegd.",
+    "empty": "Nog geen beloningen toegevoegd.",
     "table": {
         "image": "Afbeelding",
         "title": "Titel",
@@ -396,8 +396,8 @@
         "noPhoto": "Geen foto"
     },
     "form": {
-        "titleCreate": "Reward toevoegen",
-        "titleEdit": "Reward bewerken",
+        "titleCreate": "Beloning toevoegen",
+        "titleEdit": "Beloning bewerken",
         "titleLabel": "Titel",
         "businessLabel": "Bedrijfsnaam",
         "descriptionLabel": "Beschrijving",
@@ -433,13 +433,13 @@
         }
     },
     "toast": {
-        "fetchError": "Kon rewards niet ophalen.",
-        "saveSuccess": "Reward aangemaakt!",
-        "updateSuccess": "Reward bijgewerkt!",
+        "fetchError": "Kon beloningen niet ophalen.",
+        "saveSuccess": "Beloning aangemaakt!",
+        "updateSuccess": "Beloning bijgewerkt!",
         "saveError": "Er is een fout opgetreden.",
         "deleteConfirm": "Wil je \"{{title}}\" verwijderen?",
-        "deleteSuccess": "Reward verwijderd!",
-        "deleteError": "Kon reward niet verwijderen.",
+        "deleteSuccess": "Beloning verwijderd!",
+        "deleteError": "Kon beloning niet verwijderen.",
         "toggleError": "Kon status niet wijzigen."
     }
 },

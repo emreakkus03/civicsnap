@@ -50,69 +50,71 @@ export default function ResetPasswordDashboard() {
         }
     };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA] font-inter">
-        <div className="bg-white p-10 rounded-2xl shadow-lg w-full max-w-md text-center">
-            <h1 className="text-3xl font-inter-bold text-gray-900 mb-2">
-                {t("resetPasswordDashboard.title")}
-            </h1>
-            <p className="text-gray-500 mb-8 font-inter-regular">
-                {t("resetPasswordDashboard.subtitle")}
-            </p>
+    return (
+        // --- AANGEPAST: p-4 toegevoegd zodat de kaart randen heeft op mobiel ---
+        <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA] font-inter p-4">
+            {/* --- AANGEPAST: Responsive padding (p-6 tot md:p-10) --- */}
+            <div className="bg-white p-6 sm:p-8 md:p-10 rounded-2xl shadow-lg w-full max-w-md text-center">
+                <h1 className="text-2xl sm:text-3xl font-inter-bold text-gray-900 mb-2">
+                    {t("resetPasswordDashboard.title")}
+                </h1>
+                <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8 font-inter-regular">
+                    {t("resetPasswordDashboard.subtitle")}
+                </p>
 
-            {error && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm font-inter-medium">
-                    {error}
-                </div>
-            )}
+                {error && (
+                    <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm font-inter-medium text-left">
+                        {error}
+                    </div>
+                )}
 
-            <form onSubmit={handleReset} className="flex flex-col gap-4">
-                <div className="relative">
-                    <input
-                        type={showPassword ? "text" : "password"}
-                        placeholder={t("resetPasswordDashboard.newPasswordPlaceholder")}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] font-inter-regular pr-12"
-                        required
-                        minLength={8}
-                    />
+                <form onSubmit={handleReset} className="flex flex-col gap-3 sm:gap-4 text-left">
+                    <div className="relative">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder={t("resetPasswordDashboard.newPasswordPlaceholder")}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] font-inter-regular pr-12 text-sm sm:text-base"
+                            required
+                            minLength={8}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
+
+                    <div className="relative">
+                        <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder={t("resetPasswordDashboard.confirmPasswordPlaceholder")}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] font-inter-regular pr-12 text-sm sm:text-base"
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                            {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
+
                     <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        type="submit"
+                        disabled={loading}
+                        className="mt-2 sm:mt-4 p-3 sm:p-4 rounded-xl bg-[#0870C4] text-white font-inter-bold hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm sm:text-base flex justify-center items-center"
                     >
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {loading ? t("resetPasswordDashboard.loadingButton") : t("resetPasswordDashboard.submitButton")}
                     </button>
-                </div>
-
-                <div className="relative">
-                    <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder={t("resetPasswordDashboard.confirmPasswordPlaceholder")}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0870C4] font-inter-regular pr-12"
-                        required
-                    />
-                    <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                </div>
-
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="mt-4 p-4 rounded-xl bg-[#0870C4] text-white font-inter-bold hover:bg-blue-700 transition-colors disabled:opacity-50"
-                >
-                    {loading ? t("resetPasswordDashboard.loadingButton") : t("resetPasswordDashboard.submitButton")}
-                </button>
-            </form>
+                </form>
+            </div>
         </div>
-    </div>
-);
+    );
 }
