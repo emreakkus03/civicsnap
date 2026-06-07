@@ -71,6 +71,21 @@ export default function Settings() {
   const [integrationPassword, setIntegrationPassword] = useState("");
   const [isIntegrationActive, setIsIntegrationActive] = useState(true);
 
+  const [emailOnNewReport, setEmailOnNewReport] = useState(false);
+  const [weeklySummary, setWeeklySummary] = useState(false);
+
+  useEffect(() => {
+    if (profile?.preferences) {
+      try {
+        const parsedPrefs = JSON.parse(profile.preferences);
+        if (typeof parsedPrefs.email_on_new_report === "boolean") setEmailOnNewReport(parsedPrefs.email_on_new_report);
+        if (typeof parsedPrefs.weekly_summary === "boolean") setWeeklySummary(parsedPrefs.weekly_summary);
+      } catch (error) {
+        console.error("Fout bij het parsen van preferences:", error);
+      }
+    }
+  }, [profile?.preferences]);
+
   useEffect(() => {
     if (activeTab === "organization") fetchOrganizationMembers();
     if (activeTab === "integrations") {
@@ -336,11 +351,26 @@ const fetchOrganizationMembers = async () => {
         await account.updatePassword(newPassword, oldPassword);
       }
       if (name !== profile.full_name) await account.updateName(name);
+      let currentPrefs = {};
+      try {
+        if (profile.preferences) currentPrefs = JSON.parse(profile.preferences);
+      } catch (e) {}
+
+      const prefsJson = JSON.stringify({
+        ...currentPrefs,
+        email_on_new_report: emailOnNewReport,
+        weekly_summary: weeklySummary
+      });
+
       await databases.updateDocument(
         appwriteConfig.databaseId,
         appwriteConfig.profilesCollectionId,
         profile.$id,
-        { full_name: name, avatar_url: finalAvatarUrl },
+        { 
+          full_name: name, 
+          avatar_url: finalAvatarUrl,
+          preferences: prefsJson 
+        },
       );
       if (activeTab === "organization_info" && profile?.role === "org_admin") {
         let finalOrgLogoUrl = orgLogoUrl;
@@ -513,6 +543,34 @@ const fetchOrganizationMembers = async () => {
                           {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                       </div>
+                    </div>
+                  </div>
+                  <div className="mb-6 md:mb-8">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Notificaties</h3>
+                    <div className="space-y-3">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={emailOnNewReport}
+                          onChange={(e) => setEmailOnNewReport(e.target.checked)}
+                          className="w-5 h-5 text-[#0870C4] bg-gray-100 border-gray-300 rounded focus:ring-[#0870C4] focus:ring-2 cursor-pointer"
+                        />
+                        <span className="text-sm md:text-base text-gray-700">
+                          Stuur mij een e-mail bij elke nieuwe melding
+                        </span>
+                      </label>
+                      
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={weeklySummary}
+                          onChange={(e) => setWeeklySummary(e.target.checked)}
+                          className="w-5 h-5 text-[#0870C4] bg-gray-100 border-gray-300 rounded focus:ring-[#0870C4] focus:ring-2 cursor-pointer"
+                        />
+                        <span className="text-sm md:text-base text-gray-700">
+                          Stuur mij een wekelijkse overzicht
+                        </span>
+                      </label>
                     </div>
                   </div>
                   <hr className="my-6 md:my-8 border-gray-100" />

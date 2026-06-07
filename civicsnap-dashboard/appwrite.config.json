@@ -567,6 +567,58 @@
             ],
             "deploymentRetention": 0,
             "path": "functions/calculatestats"
+        },
+        {
+            "$id": "6a254f5a00281470c7c8",
+            "name": "SendMailByNewReport",
+            "runtime": "node-25",
+            "buildSpecification": "s-0.5vcpu-512mb",
+            "runtimeSpecification": "s-0.5vcpu-512mb",
+            "execute": [
+                "any"
+            ],
+            "events": [],
+            "scopes": [
+                "users.read"
+            ],
+            "schedule": "",
+            "timeout": 15,
+            "enabled": true,
+            "logging": true,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "ignore": [
+                "node_modules",
+                ".npm"
+            ],
+            "deploymentRetention": 0,
+            "path": "functions/sendmailbynewreport"
+        },
+        {
+            "$id": "6a254f9900203be74966",
+            "name": "SendWeeklyOverview",
+            "runtime": "node-25",
+            "buildSpecification": "s-0.5vcpu-512mb",
+            "runtimeSpecification": "s-0.5vcpu-512mb",
+            "execute": [
+                "any"
+            ],
+            "events": [],
+            "scopes": [
+                "users.read"
+            ],
+            "schedule": "",
+            "timeout": 15,
+            "enabled": true,
+            "logging": true,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "ignore": [
+                "node_modules",
+                ".npm"
+            ],
+            "deploymentRetention": 0,
+            "path": "functions/sendweeklyoverview"
         }
     ],
     "tablesDB": [
