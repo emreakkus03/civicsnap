@@ -6,6 +6,9 @@ import {
   Alert,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
+    Modal,        
+  FlatList,   
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -87,6 +90,9 @@ export default function CreateReportForm({
   const [showXPPopup, setShowXPPopup] = useState(false);
   const [xpGained, setXpGained] = useState(0);
   const [newTotalXp, setNewTotalXp] = useState(0);
+
+  const [dropdownLayout, setDropdownLayout] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+const dropdownRef = React.useRef<View>(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -513,38 +519,74 @@ export default function CreateReportForm({
       <View style={[styles.inputGroup, styles.categoryGroup]}>
         <ThemedText style={styles.categoryLabel}>Categorie</ThemedText>
         <TouchableOpacity
-          style={styles.dropdownSelector}
-          onPress={() => setDropdownOpen(!dropdownOpen)}
-          activeOpacity={0.7}
-        >
-          <ThemedText>
-            {selectedCategory ? selectedCategory.name : "Laden..."}
-          </ThemedText>
-          <Ionicons
-            name={dropdownOpen ? "chevron-up" : "chevron-down"}
-            size={20}
-            color={Variables.colors.textLight}
-          />
-        </TouchableOpacity>
+  ref={dropdownRef}
+  style={styles.dropdownSelector}
+  onPress={() => {
+    if (!dropdownOpen) {
+      dropdownRef.current?.measureInWindow((x, y, width, height) => {
+        setDropdownLayout({ x, y, width, height });
+        setDropdownOpen(true);
+      });
+    } else {
+      setDropdownOpen(false);
+    }
+  }}
+  activeOpacity={0.7}
+>
+  <ThemedText>
+    {selectedCategory ? selectedCategory.name : "Laden..."}
+  </ThemedText>
+  <Ionicons
+    name={dropdownOpen ? "chevron-up" : "chevron-down"}
+    size={20}
+    color={Variables.colors.textLight}
+  />
+</TouchableOpacity>
 
-        {dropdownOpen && (
-          <View style={styles.dropdownList}>
-            {categories.map((cat) => (
-              <TouchableOpacity
-                key={cat.id}
-                style={styles.dropdownItem}
-                onPress={() => {
-                  setSelectedCategory(cat);
-                  setDropdownOpen(false);
-                  setAiDetectedLabel(null);
-                  setAiConfidence(0);
-                }}
-              >
-                <ThemedText>{cat.name}</ThemedText>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+   <Modal
+  visible={dropdownOpen}
+  transparent
+  animationType="none"
+  onRequestClose={() => setDropdownOpen(false)}
+>
+  <TouchableOpacity
+    style={styles.dropdownOverlay}
+    activeOpacity={1}
+    onPress={() => setDropdownOpen(false)}
+  >
+    {dropdownLayout && (
+      <View
+        style={[
+          styles.dropdownList,
+          {
+            position: "absolute",
+            top: dropdownLayout.y + dropdownLayout.height,
+            left: dropdownLayout.x,
+            width: dropdownLayout.width,
+          },
+        ]}
+      >
+        <FlatList
+          data={categories}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item: cat }) => (
+            <TouchableOpacity
+              style={styles.dropdownItem}
+              onPress={() => {
+                setSelectedCategory(cat);
+                setDropdownOpen(false);
+                setAiDetectedLabel(null);
+                setAiConfidence(0);
+              }}
+            >
+              <ThemedText>{cat.name}</ThemedText>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+    )}
+  </TouchableOpacity>
+</Modal>
       </View>
 
       <TextInput
@@ -764,16 +806,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: Variables.colors.textInverse,
   },
-  dropdownList: {
-    position: "absolute",
-    top: 75,
-    left: 0,
-    right: 0,
-    backgroundColor: Variables.colors.textInverse,
-    borderWidth: 1,
-    borderColor: Variables.colors.textLight,
-    borderRadius: Variables.sizes.sm,
-  },
+ dropdownOverlay: {
+  flex: 1,
+},
+dropdownList: {
+  maxHeight: 220,
+  backgroundColor: Variables.colors.textInverse,
+  borderWidth: 1,
+  borderColor: Variables.colors.textLight,
+  borderRadius: Variables.sizes.sm,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.15,
+  shadowRadius: 4,
+  elevation: 8,
+},
   dropdownItem: {
     padding: 14,
     borderBottomWidth: 1,
