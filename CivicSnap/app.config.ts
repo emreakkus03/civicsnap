@@ -29,7 +29,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     package: "dev.emre.CivicSnap",
     edgeToEdgeEnabled: true,
-    googleServicesFile: "./google-services.json",
+    googleServicesFile: process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
     predictiveBackGestureEnabled: false,
     permissions: [
       "ACCESS_COARSE_LOCATION",
