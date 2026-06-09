@@ -26,6 +26,8 @@ import { useTranslation } from "react-i18next";
 
 import toast from "react-hot-toast";
 
+import { sanitizeUrl } from '@components/utils/sanitizeUrl';
+
 interface Report extends Models.Document {
   description: string;
   address: string;
@@ -202,10 +204,8 @@ export default function Reports() {
     
     const dateString = new Date().toISOString().split('T')[0];
     link.setAttribute("download", `CivicSnap_Export_${activeTab}_${dateString}.csv`);
-    
-    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     
     toast.success("Export succesvol gedownload!");
   };
@@ -399,7 +399,7 @@ export default function Reports() {
                             <td className="py-2 md:py-3 px-4 md:px-6">
                               <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200">
                                 {report.photo_url ? (
-                                  <img src={report.photo_url} alt={t("reports.imageAlt")} className="w-full h-full object-cover" />
+                                  <img src={sanitizeUrl(report.photo_url)} alt={t("reports.imageAlt")} className="w-full h-full object-cover" />
                                 ) : (
                                   <ImageIcon size={20} className="text-gray-300" />
                                 )}

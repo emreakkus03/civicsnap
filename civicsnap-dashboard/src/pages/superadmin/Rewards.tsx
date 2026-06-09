@@ -7,6 +7,7 @@ import Header from "@components/Header";
 import Sidebar from "@components/Sidebar";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@core/AuthProvider";
+import { sanitizeUrl } from '@components/utils/sanitizeUrl';
 
 interface Reward extends Models.Document {
     title: string;
@@ -360,7 +361,7 @@ export default function Rewards() {
                                 <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} className="hidden" />
                                 <div onClick={() => fileInputRef.current?.click()} className="w-full h-24 md:h-32 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-[#0870C4] transition-colors overflow-hidden">
                                     {imagePreview || form.image_url ? (
-                                        <img src={imagePreview || form.image_url} alt="preview" className="w-full h-full object-cover" />
+                                        <img src={sanitizeUrl(imagePreview || form.image_url)} alt="preview" className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="text-center text-gray-400">
                                             <Plus size={24} className="mx-auto mb-1" />

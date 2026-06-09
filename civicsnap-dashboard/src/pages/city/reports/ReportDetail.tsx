@@ -24,6 +24,8 @@ import { useAuth } from "@core/AuthProvider";
 import { useChat } from "@components/context/ChatContext";
 import { useRealtime } from "@components/context/RealtimeProvider";
 
+import { sanitizeUrl } from '@components/utils/sanitizeUrl';
+
 export default function ReportDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -251,7 +253,7 @@ export default function ReportDetail() {
                     <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
                       <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
                         {reporter.avatar_url ? (
-                          <img src={reporter.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                          <img src={sanitizeUrl(reporter.avatar_url)} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
                           <User size={20} className="text-gray-400 md:w-6 md:h-6" />
                         )}
@@ -366,7 +368,7 @@ export default function ReportDetail() {
                     >
                       <div className="h-28 md:h-32 bg-gray-100 relative">
                         {dup.photo_url ? (
-                          <img src={dup.photo_url} alt={t("reportsDetail.duplicates.altImage")} className="w-full h-full object-cover" />
+                          <img src={sanitizeUrl(dup.photo_url)} alt={t("reportsDetail.duplicates.altImage")} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <ImageIcon className="text-gray-300" size={24} />
@@ -407,7 +409,7 @@ export default function ReportDetail() {
                     <div className="w-full h-48 md:h-64 bg-gray-100 rounded-xl mb-4 md:mb-6 overflow-hidden relative">
                       {selectedDuplicate.photo_url ? (
                         <img
-                          src={selectedDuplicate.photo_url}
+                          src={sanitizeUrl(selectedDuplicate.photo_url)}
                           alt={t("reportsDetail.duplicates.altImage")}
                           className="w-full h-full object-contain bg-black/5"
                         />
