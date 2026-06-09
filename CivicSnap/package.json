@@ -62,5 +62,11 @@
     "eslint-config-expo": "~10.0.0",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "shell-quote": "^1.8.4",
+    "yaml": "^2.3.4",
+    "qs": "^6.13.0",
+    "minimatch": "^9.0.4"
+  }
 }
