@@ -9,7 +9,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   icon: "./assets/images/icon.png",
   scheme: "civicsnap",
   userInterfaceStyle: "automatic",
-  newArchEnabled: true,
   
   ios: {
     supportsTablet: true,
@@ -28,7 +27,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: "./assets/images/civicsnap-adaptive-icon.png",
     },
     package: "dev.emre.CivicSnap",
-    edgeToEdgeEnabled: true,
     googleServicesFile: process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
     predictiveBackGestureEnabled: false,
     permissions: [
@@ -62,7 +60,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         }
       }
     ],
-   
     [
         "expo-location",
         {
@@ -70,12 +67,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         }
     ],
     [
-    "expo-notifications",
-    {
-        "icon": "./assets/images/icon.png",
-        "color": "#274373"
-    }
-]
+        "expo-notifications",
+        {
+            "icon": "./assets/images/icon.png",
+            "color": "#274373"
+        }
+    ],
+    // Toegevoegd voor SDK 56 compatibiliteit
+    "expo-font",
+    "expo-image",
+    "expo-status-bar",
+    "expo-web-browser"
   ],
   
   experiments: {

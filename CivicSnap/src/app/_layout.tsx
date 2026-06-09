@@ -5,10 +5,9 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { ThemeProvider } from "@react-navigation/native";
-import { Theme, Variables } from "@style/theme";
+// Alleen nog je eigen Variables importeren, Theme is hier niet meer nodig
+import { Variables } from "@style/theme";
 
 import AuthProvider, {
   useAuthContext,
@@ -35,7 +34,6 @@ const InitialLayout = () => {
     }
   }, [isLoggedIn, isInitialized, segments]);
 
-  
   if (!isInitialized) {
     return (
       <View
@@ -52,7 +50,13 @@ const InitialLayout = () => {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack 
+      screenOptions={{ 
+        headerShown: false,
+        // Dit vervangt de oude ThemeProvider logica en is SDK 56 proof!
+        contentStyle: { backgroundColor: Variables.colors.background } 
+      }}
+    >
       <Stack.Screen name="welcome" />
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
@@ -83,12 +87,10 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={Theme}>
-        <AuthProvider>
-          <InitialLayout />
-          <StatusBar style="auto" />
-        </AuthProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <InitialLayout />
+        <StatusBar style="auto" />
+      </AuthProvider>
     </GestureHandlerRootView>
   );
 }

@@ -1,6 +1,3 @@
-import { DefaultTheme } from "@react-navigation/native";
-
-
 const Palette = {
   primaryBlue: "#0870C4",      
   darkBlue: "#274373",         
@@ -11,7 +8,6 @@ const Palette = {
   red: "#D3465C",             
 };
 
-
 export const Fonts = {
   regular: "inter-regular",
   default: "inter-medium",
@@ -19,7 +15,6 @@ export const Fonts = {
   bold: "inter-bold",
   extrabold: "inter-extrabold",
 };
-
 
 export const Variables = {
   colors: {
@@ -36,7 +31,6 @@ export const Variables = {
     border: Palette.primaryBlue,  
   },
   
- 
   sizes: {
     xs: 4,
     sm: 8,
@@ -59,19 +53,24 @@ export const Variables = {
   },
 };
 
-
+// Dit is het vernieuwde Theme object (compatibel met SDK 56 / React Navigation v7)
 export const Theme = {
-  ...DefaultTheme,
+  dark: false,
   colors: {
-    ...DefaultTheme.colors,
     primary: Variables.colors.primary,
     background: Variables.colors.background, 
     card: Variables.colors.surface,         
     text: Variables.colors.text,
-    border: "transparent",                   
+    border: "transparent",     
+    notification: Variables.colors.error,              
+  },
+  fonts: {
+    regular: { fontFamily: Fonts.regular, fontWeight: "400" as const },
+    medium: { fontFamily: Fonts.default, fontWeight: "500" as const },
+    bold: { fontFamily: Fonts.bold, fontWeight: "700" as const },
+    heavy: { fontFamily: Fonts.extrabold, fontWeight: "800" as const },
   },
 };
-
 
 export const DefaultScreenOptions = {
   headerStyle: {
