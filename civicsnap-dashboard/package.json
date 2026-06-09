@@ -13,6 +13,8 @@
     "@types/node": "^16.18.126",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "ajv": "^8.20.0",
+    "ajv-keywords": "^5.1.0",
     "appwrite": "^22.4.1",
     "i18next": "^25.8.13",
     "lucide-react": "^0.575.0",
@@ -56,5 +58,10 @@
     "autoprefixer": "^10.4.24",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.19"
+  },
+  "overrides": {
+    "react-scripts": {
+      "shell-quote": "^1.8.4"
+    }
   }
 }
