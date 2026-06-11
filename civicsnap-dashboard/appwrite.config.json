@@ -619,6 +619,32 @@
             ],
             "deploymentRetention": 0,
             "path": "functions/sendweeklyoverview"
+        },
+        {
+            "$id": "6a2ac5d2002af5db7599",
+            "name": "AIVisionScanner",
+            "runtime": "node-25",
+            "buildSpecification": "s-0.5vcpu-512mb",
+            "runtimeSpecification": "s-0.5vcpu-512mb",
+            "execute": [
+                "any"
+            ],
+            "events": [],
+            "scopes": [
+                "users.read"
+            ],
+            "schedule": "",
+            "timeout": 15,
+            "enabled": true,
+            "logging": true,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "ignore": [
+                "node_modules",
+                ".npm"
+            ],
+            "deploymentRetention": 0,
+            "path": "functions/aivisionscanner"
         }
     ],
     "tablesDB": [

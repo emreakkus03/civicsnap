@@ -1,10 +1,7 @@
+import { Platform } from 'react-native';
 import { Client, Account, Databases, Storage, Avatars, Functions } from 'react-native-appwrite';
 
-console.log("--- ENV DEBUG START ---");
-console.log("Endpoint:", process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT);
-console.log("Project ID:", process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID);
-console.log("Daily Spin ID:", process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_DAILY_SPIN_ID);
-console.log("--- ENV DEBUG END ---");
+
 const CONFIG = {
     endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT || '',
     projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID || '',
@@ -14,7 +11,6 @@ const CONFIG = {
     profilesCollectionId: process.env.EXPO_PUBLIC_APPWRITE_PROFILES_COLLECTION_ID|| '',
     categoriesCollectionId: process.env.EXPO_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID || '',
     reportsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_REPORTS_COLLECTION_ID || '',
-    google_maps_api_key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
     organizationsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_ORGANIZATIONS_COLLECTION_ID || '',
     announcementsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_ANNOUNCEMENTS_COLLECTION_ID || '',
     rewardsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_REWARDS_COLLECTION_ID || '',
@@ -23,6 +19,11 @@ const CONFIG = {
     messagesCollectionId: process.env.EXPO_PUBLIC_APPWRITE_MESSAGES_COLLECTION_ID || '',
     sendMessageFunctionId: process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_SEND_MESSAGE_ID || '',
     dailySpinFunctionId: process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_DAILY_SPIN_ID || '',
+    visionFunctionId: process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_VISION_ID || '',
+
+    google_maps_api_key: Platform.OS === 'ios' 
+        ? process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY || ''
+        : process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY || '',
 };
 
 
@@ -42,9 +43,7 @@ export const API = {
     avatars: new Avatars(client),   
     functions: new Functions(client),
     
-    
     config: {
-        
         databaseId: CONFIG.databaseId, 
         projectId: CONFIG.projectId,
         storageBucketId: CONFIG.storageBucketId,
@@ -60,5 +59,6 @@ export const API = {
         messagesCollectionId: CONFIG.messagesCollectionId,
         sendMessageFunctionId: CONFIG.sendMessageFunctionId,
         dailySpinFunctionId: CONFIG.dailySpinFunctionId,
+        visionFunctionId: CONFIG.visionFunctionId,
     }
 };

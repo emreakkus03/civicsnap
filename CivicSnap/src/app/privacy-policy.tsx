@@ -19,26 +19,30 @@ export default function PrivacyPolicyScreen() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-                <Text style={styles.lastUpdated}>Laatst bijgewerkt op: 19 maart 2026</Text>
+                <Text style={styles.lastUpdated}>Laatst bijgewerkt op: 11 juni 2026</Text>
 
                 <Text style={styles.intro}>
-                    Welkom bij CivicSnap! Wij hechten veel waarde aan jouw privacy en de bescherming van jouw persoonsgegevens. In dit Privacybeleid leggen we transparant uit welke gegevens we verzamelen, waarom we dat doen, en met welke externe partijen we deze delen. Dit beleid is opgesteld in overeenstemming met de Algemene Verordening Gegevensbescherming (AVG/GDPR).
+                    Welkom bij CivicSnap! Wij hechten veel waarde aan jouw privacy en de bescherming van jouw persoonsgegevens. Dit beleid is opgesteld in overeenstemming met de Algemene Verordening Gegevensbescherming (AVG/GDPR). CivicSnap is uitsluitend bedoeld voor gebruikers van 16 jaar en ouder.
                 </Text>
 
                 <Text style={styles.sectionTitle}>1. Welke persoonsgegevens wij verzamelen</Text>
-                <Text style={styles.paragraph}>Wanneer je CivicSnap gebruikt, verzamelen en verwerken wij de volgende gegevens:</Text>
-                <Text style={styles.bullet}>• <Text style={styles.bold}>Accountgegevens:</Text> Wanneer je een account aanmaakt, slaan wij je naam en e-mailadres op in onze beveiligde database.</Text>
-                <Text style={styles.bullet}>• <Text style={styles.bold}>Locatiegegevens:</Text> Om een probleem in de gemeente accuraat te kunnen melden, vragen wij (met jouw uitdrukkelijke toestemming) toegang tot de GPS-locatie van je apparaat.</Text>
-                <Text style={styles.bullet}>• <Text style={styles.bold}>Media:</Text> Foto's die je via de camera maakt of selecteert uit je galerij om toe te voegen aan een melding.</Text>
+                <Text style={styles.paragraph}>Wij verzamelen en verwerken de volgende gegevens:</Text>
+                <Text style={styles.bullet}>• <Text style={styles.bold}>Account & Profiel:</Text> Naam, e-mailadres, wachtwoord en (optioneel) je profielfoto.</Text>
+                <Text style={styles.bullet}>• <Text style={styles.bold}>Locatiegegevens:</Text> Om problemen accuraat te melden, vragen wij uitdrukkelijke toestemming tot de GPS-locatie van je apparaat.</Text>
+                <Text style={styles.bullet}>• <Text style={styles.bold}>Media (Camera & Galerij):</Text> Foto's die je uploadt bij een melding of als profielfoto via de camera of fotogalerij.</Text>
+                <Text style={styles.bullet}>• <Text style={styles.bold}>Communicatie:</Text> Berichten die via de interne chatfunctie tussen jou en de gemeente worden uitgewisseld.</Text>
+                {/* 🔥 HIER IS DE NIEUWE NOTIFICATIE BULLET 🔥 */}
+                <Text style={styles.bullet}>• <Text style={styles.bold}>Pushnotificaties:</Text> Om je op de hoogte te houden van statusupdates over jouw meldingen of nieuwe chatberichten, vragen we toestemming om pushnotificaties te sturen. Je kunt deze te allen tijde in- of uitschakelen via de instellingen van je telefoon.</Text>
 
-                <Text style={styles.sectionTitle}>2. Delen van gegevens met externe diensten</Text>
-                <Text style={styles.bullet}>• <Text style={styles.bold}>Google Maps API:</Text> Wij gebruiken Google Maps om de interactieve kaarten in de app weer te geven en om jouw GPS-coördinaten om te zetten in een leesbaar adres. Jouw gebruik van de kaart valt daarmee ook onder het Privacybeleid van Google.</Text>
-                <Text style={styles.bullet}>• <Text style={styles.bold}>Google Cloud Vision API:</Text> Foto's die je uploadt bij een melding, worden tijdelijk naar de systemen van Google gestuurd. Hier analyseert kunstmatige intelligentie de foto om deze automatisch in de juiste categorie in te delen en om ongepaste content te blokkeren.</Text>
-                <Text style={styles.bullet}>• <Text style={styles.bold}>De Gemeente:</Text> Jouw meldingen (inclusief de foto, locatie en omschrijving) worden via ons afgeschermde dashboard rechtstreeks gedeeld met de bevoegde ambtenaren van jouw gemeente.</Text>
+                <Text style={styles.sectionTitle}>2. Zichtbaarheid en Delen van gegevens</Text>
+                <Text style={styles.bullet}>• <Text style={styles.bold}>Publieke Kaart:</Text> Jouw meldingen (inclusief foto, beschrijving, AI-label en status) zijn anoniem zichtbaar voor andere gebruikers op de openbare kaart. Jouw persoonlijke accountgegevens worden hierbij verborgen voor medeburgers.</Text>
+                <Text style={styles.bullet}>• <Text style={styles.bold}>De Gemeente:</Text> De gemeente ontvangt via ons afgeschermde dashboard wél de volledige melding, inclusief de exacte locatie en jouw naam als melder, om het probleem efficiënt te kunnen verhelpen of contact met je op te nemen via de chat.</Text>
+                <Text style={styles.bullet}>• <Text style={styles.bold}>Externe API's:</Text> Wij maken gebruik van Google Maps (Android) en Apple Maps (iOS) voor kaartweergave, en de Google Cloud Vision API om meldingen via AI in categorieën in te delen. Foto's worden niet permanent door Google opgeslagen.</Text>
 
                 <Text style={styles.sectionTitle}>3. Dataminimalisatie en Bewaartermijnen</Text>
-                <Text style={styles.bullet}>• <Text style={styles.bold}>Permanente opslag:</Text> De ruwe coördinaten en de inhoud van jouw melding bewaren wij zolang de melding relevant is voor de gemeente.</Text>
-                <Text style={styles.bullet}>• <Text style={styles.bold}>Tijdelijke opslag (Caching):</Text> Uitgeschreven straatnamen en postcodes die via Google Maps worden opgehaald, worden maximaal 30 dagen in ons systeem bewaard.</Text>
+                <Text style={styles.paragraph}>
+                    Alle gegevens (waaronder meldingen, verzamelde XP, diamanten en coupons) worden veilig in onze database opgeslagen om jouw in-app voortgang te behouden en de gemeente inzicht te geven in de oploshistorie. In jouw eigen profiel tonen wij de meldingen van de afgelopen 3 maanden. Je persoonsgegevens blijven bewaard zolang je account actief is. Zodra je jouw account via de instellingen in de app verwijdert, worden je persoonsgegevens gewist conform de AVG.
+                </Text>
 
                 <Text style={styles.sectionTitle}>4. Jouw Rechten</Text>
                 <Text style={styles.paragraph}>

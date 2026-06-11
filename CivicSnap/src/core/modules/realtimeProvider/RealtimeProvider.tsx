@@ -5,23 +5,28 @@ import React, {
   useState,
   useRef,
 } from "react";
-import { AppState, AppStateStatus, LogBox } from "react-native";
+import { AppState, AppStateStatus, LogBox, Platform } from "react-native";
 import { API } from "@core/networking/api"; 
 
-if (global.WebSocket) {
-  const originalSend = global.WebSocket.prototype.send;
-  global.WebSocket.prototype.send = function (data) {
+// FIX 1: Gebruik globalThis in plaats van global, en typeer 'data' als any
+if (globalThis.WebSocket) {
+  const originalSend = globalThis.WebSocket.prototype.send;
+  globalThis.WebSocket.prototype.send = function (this: any, data: any) {
     try {
       if (this.readyState === 1) {
         originalSend.call(this, data);
       }
     } catch (error) {
+      // Stilzwijgend opvangen
     }
   };
 }
 
+// FIX 2: Hoofdlettergevoelige logs toegevoegd om de Metro popups definitief te muten
 LogBox.ignoreLogs([
-  "realtime got disconnected", 
+  "Realtime got disconnected", 
+  "realtime got disconnected",
+  "Stream end encountered",
   "Software caused connection abort",
   "Invalid state error"
 ]);
@@ -71,6 +76,7 @@ export const RealtimeProvider = ({
         unsubscribeRef.current();
         console.log("🛑 Verbinding met Appwrite Realtime netjes verbroken...");
       } catch (error) {
+        // Al verbroken op de achtergrond
       }
       unsubscribeRef.current = null;
     }
@@ -84,6 +90,8 @@ export const RealtimeProvider = ({
       (nextAppState: AppStateStatus) => {
         if (nextAppState === "active") {
           console.log("📱 App back in focus! Verse connectie opzetten...");
+          // OPTIMALISATIE: Eerst eventuele zombie-connecties killen voordat we een nieuwe openen
+          unsubscribeFromRealtime(); 
           subscribeToRealtime();
           triggerUpdate();
         } else if (nextAppState === "background") {

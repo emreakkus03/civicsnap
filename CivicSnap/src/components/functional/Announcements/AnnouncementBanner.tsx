@@ -1,47 +1,52 @@
-import { useState, useEffect } from "react"; // Import React hooks for state and lifecycle handling.
-import { StyleSheet, View, TouchableOpacity } from "react-native"; // Import React Native UI primitives and stylesheet utility.
-import { Query } from "react-native-appwrite"; // Import Appwrite query builder helpers.
-import { Ionicons } from "@expo/vector-icons"; // Import Ionicons icon set from Expo.
-import { useSafeAreaInsets } from "react-native-safe-area-context"; // Import safe area inset hook for notch/status bar spacing.
+import { useState, useEffect } from "react"; 
+import { StyleSheet, View, TouchableOpacity } from "react-native"; 
+import { Query } from "react-native-appwrite"; 
+import { Ionicons } from "@expo/vector-icons"; 
+import { useSafeAreaInsets } from "react-native-safe-area-context"; 
 
-import { API } from "@core/networking/api"; // Import centralized API client/config.
-import { Variables } from "@style/theme"; // Import theme variables (colors, sizes, fonts).
-import ThemedText from "@components/design/Typography/ThemedText"; // Import project-specific themed text component.
+import { API } from "@core/networking/api"; 
+import { Variables } from "@style/theme"; 
+import ThemedText from "@components/design/Typography/ThemedText"; 
 
-import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider"; // Import realtime hook for server update triggers.
+import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider"; 
+
+const fetchWithTimeout = <T,>(promise: Promise<T>, ms: number = 5000): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout: Server reageerde niet binnen ${ms}ms`)), ms)
+    ),
+  ]);
+};
 
 type Props = {
-  location_lat: number; // Latitude for current user location.
-  location_long: number; // Longitude for current user location.
-}; // Define component props type.
+  location_lat: number; 
+  location_long: number; 
+}; 
 
-export default function AnnouncementBanner({ location_lat, location_long }: Props) { // Define and export the announcement banner component.
-  const [activeAnnouncement, setActiveAnnouncement] = useState<any | null>(null); // Store the currently active announcement document.
-  const [showAnnouncements, setShowAnnouncements] = useState(true); // Control banner visibility state.
-  const [dismissedAnnouncements, setDismissedAnnouncements] = useState<string | null>(null); // Store dismissed announcement ID to avoid immediate re-show.
+export default function AnnouncementBanner({ location_lat, location_long }: Props) { 
+  const [activeAnnouncement, setActiveAnnouncement] = useState<any | null>(null); 
+  const [showAnnouncements, setShowAnnouncements] = useState(true); 
+  const [dismissedAnnouncements, setDismissedAnnouncements] = useState<string | null>(null); 
 
- const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
   const { lastUpdate } = useRealtime();
 
-  // 👇 DE FIX: Afronden op 2 of 3 decimalen voorkomt de infinite loop crash!
-  // 2 decimalen is ~1 kilometer nauwkeurig. Genoeg om te weten of je in een andere stad bent.
   const roundedLat = location_lat ? Math.round(location_lat * 100) / 100 : null;
   const roundedLong = location_long ? Math.round(location_long * 100) / 100 : null;
 
   useEffect(() => {
-    // Check nu op de afgeronde waarden
     if (!roundedLat || !roundedLong) {
       return; 
     }
 
     const fetchLocalAnnouncements = async () => {
       try {
-        const APIKey = await API.config.googleMapsApiKey; 
+        const APIKey = API.config.googleMapsApiKey;
         if (!APIKey) return; 
 
-        // 👇 Gebruik de afgeronde waarden voor de Google Maps call
-        const geoResponse = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${roundedLat},${roundedLong}&key=${APIKey}`
+        const geoResponse = await fetchWithTimeout(
+          fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${roundedLat},${roundedLong}&key=${APIKey}`)
         );
 
         const geoData = await geoResponse.json(); 
@@ -58,27 +63,32 @@ export default function AnnouncementBanner({ location_lat, location_long }: Prop
           return; 
         }
 
-        const orgsResponse = await API.database.listDocuments(
-          API.config.databaseId,
-          API.config.organizationsCollectionId,
-          [Query.equal("zip_codes", currentZipCode)]
+        const orgsResponse = await fetchWithTimeout(
+          API.database.listDocuments(
+            API.config.databaseId,
+            API.config.organizationsCollectionId,
+            [Query.equal("zip_codes", currentZipCode)]
+          )
         ); 
 
         if (orgsResponse.documents.length === 0) return; 
         const organizationId = orgsResponse.documents[0].$id; 
 
         const now = new Date().toISOString(); 
-        const announcementsResponse = await API.database.listDocuments(
-          API.config.databaseId,
-          API.config.announcementsCollectionId,
-          [
-            Query.equal("organization_id", organizationId), 
-            Query.equal("is_active", true), 
-            Query.lessThanEqual("start_at", now), 
-            Query.greaterThan("ends_at", now), 
-            Query.orderDesc("priority"), 
-            Query.limit(1), 
-          ]
+        
+        const announcementsResponse = await fetchWithTimeout(
+          API.database.listDocuments(
+            API.config.databaseId,
+            API.config.announcementsCollectionId,
+            [
+              Query.equal("organization_id", organizationId), 
+              Query.equal("is_active", true), 
+              Query.lessThanEqual("start_at", now), 
+              Query.greaterThan("ends_at", now), 
+              Query.orderDesc("priority"), 
+              Query.limit(1), 
+            ]
+          )
         ); 
 
         if (announcementsResponse.documents.length > 0) {
@@ -92,116 +102,102 @@ export default function AnnouncementBanner({ location_lat, location_long }: Prop
           setActiveAnnouncement(null); 
         }
       } catch (error) {
-        console.error("Error while fetching local announcements:", error); 
+        console.error("Error while fetching local announcements (Timeout of Netwerkfout):", error); 
       }
     }; 
 
     fetchLocalAnnouncements(); 
     
-  
   }, [roundedLat, roundedLong, lastUpdate]);
 
-  if (!activeAnnouncement || !showAnnouncements) return null; // Render nothing when no active item or banner is hidden.
+  if (!activeAnnouncement || !showAnnouncements) return null; 
 
   const getBannerColor = () => {
-    // Return left-border/title color based on priority value.
     switch (activeAnnouncement.priority) {
-      // Branch by priority level.
       case "high":
-        return "#E63946"; // High priority color.
+        return "#E63946"; 
       case "medium":
-        return "#F4A261"; // Medium priority color.
+        return "#F4A261"; 
       case "low":
-        return "#2A9D8F"; // Low priority color.
+        return "#2A9D8F"; 
       default:
-        return Variables.colors.primary; // Fallback theme primary color.
+        return Variables.colors.primary; 
     }
-  }; // End color helper function.
+  }; 
 
   return (
     <View style={[styles.announcementBanner, { top: insets.top + 15, borderLeftColor: getBannerColor() }]}>
-      {/* Outer banner container with safe-area top offset and dynamic border color. */}
       <View style={styles.announcementContent}>
-        {/* Inner content wrapper with padding. */}
         <View style={styles.announcementHeader}>
-          {/* Header row containing icon/title and close action. */}
           <View style={styles.titleWrapper}>
-            {/* Wrapper for icon and title text. */}
             <Ionicons name="megaphone" size={16} color={getBannerColor()} style={{ marginRight: 6 }} />
-            {/* Megaphone icon with dynamic color. */}
             <ThemedText style={[styles.announcementTitle, { color: getBannerColor() }]} numberOfLines={1}>
-              {/* Single-line announcement title with dynamic color. */}
               {activeAnnouncement.title}
-              {/* Render announcement title value. */}
             </ThemedText>
           </View>
           <TouchableOpacity
             onPress={() => {
-              setShowAnnouncements(false); // Hide banner immediately on close.
-              setDismissedAnnouncements(activeAnnouncement.$id); // Remember dismissed announcement ID.
+              setShowAnnouncements(false); 
+              setDismissedAnnouncements(activeAnnouncement.$id); 
             }}
             style={styles.closeButton}
           >
-            {/* Close button container. */}
             <Ionicons name="close" size={20} color={Variables.colors.textLight} />
-            {/* Close icon. */}
           </TouchableOpacity>
         </View>
 
         <ThemedText style={styles.announcementText} numberOfLines={2}>
-          {/* Two-line announcement body text. */}
           {activeAnnouncement.content}
-          {/* Render announcement content value. */}
         </ThemedText>
       </View>
     </View>
-  ); // Return banner UI tree.
-} // End component.
+  ); 
+} 
 
 const styles = StyleSheet.create({
   announcementBanner: {
-    position: "absolute", // Float banner over page content.
-    left: Variables.sizes.md, // Horizontal left inset.
-    right: Variables.sizes.md, // Horizontal right inset.
-    zIndex: 100, // Ensure banner appears above other elements.
-    backgroundColor: Variables.colors.surface, // Banner background color.
-    borderRadius: Variables.sizes.sm, // Rounded corner radius.
-    shadowColor: Variables.colors.text, // iOS shadow color.
-    shadowOffset: { width: 0, height: 6 }, // iOS shadow offset.
-    shadowOpacity: 0.12, // iOS shadow opacity.
-    shadowRadius: 10, // iOS shadow blur radius.
-    elevation: 8, // Android shadow elevation.
-    borderLeftWidth: 5, // Left accent border width.
+    position: "absolute", 
+    left: Variables.sizes.md, 
+    right: Variables.sizes.md, 
+    zIndex: 100, 
+    backgroundColor: Variables.colors.surface, 
+    borderRadius: Variables.sizes.sm, 
+    shadowColor: Variables.colors.text, 
+    shadowOffset: { width: 0, height: 6 }, 
+    shadowOpacity: 0.12, 
+    shadowRadius: 10, 
+    elevation: 8, 
+    borderLeftWidth: 5, 
   },
   announcementContent: {
-    padding: Variables.sizes.md, // Inner spacing around banner content.
+    padding: Variables.sizes.md, 
   },
   announcementHeader: {
-    flexDirection: "row", // Place title and close button in a row.
-    justifyContent: "space-between", // Push title and button to row edges.
-    alignItems: "center", // Vertically center row items.
-    marginBottom: Variables.sizes.xs, // Space below header.
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    alignItems: "center", 
+    marginBottom: Variables.sizes.xs, 
   },
   titleWrapper: {
-    flexDirection: "row", // Place icon and title text side-by-side.
-    alignItems: "center", // Vertically align icon and title text.
-    flex: 1, // Let title wrapper use available width.
-    marginRight: Variables.sizes.sm, // Space between title and close button.
+    flexDirection: "row", 
+    alignItems: "center", 
+    flex: 1, 
+    marginRight: Variables.sizes.sm, 
   },
   announcementTitle: {
-    fontSize: Variables.textSizes.base, // Title text size.
-    fontFamily: Variables.fonts.bold, // Title font weight/style.
-    flex: 1, // Allow title to truncate within available space.
+    fontSize: Variables.textSizes.base, 
+    fontFamily: Variables.fonts.bold, 
+    flex: 1, 
   },
   announcementText: {
-    fontSize: Variables.textSizes.sm, // Body text size.
-    color: Variables.colors.textLight, // Body text color.
-    lineHeight: 20, // Body text line height.
-    fontFamily: Variables.fonts.regular, // Body text font family.
+    fontSize: Variables.textSizes.sm, 
+    color: Variables.colors.textLight, 
+    lineHeight: 20, 
+    fontFamily: Variables.fonts.regular, 
   },
   closeButton: {
-    padding: Variables.sizes.xs, // Touch target padding.
-    backgroundColor: Variables.colors.background, // Button background color.
-    borderRadius: 20, // Make close button circular.
+    padding: Variables.sizes.xs, 
+    backgroundColor: Variables.colors.background, 
+    borderRadius: 20, 
   },
-}); // End stylesheet.
+});

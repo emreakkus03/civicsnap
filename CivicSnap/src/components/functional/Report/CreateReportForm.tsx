@@ -8,11 +8,12 @@ import {
   ActivityIndicator,
   ScrollView,
     Modal,        
-  FlatList,   
+  FlatList, 
+  Platform  
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { ID } from "react-native-appwrite";
+import { ID, ExecutionMethod } from "react-native-appwrite";
 
 import { API } from "@/core/networking/api";
 import { useAuthContext } from "@components/functional/Auth/authProvider";
@@ -28,7 +29,7 @@ import XPPopup from "@components/design/XPPopup/XPPopup";
 import LocationSearchModal from "@components/functional/Report/LocationSearchModal";
 
 import * as ImagePicker from "expo-image-picker";
-import { File, Paths } from "expo-file-system/next";
+import { File, Paths } from "expo-file-system";
 
 import { Image } from "expo-image";
 
@@ -40,6 +41,22 @@ type Props = {
   zipcode: string;
   photoUri?: string;
   hasPhoto: boolean;
+};
+
+
+const getBlobFromUri = async (uri: string) => {
+  return new Promise<any>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function () {
+      resolve(xhr.response);
+    };
+    xhr.onerror = function (e) {
+      reject(new TypeError("Network request failed"));
+    };
+    xhr.responseType = "blob";
+    xhr.open("GET", uri, true);
+    xhr.send(null);
+  });
 };
 
 export default function CreateReportForm({
@@ -169,26 +186,23 @@ const dropdownRef = React.useRef<View>(null);
     setAiConfidence(0);
 
     try {
-      const apiKey = API.config.googleMapsApiKey;
-      const response = await fetch(
-        `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            requests: [
-              {
-                image: { content: base64String },
-                features: [{ type: "LABEL_DETECTION", maxResults: 10 }],
-              },
-            ],
-          }),
-        },
+      const execution = await API.functions.createExecution(
+        API.config.visionFunctionId,
+        JSON.stringify({ base64: base64String }),
+        false,   
+        '/',     
+        ExecutionMethod.POST,  
+        { 'Content-Type': 'application/json' } 
       );
 
-      const data = await response.json();
+      if (execution.responseStatusCode !== 200) {
+         console.error("Server Execution Error:", execution.responseBody);
+         throw new Error("Backend AI analyse faalde.");
+      }
 
-      if (data.responses && data.responses[0].labelAnnotations) {
+      const data = JSON.parse(execution.responseBody);
+
+      if (data.success && data.responses && data.responses[0].labelAnnotations) {
         const annotations = data.responses[0].labelAnnotations;
 
         const rawLabels = annotations.map((annotation: any) =>
@@ -218,6 +232,8 @@ const dropdownRef = React.useRef<View>(null);
         } else {
           console.log("Geen bijpassende categorie gevonden in de database.");
         }
+      } else {
+         console.log("Geen labels gevonden of analyse mislukt:", data.error);
       }
     } catch (error) {
       console.error("AI Analyse error:", error);
@@ -226,7 +242,7 @@ const dropdownRef = React.useRef<View>(null);
     }
   };
 
-  const pickImage = async (useCamera: boolean) => {
+const pickImage = async (useCamera: boolean) => {
     let result;
 
     const options: ImagePicker.ImagePickerOptions = {
@@ -269,14 +285,19 @@ const dropdownRef = React.useRef<View>(null);
       const destination = new File(Paths.cache, newFileName);
 
       try {
-        source.copy(destination);
-        setLocalPhotoUri(destination.uri);
+        await source.copy(destination);
+// Ensure plain file:// URI without double slashes
+const cleanUri = destination.uri.startsWith("file://")
+  ? destination.uri
+  : `file://${destination.uri}`;
+setLocalPhotoUri(cleanUri);
         setImageKey((prev) => prev + 1);
 
         if (base64Data) {
           await analyzeImageWithAI(base64Data);
         }
       } catch (e) {
+        console.error("Error copying file:", e);
         setLocalPhotoUri(originalUri);
         setImageKey((prev) => prev + 1);
       }
@@ -287,7 +308,7 @@ const dropdownRef = React.useRef<View>(null);
 
   const handleSubmit = async () => {
     if (!localPhotoUri && description.trim() === "") {
-      Alert.alert("Oeps!", "Vul een korte beschrijving van het probleem in.");
+      Alert.alert("Oeps!", "Vul een korte beschrijving van het problem in.");
       return;
     }
     if (!user) {
@@ -300,24 +321,41 @@ const dropdownRef = React.useRef<View>(null);
     }
     setLoading(true);
     try {
-      let uploadedPhotoUri = "";
+     let uploadedPhotoUri = "";
       if (localPhotoUri) {
         try {
-          const type = localPhotoUri.endsWith(".png")
-            ? "image/png"
-            : "image/jpeg";
-          const file = {
-            uri: localPhotoUri,
-            name: `report_${Date.now()}.jpg`,
-            type: type,
-            size: 0,
-          };
+          const type = localPhotoUri.endsWith(".png") ? "image/png" : "image/jpeg";
+          
+          const cleanUri = localPhotoUri.startsWith("file://")
+            ? localPhotoUri
+            : `file://${localPhotoUri}`;
 
+          // Haal de Blob op
+          const fileBlob = await getBlobFromUri(cleanUri);
+
+          // Forceer de naam en het type in de Blob, omzeil de 'read-only' error!
+          Object.defineProperty(fileBlob, 'name', {
+            value: `report_${Date.now()}.jpg`,
+            configurable: true,
+            enumerable: true,
+          });
+          
+          Object.defineProperty(fileBlob, 'type', {
+            value: type,
+            configurable: true,
+            enumerable: true,
+          });
+
+          // Stuur de gemuteerde Blob naar Appwrite
           const uploaded = await API.storage.createFile(
             API.config.storageBucketId,
             ID.unique(),
-            file as any,
+            fileBlob as any
           );
+
+          if (!uploaded || !uploaded.$id) {
+            throw new Error("Appwrite retourneerde geen ID na upload!");
+          }
 
           const endpoint = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT;
           const projectId = process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID;
@@ -326,6 +364,8 @@ const dropdownRef = React.useRef<View>(null);
 
           uploadedPhotoUri = `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
         } catch (uploadError) {
+          console.error("--- DETAILED APPWRITE UPLOAD ERROR ---", uploadError);
+          
           Alert.alert(
             "Upload failed",
             "The photo could not be processed. Please try again.",

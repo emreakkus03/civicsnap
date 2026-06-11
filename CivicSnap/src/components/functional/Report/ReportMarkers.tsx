@@ -8,6 +8,15 @@ import { View } from "react-native";
 import { API } from "@core/networking/api";
 import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
 
+const fetchWithTimeout = <T,>(promise: Promise<T>, ms: number = 5000): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout: Server reageerde niet binnen ${ms}ms`)), ms)
+    ),
+  ]);
+};
+
 type ReportMarkerProps = {
   location_lat: number;
   location_long: number;
@@ -31,8 +40,8 @@ export default function ReportMarkers({
         const APIKey = API.config.googleMapsApiKey;
         if (!APIKey) return;
 
-        const geoResponse = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location_lat},${location_long}&key=${APIKey}`,
+        const geoResponse = await fetchWithTimeout(
+          fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${location_lat},${location_long}&key=${APIKey}`)
         );
         const geoData = await geoResponse.json();
 
@@ -43,7 +52,7 @@ export default function ReportMarkers({
           if (zipComponent) setCurrentZipCode(zipComponent.long_name);
         }
       } catch (error) {
-        console.error("Error fetching zipcode:", error);
+        console.error("Error fetching zipcode (Timeout of Netwerkfout):", error);
       }
     };
 
@@ -55,31 +64,35 @@ export default function ReportMarkers({
 
     const fetchReportsByZip = async () => {
       try {
-        const orgsResponse = await API.database.listDocuments(
-          API.config.databaseId,
-          API.config.organizationsCollectionId,
-          [Query.search("zip_codes", currentZipCode)],
+        const orgsResponse = await fetchWithTimeout(
+          API.database.listDocuments(
+            API.config.databaseId,
+            API.config.organizationsCollectionId,
+            [Query.search("zip_codes", currentZipCode)],
+          )
         );
 
         if (orgsResponse.documents.length === 0) return;
         const organizationId = orgsResponse.documents[0].$id;
 
-        const reportsResponse = await API.database.listDocuments(
-          API.config.databaseId,
-          API.config.reportsCollectionId,
-          [
-            Query.equal("organization_id", organizationId),
-            Query.equal("status", ["new", "approved", "in_progress"]),
-            Query.equal("is_duplicate", false),
-            Query.equal("is_shadowbanned", false),
-            Query.orderDesc("$createdAt"),
-            Query.limit(50),
-          ],
+        const reportsResponse = await fetchWithTimeout(
+          API.database.listDocuments(
+            API.config.databaseId,
+            API.config.reportsCollectionId,
+            [
+              Query.equal("organization_id", organizationId),
+              Query.equal("status", ["new", "approved", "in_progress"]),
+              Query.equal("is_duplicate", false),
+              Query.equal("is_shadowbanned", false),
+              Query.orderDesc("$createdAt"),
+              Query.limit(50),
+            ],
+          )
         );
 
         setReports(reportsResponse.documents);
       } catch (error) {
-        console.error("Error fetching reports:", error);
+        console.error("Error fetching reports (Timeout of Netwerkfout):", error);
       }
     };
 

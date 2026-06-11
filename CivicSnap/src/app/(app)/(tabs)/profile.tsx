@@ -65,15 +65,14 @@ export default function ProfileScreen() {
         const response = await API.database.listDocuments(
           API.config.databaseId,
           API.config.reportsCollectionId,
+          [
+            Query.equal("user_id", profile.$id), 
+            Query.orderDesc("$createdAt"),     
+            Query.limit(100)                   
+          ]
         );
-
-        let myReports = response.documents.filter(
-          (doc: any) => doc.user_id === profile.$id,
-        );
-        myReports.sort(
-          (a: any, b: any) =>
-            new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime(),
-        );
+        
+        let myReports = response.documents;
 
         const reportsWithCategories = await Promise.all(
           myReports.map(async (report: any) => {
@@ -121,7 +120,7 @@ export default function ProfileScreen() {
           API.config.conversationsCollectionId,
           [
             Query.equal("user_id", profile.$id),
-            Query.equal("has_unread_user", true), // 👇 Zorg dat je dit veld in Appwrite hebt!
+            Query.equal("has_unread_user", true),
           ],
         );
 
@@ -477,13 +476,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   headerIconContainer: {
-  width: 40, // Geef beide kanten exact dezelfde breedte
+  width: 40, 
   alignItems: "center",
   justifyContent: "center",
 },
   headerTitle: {
-    flex: 1, // Neemt alle beschikbare ruimte in het midden in
-  textAlign: "center", // Centreert de tekst binnen die ruimte
+    flex: 1, 
+  textAlign: "center",
   fontFamily: Variables.fonts.bold,
   fontSize: Variables.textSizes.xl,
   color: Variables.colors.text,
@@ -523,7 +522,7 @@ const styles = StyleSheet.create({
   badgeContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Variables.colors.primary + "1A", // 10% transparantie voor een lichtblauwe tint
+    backgroundColor: Variables.colors.primary + "1A", 
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
