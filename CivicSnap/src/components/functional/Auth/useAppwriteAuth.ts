@@ -14,9 +14,7 @@ import { UserProfile } from "@core/networking/database.types";
 
 const useAppwriteAuth = () => {
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
-  const [auth, setAuth] = useState<Models.User<Models.Preferences> | null>(
-    null,
-  );
+  const [auth, setAuth] = useState<Models.User<Models.Preferences> | null>(null);
   const [session, setSession] = useState<Models.Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
@@ -38,7 +36,6 @@ const useAppwriteAuth = () => {
     checkAuth();
   }, []);
 
- 
   const login = async (body: LoginBody) => {
     await apiLogin(body);
     const user = await getCurrentSession();
@@ -56,7 +53,6 @@ const useAppwriteAuth = () => {
     setProfile(null);
   };
 
- 
   const register = async (body: RegisterBody) => {
     await apiRegister(body);
     const user = await getCurrentSession();
@@ -89,6 +85,7 @@ const useAppwriteAuth = () => {
     login,
     logout,
     register,
+    setProfile,
   };
 };
 

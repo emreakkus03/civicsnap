@@ -1,9 +1,21 @@
 import { Tabs } from "expo-router";
 import { Image } from "react-native";
+import { useThemeColors } from "@core/utils/useThemeColors";
 
 export default function AppLayout() {
+  const colors = useThemeColors();
+
   return (
-    <Tabs screenOptions={{ headerShown: false, tabBarStyle: {borderTopWidth: 1} }}>
+    <Tabs 
+      screenOptions={{ 
+        headerShown: false, 
+        tabBarStyle: {
+          borderTopWidth: 1,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+        } 
+      }}
+    >
       <Tabs.Screen
         name="shop"
         options={{
@@ -20,7 +32,7 @@ export default function AppLayout() {
               style={{
                 width: 24,
                 height: 24,
-                tintColor: focused ? "#0870C4" : "#747373",
+                tintColor: focused ? colors.primary : colors.textLight,
               }}
             />
           ),
@@ -42,7 +54,7 @@ export default function AppLayout() {
               style={{
                 width: 24,
                 height: 24,
-                tintColor: focused ? "#0870C4" : "#747373",
+                tintColor: focused ? colors.primary : colors.textLight,
               }}
             />
           ),
@@ -64,7 +76,7 @@ export default function AppLayout() {
               style={{
                 width: 24,
                 height: 24,
-                tintColor: focused ? "#0870C4" : "#747373",
+                tintColor: focused ? colors.primary : colors.textLight,
               }}
             />
           ),

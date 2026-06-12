@@ -11,6 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import QRCode from "react-qr-code";
 
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 interface CouponModalProps {
@@ -32,12 +33,14 @@ const LOCATION_LABELS: Record<string, string> = {
 };
 
 export default function CouponModal({ coupon, onClose }: CouponModalProps) {
+  const colors = useThemeColors();                                       
+  const styles = createStyles(colors);
   return (
     <Modal transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalCard}>
           <TouchableOpacity style={styles.modalClose} onPress={onClose}>
-            <Ionicons name="close" size={24} color={Variables.colors.text} />
+            <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
 
           <ScrollView showsVerticalScrollIndicator={false}>
@@ -46,7 +49,7 @@ export default function CouponModal({ coupon, onClose }: CouponModalProps) {
         <Image source={{ uri: coupon.reward.image_url }} style={styles.modalImage} />
     ) : (
         <View style={[styles.modalImage, styles.imagePlaceholder]}>
-            <Ionicons name="gift-outline" size={48} color={Variables.colors.textLight} />
+            <Ionicons name="gift-outline" size={48} color={colors.textLight} />
         </View>
     )}
 </View>
@@ -67,7 +70,7 @@ export default function CouponModal({ coupon, onClose }: CouponModalProps) {
 <View style={styles.section}>
     <Text style={styles.sectionLabel}>Jouw QR Code</Text>
     <View style={styles.qrContainer}>
-        <QRCode value={coupon.code} size={180} color={Variables.colors.text} />
+        <QRCode value={coupon.code} size={180} color={colors.text} />
     </View>
 </View>
 
@@ -105,17 +108,17 @@ export default function CouponModal({ coupon, onClose }: CouponModalProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
     section: {
     marginBottom: Variables.sizes.md,
     paddingBottom: Variables.sizes.md,
     borderBottomWidth: 1,
-    borderBottomColor: Variables.colors.background,
+    borderBottomColor: colors.background,
 },
 sectionLabel: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.text,
+    color: colors.text,
     marginBottom: Variables.sizes.xs,
     textTransform: "uppercase",
     letterSpacing: 1,
@@ -126,7 +129,7 @@ sectionLabel: {
     justifyContent: "flex-end",
   },
   modalCard: {
-    backgroundColor: Variables.colors.surface,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: Variables.sizes.lg,
@@ -156,7 +159,7 @@ sectionLabel: {
   modalTitle: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.lg,
-    color: Variables.colors.text,
+    color: colors.text,
     marginBottom: Variables.sizes.xs,
   },
   businessRow: {
@@ -172,12 +175,12 @@ sectionLabel: {
   modalBusiness: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
   },
   modalValidity: {
     fontFamily: Variables.fonts.semibold,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
     marginBottom: Variables.sizes.md,
     textAlign: "center",
   },
@@ -186,7 +189,7 @@ sectionLabel: {
     justifyContent: "center",
     marginVertical: Variables.sizes.md,
     padding: Variables.sizes.md,
-    backgroundColor: Variables.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -195,25 +198,25 @@ sectionLabel: {
     elevation: 2,
   },
   codeBox: {
-    backgroundColor: Variables.colors.background,
+    backgroundColor: colors.background,
     borderRadius: 14,
     padding: Variables.sizes.md,
     alignItems: "center",
     marginVertical: Variables.sizes.md,
     borderWidth: 2,
-    borderColor: Variables.colors.primary,
+    borderColor: colors.primary,
     borderStyle: "dashed",
   },
   codeText: {
     fontFamily: Variables.fonts.extrabold,
     fontSize: Variables.textSizes.lg,
-    color: Variables.colors.primary,
+    color: colors.primary,
     letterSpacing: 3,
   },
   codeInstructions: {
     fontFamily: Variables.fonts.regular,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
     textAlign: "center",
     lineHeight: 20,
   },

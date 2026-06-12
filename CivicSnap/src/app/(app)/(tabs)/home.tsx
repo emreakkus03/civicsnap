@@ -3,13 +3,11 @@ import { View, StyleSheet, ScrollView, Text, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
-// ---- Components ----
-// --- Design ---
 import ThemedText from "@components/design/Typography/ThemedText";
-// --- Functional ---
 import { useAuthContext } from "@components/functional/Auth/authProvider";
 import LocationMap from "@components/functional/Map/LocationMap";
-// ---- Custom Styles ----
+
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
@@ -24,18 +22,19 @@ const getLevelTitle = (level: number): string => {
   return "Legende";
 };
 
-
 export default function HomeScreen() {
   const router = useRouter();
   const { profile } = useAuthContext();
   const { lastUpdate } = useRealtime();
 
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
+
   const [points, setPoints] = useState(profile?.current_points || 0);
   const [lifetimeXp, setLifetimeXp] = useState(profile?.lifetime_points || 0);
 
-  // Na de bestaande states:
-const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url);
-const [displayName, setDisplayName] = useState(profile?.full_name?.split(" ")[0] || "User");
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url);
+  const [displayName, setDisplayName] = useState(profile?.full_name?.split(" ")[0] || "User");
 
   useEffect(() => {
     if (profile) {
@@ -68,17 +67,13 @@ const [displayName, setDisplayName] = useState(profile?.full_name?.split(" ")[0]
 
   useEffect(() => {
     const requestNotificationPermissions = async () => {
-      // 1. Check of we al toestemming hebben
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
-
-      // 2. Zo niet, vraag het nu aan de gebruiker met de pop-up
       if (existingStatus !== 'granted') {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
 
-      // 3. Als ze weigeren, doen we (voor nu) even niets, we respecteren hun keuze
       if (finalStatus !== 'granted') {
         console.log('Gebruiker heeft notificaties geweigerd.');
         return;
@@ -86,7 +81,7 @@ const [displayName, setDisplayName] = useState(profile?.full_name?.split(" ")[0]
     };
 
     requestNotificationPermissions();
-  }, []); // De lege array [] zorgt dat dit alleen gebeurt als de pagina voor het eerst laadt
+  }, []);
 
   const calculateLevel = (totalXp: number) => {
     let tempLevel = 1;
@@ -98,9 +93,10 @@ const [displayName, setDisplayName] = useState(profile?.full_name?.split(" ")[0]
         xpForNextTier += 500;
     }
     return tempLevel;
-};
-const calculatedLevel = calculateLevel(lifetimeXp);
-const currentTitle = getLevelTitle(calculatedLevel);
+  };
+
+  const calculatedLevel = calculateLevel(lifetimeXp);
+  const currentTitle = getLevelTitle(calculatedLevel);
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
@@ -146,10 +142,10 @@ const currentTitle = getLevelTitle(calculatedLevel);
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Variables.colors.background,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -185,10 +181,10 @@ const styles = StyleSheet.create({
   greeting: {
     fontFamily: Variables.fonts.bold || "bold",
     fontSize: Variables.textSizes.lg || 22,
-    color: Variables.colors.text || "#000",
+    color: colors.text || "#000",
   },
   badgeContainer: {
-    backgroundColor: Variables.colors.primary + "1A", 
+    backgroundColor: colors.primary + "1A", 
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -198,12 +194,12 @@ const styles = StyleSheet.create({
   badgeText: {
     fontFamily: Variables.fonts.bold,
     fontSize: 12,
-    color: Variables.colors.primary,
+    color: colors.primary,
     textTransform: "uppercase",
   },
   levelText: {
     fontSize: Variables.textSizes.md || 16,
-    color: Variables.colors.textLight || "#747373",
+    color: colors.textLight || "#747373",
     marginTop: 2,
   },
   pointsGroup: {
@@ -214,7 +210,7 @@ const styles = StyleSheet.create({
   pointsValue: {
     fontSize: Variables.textSizes.lg || 22,
     fontFamily: Variables.fonts.bold || "bold",
-    color: Variables.colors.text || "#000",
+    color: colors.text || "#000",
   },
   section: {
     flex: 1,

@@ -5,7 +5,8 @@ import { Ionicons } from "@expo/vector-icons"; // Timeline icons
 
 import BackButton from "@components/design/Button/BackButton"; // Reusable back button
 import ThemedText from "@components/design/Typography/ThemedText"; // Themed typography component
-import { Variables } from "@/style/theme"; // Theme variables (colors, fonts, sizes)
+import { useThemeColors } from "@core/utils/useThemeColors";
+import { Variables } from "@style/theme";
 import { API } from "@core/networking/api"; // API client for Appwrite
 
 import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider"; // Realtime update hook
@@ -16,6 +17,8 @@ export default function ReportDetailScreen() {
     const [loading, setLoading] = useState(true); // Loading state
 
     const { lastUpdate } = useRealtime(); // Re-fetch trigger from realtime updates
+    const colors = useThemeColors();
+    const styles = createStyles(colors);
 
     // Fetch report data when screen loads or realtime updates change
     useEffect(() => {
@@ -67,7 +70,7 @@ export default function ReportDetailScreen() {
     if (loading) {
         return (
             <View style={[styles.container, styles.center]}>
-                <ActivityIndicator size="large" color={Variables.colors.primary} />
+                <ActivityIndicator size="large" color={colors.primary} />
             </View>
         );
     }
@@ -174,7 +177,7 @@ export default function ReportDetailScreen() {
                             <View
                                 style={[
                                     styles.iconCircle,
-                                    { backgroundColor: Variables.colors.primary || "#1976D2" },
+                                    { backgroundColor: colors.primary || "#1976D2" },
                                 ]}
                             >
                                 <Ionicons name="document-text" size={16} color="white" />
@@ -244,7 +247,7 @@ export default function ReportDetailScreen() {
                                     <Text
                                         style={[
                                             styles.timelineText,
-                                            !isInProgress && { color: Variables.colors.textLight },
+                                            !isInProgress && { color: colors.textLight },
                                         ]}
                                     >
                                         {isInProgress ? (
@@ -277,7 +280,7 @@ export default function ReportDetailScreen() {
                                     <Text
                                         style={[
                                             styles.timelineText,
-                                            !isResolved && { color: Variables.colors.textLight },
+                                            !isResolved && { color: colors.textLight },
                                         ]}
                                     >
                                         {isResolved ? (
@@ -299,17 +302,17 @@ export default function ReportDetailScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
     container: {
         flex: 1, // Fill available space
-        backgroundColor: Variables.colors.background || "#F8F9FA", // Screen background
+        backgroundColor: colors.background || "#F8F9FA", // Screen background
     },
     center: {
         justifyContent: "center", // Vertical center
         alignItems: "center", // Horizontal center
     },
     blueHeader: {
-        backgroundColor: Variables.colors.header || "#2C4365", // Header background
+        backgroundColor: colors.header || "#2C4365", // Header background
         paddingTop: 60, // Top spacing
         paddingBottom: 40, // Bottom spacing
         paddingHorizontal: 20, // Horizontal spacing
@@ -364,12 +367,12 @@ const styles = StyleSheet.create({
     },
     infoText: {
         fontSize: Variables.textSizes.base, // Base text size
-        color: Variables.colors.text, // Primary text color
+        color: colors.text, // Primary text color
         fontFamily: Variables.fonts.regular, // Regular font
     },
     descriptionText: {
         fontSize: Variables.textSizes.base, // Base text size
-        color: Variables.colors.textLight || "#666", // Secondary text color
+        color: colors.textLight || "#666", // Secondary text color
         fontFamily: Variables.fonts.regular, // Regular font
         fontStyle: "italic", // Italic style
         marginTop: 5, // Top spacing
@@ -406,7 +409,7 @@ const styles = StyleSheet.create({
     },
     timelineText: {
         fontSize: Variables.textSizes.base, // Base text size
-        color: Variables.colors.text, // Default text color
+        color: colors.text, // Default text color
         fontFamily: Variables.fonts.regular, // Regular font
     },
     titleContainer: {
@@ -433,20 +436,20 @@ const styles = StyleSheet.create({
         alignSelf: "center", // Horizontally centered
     },
     aiBadgeSuccess: {
-        backgroundColor: Variables.colors.primary, // Primary badge color
+        backgroundColor: colors.primary, // Primary badge color
         paddingHorizontal: 12, // Horizontal padding
         paddingVertical: 6, // Vertical padding
         borderRadius: 20, // Rounded pill
         flexDirection: "row", // Icon + text
         alignItems: "center", // Center content vertically
-        shadowColor: Variables.colors.text, // Shadow color
+        shadowColor: colors.text, // Shadow color
         shadowOffset: { width: 0, height: 2 }, // Shadow offset
         shadowOpacity: 0.3, // Shadow opacity
         shadowRadius: 3, // Shadow blur
         elevation: 5, // Android shadow
     },
     aiBadgeText: {
-        color: Variables.colors.textInverse || "#FFFFFF", // Badge text color
+        color: colors.textInverse || "#FFFFFF", // Badge text color
         fontSize: Variables.textSizes.sm - 2, // Slightly smaller text
         fontWeight: "bold", // Bold text
     },

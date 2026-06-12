@@ -6,9 +6,7 @@ import { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator } from "react-native";
 
-// Alleen nog je eigen Variables importeren, Theme is hier niet meer nodig
-import { Variables } from "@style/theme";
-
+import { useThemeColors } from "@core/utils/useThemeColors";
 import AuthProvider, {
   useAuthContext,
 } from "@components/functional/Auth/authProvider";
@@ -19,6 +17,7 @@ const InitialLayout = () => {
   const { isLoggedIn, isInitialized } = useAuthContext();
   const router = useRouter();
   const segments = useSegments();
+  const colors = useThemeColors();
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -41,10 +40,10 @@ const InitialLayout = () => {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: Variables.colors.background,
+          backgroundColor: colors.background,
         }}
       >
-        <ActivityIndicator size="large" color={Variables.colors.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -53,8 +52,7 @@ const InitialLayout = () => {
     <Stack 
       screenOptions={{ 
         headerShown: false,
-        // Dit vervangt de oude ThemeProvider logica en is SDK 56 proof!
-        contentStyle: { backgroundColor: Variables.colors.background } 
+        contentStyle: { backgroundColor: colors.background } 
       }}
     >
       <Stack.Screen name="welcome" />

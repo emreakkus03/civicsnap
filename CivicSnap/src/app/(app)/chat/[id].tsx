@@ -7,7 +7,8 @@ import { Query } from "react-native-appwrite";
 
 import { useAuthContext } from "@components/functional/Auth/authProvider";
 import { API } from "@core/networking/api";
-import { Variables } from "@/style/theme";
+import { useThemeColors } from "@core/utils/useThemeColors";
+import { Variables } from "@style/theme";
 
 export default function ChatDetailScreen() {
     const router = useRouter();
@@ -20,6 +21,9 @@ export default function ChatDetailScreen() {
     const [newMessage, setNewMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+    const colors = useThemeColors();
+    const styles = createStyles(colors);
 
     useEffect(() => {
         const keyboardWillShow = Keyboard.addListener(
@@ -145,7 +149,7 @@ export default function ChatDetailScreen() {
             >
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => router.back()} style={{ padding: 5 }}>
-                        <Ionicons name="arrow-back" size={24} color={Variables.colors.text} />
+                        <Ionicons name="arrow-back" size={24} color={colors.text} />
                     </TouchableOpacity>
                     
                     <View style={styles.headerTextContainer}>
@@ -168,10 +172,10 @@ export default function ChatDetailScreen() {
                         const isMe = item.sender_id === profile?.$id;
                         return (
                             <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.theirMessage]}>
-                                <Text style={{ color: isMe ? "white" : Variables.colors.text, fontSize: 15, fontFamily: Variables.fonts.regular }}>
+                                <Text style={{ color: isMe ? "white" : colors.text, fontSize: 15, fontFamily: Variables.fonts.regular }}>
                                     {item.text}
                                 </Text>
-                                <Text style={{ color: isMe ? "rgba(255,255,255,0.7)" : Variables.colors.textLight, fontSize: 10, alignSelf: 'flex-end', marginTop: 4 }}>
+                                <Text style={{ color: isMe ? "rgba(255,255,255,0.7)" : colors.textLight, fontSize: 10, alignSelf: 'flex-end', marginTop: 4 }}>
                                     {new Date(item.$createdAt).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}
                                 </Text>
                             </View>
@@ -187,7 +191,7 @@ export default function ChatDetailScreen() {
                         <TextInput
                             style={styles.input}
                             placeholder="Typ een bericht..."
-                            placeholderTextColor={Variables.colors.textLight}
+                            placeholderTextColor={colors.textLight}
                             value={newMessage}
                             onChangeText={setNewMessage}
                             multiline
@@ -210,18 +214,18 @@ export default function ChatDetailScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Variables.colors.background || "#F8F9FA" },
-    header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 15, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#eee", backgroundColor: "white", zIndex: 10 },
+const createStyles = (colors: any) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 15, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.background, zIndex: 10 },
     headerTextContainer: { flex: 1, alignItems: "center", marginHorizontal: 10 },
-    headerTitle: { fontFamily: Variables.fonts.bold, fontSize: 16, color: Variables.colors.text, textAlign: "center" },
-    headerSubtitle: { fontFamily: Variables.fonts.regular, fontSize: 12, color: Variables.colors.textLight, textAlign: "center", marginTop: 2 },
+    headerTitle: { fontFamily: Variables.fonts.bold, fontSize: 16, color: colors.text, textAlign: "center" },
+    headerSubtitle: { fontFamily: Variables.fonts.regular, fontSize: 12, color: colors.textLight, textAlign: "center", marginTop: 2 },
     messageBubble: { maxWidth: "80%", padding: 12, borderRadius: 20, marginVertical: 4 },
-    myMessage: { alignSelf: "flex-end", backgroundColor: Variables.colors.primary, borderBottomRightRadius: 4 },
-    theirMessage: { alignSelf: "flex-start", backgroundColor: "white", borderBottomLeftRadius: 4, borderWidth: 1, borderColor: "#eee" },
-    inputContainer: { flexDirection: "row", padding: 15, backgroundColor: "white", borderTopWidth: 1, borderColor: "#eee", alignItems: "flex-end" },
-    input: { flex: 1, backgroundColor: "#F5F7FA", paddingHorizontal: 18, paddingTop: 12, paddingBottom: 12, borderRadius: 20, fontSize: 15, maxHeight: 100, fontFamily: Variables.fonts.regular },
-    sendButton: { backgroundColor: Variables.colors.primary, justifyContent: "center", alignItems: "center", width: 44, height: 44, borderRadius: 22, marginLeft: 10, marginBottom: 2 },
-    closedContainer: { padding: 20, backgroundColor: "#E0E0E0", alignItems: "center" },
-    closedText: { fontFamily: Variables.fonts.regular, color: Variables.colors.textLight },
+    myMessage: { alignSelf: "flex-end", backgroundColor: colors.primary, borderBottomRightRadius: 4 },
+    theirMessage: { alignSelf: "flex-start", backgroundColor: colors.surface, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: colors.border },
+    inputContainer: { flexDirection: "row", padding: 15, backgroundColor: colors.surface, borderTopWidth: 1, borderColor: colors.border, alignItems: "flex-end" },
+    input: { flex: 1, backgroundColor: colors.background, color: colors.text, paddingHorizontal: 18, paddingTop: 12, paddingBottom: 12, borderRadius: 20, fontSize: 15, maxHeight: 100, fontFamily: Variables.fonts.regular },
+    sendButton: { backgroundColor: colors.primary, justifyContent: "center", alignItems: "center", width: 44, height: 44, borderRadius: 22, marginLeft: 10, marginBottom: 2 },
+    closedContainer: { padding: 20, backgroundColor: colors.surface, alignItems: "center", borderTopWidth: 1, borderTopColor: colors.border },
+    closedText: { fontFamily: Variables.fonts.regular, color: colors.textLight },
 });

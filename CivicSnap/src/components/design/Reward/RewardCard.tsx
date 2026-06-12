@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 const LOCATION_LABELS: Record<string, string> = {
@@ -24,6 +25,8 @@ interface RewardCardProps {
 }
 
 export default function RewardCard({ reward, points, onPress, onClaim }: RewardCardProps) {
+    const colors = useThemeColors();                                       
+    const styles = createStyles(colors);
   return (
     <TouchableOpacity style={styles.rewardCard} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.locationBadge}>
@@ -37,7 +40,7 @@ export default function RewardCard({ reward, points, onPress, onClaim }: RewardC
           <Image source={{ uri: reward.image_url }} style={styles.rewardImage} />
         ) : (
           <View style={[styles.rewardImage, styles.rewardImagePlaceholder]}>
-            <Ionicons name="gift-outline" size={32} color={Variables.colors.textLight} />
+            <Ionicons name="gift-outline" size={32} color={colors.textLight} />
           </View>
         )}
       </View>
@@ -77,10 +80,10 @@ export default function RewardCard({ reward, points, onPress, onClaim }: RewardC
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   rewardCard: {
     width: "47%",
-    backgroundColor: Variables.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     overflow: "hidden",
     shadowColor: "#000",
@@ -93,7 +96,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: Variables.sizes.sm,
     right: Variables.sizes.sm,
-    backgroundColor: Variables.colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: Variables.sizes.sm,
     paddingVertical: 2,
     borderRadius: 10,
@@ -102,7 +105,7 @@ const styles = StyleSheet.create({
   locationBadgeText: {
     fontFamily: Variables.fonts.bold,
     fontSize: 12,
-    color: Variables.colors.textInverse,
+    color: colors.textInverse,
   },
   rewardImageWrapper: {
     width: "100%",
@@ -123,7 +126,7 @@ const styles = StyleSheet.create({
   rewardTitle: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.text,
+    color: colors.text,
     marginBottom: 2,
   },
   rewardBusinessRow: {
@@ -135,7 +138,7 @@ const styles = StyleSheet.create({
   rewardBusiness: {
     fontFamily: Variables.fonts.default,
     fontSize: 15,
-    color: Variables.colors.text,
+    color: colors.text,
   },
   rewardCostRow: {
     flexDirection: "row",
@@ -150,15 +153,15 @@ const styles = StyleSheet.create({
   rewardCost: {
     fontFamily: Variables.fonts.default,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.text,
+    color: colors.text,
   },
   rewardValidity: {
     fontFamily: Variables.fonts.bold,
     fontSize: 11,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
   },
   claimButton: {
-    backgroundColor: Variables.colors.primary,
+    backgroundColor: colors.primary,
     margin: Variables.sizes.sm,
     marginTop: 0,
     paddingVertical: Variables.sizes.sm,
@@ -171,6 +174,6 @@ const styles = StyleSheet.create({
   claimButtonText: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.textInverse,
+    color: colors.textInverse,
   },
 });

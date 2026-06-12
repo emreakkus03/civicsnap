@@ -7,7 +7,8 @@ import { Query } from "react-native-appwrite";
 
 import { useAuthContext } from "@components/functional/Auth/authProvider";
 import { API } from "@core/networking/api";
-import { Variables } from "@/style/theme";
+import { useThemeColors } from "@core/utils/useThemeColors";
+import { Variables } from "@style/theme";
 
 export default function ChatListScreen() {
     const router = useRouter();
@@ -15,6 +16,8 @@ export default function ChatListScreen() {
     
     const [conversations, setConversations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const colors = useThemeColors();
+    const styles = createStyles(colors);
 
     const fetchChats = useCallback(async () => {
         if (!profile?.$id) return;
@@ -79,14 +82,14 @@ export default function ChatListScreen() {
         <SafeAreaView style={styles.container} edges={["top"]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={{ padding: 5 }}>
-                    <Ionicons name="arrow-back" size={24} color={Variables.colors.text} />
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Mijn Gesprekken</Text>
                 <View style={{ width: 34 }} />
             </View>
 
             {loading ? (
-                <ActivityIndicator size="large" color={Variables.colors.primary} style={{ marginTop: 50 }} />
+                <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 50 }} />
             ) : (
                 <FlatList
                     data={conversations}
@@ -100,7 +103,7 @@ export default function ChatListScreen() {
 
                         return (
                             <TouchableOpacity
-                                style={[styles.card, hasNewMessage && { borderColor: Variables.colors.primary, borderWidth: 1 }]}
+                                style={[styles.card, hasNewMessage && { borderColor: colors.primary, borderWidth: 1 }]}
                                 onPress={() => router.push({
                                     pathname: `/(app)/chat/[id]`,
                                     params: { id: item.$id, subject: item.subject, status: item.status, org_id: item.organization_id, org_name: item.org_name }
@@ -111,18 +114,18 @@ export default function ChatListScreen() {
                                         <Text style={styles.orgName}>{item.org_name}</Text>
                                         
                                         {hasNewMessage && (
-                                            <View style={{ backgroundColor: Variables.colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                                            <View style={{ backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
                                                 <Text style={{ color: 'white', fontSize: 10, fontFamily: Variables.fonts.bold }}>NIEUW</Text>
                                             </View>
                                         )}
                                     </View>
                                     
-                                    <Text style={[styles.subject, hasNewMessage && { color: Variables.colors.primary }]} numberOfLines={1}>{item.subject}</Text>
-                                    <Text style={[styles.status, { color: item.status === 'open' ? '#388E3C' : Variables.colors.textLight }]}>
+                                    <Text style={[styles.subject, hasNewMessage && { color: colors.primary }]} numberOfLines={1}>{item.subject}</Text>
+                                    <Text style={[styles.status, { color: item.status === 'open' ? '#388E3C' : colors.textLight }]}>
                                         {item.status === 'open' ? 'Gemeente is bereikbaar' : 'Gesprek gesloten'} • {new Date(item.$updatedAt).toLocaleDateString('nl-NL')}
                                     </Text>
                                 </View>
-                                <Ionicons name="chevron-forward" size={20} color={Variables.colors.textLight} />
+                                <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
                             </TouchableOpacity>
                         );
                     }}
@@ -132,13 +135,13 @@ export default function ChatListScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Variables.colors.background || "#F8F9FA" },
-    header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 15, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#eee", backgroundColor: "white" },
-    headerTitle: { fontFamily: Variables.fonts.bold, fontSize: 18, color: Variables.colors.text },
-    card: { flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 16, padding: 15, marginBottom: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
-    orgName: { fontFamily: Variables.fonts.bold, fontSize: 12, color: Variables.colors.primary, marginBottom: 2, textTransform: "uppercase" },
-    subject: { fontFamily: Variables.fonts.bold, fontSize: 16, color: Variables.colors.text, marginBottom: 4 },
+const createStyles = (colors: any) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 15, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.background },
+    headerTitle: { fontFamily: Variables.fonts.bold, fontSize: 18, color: colors.text },
+    card: { flexDirection: "row", alignItems: "center", backgroundColor: colors.surface, borderRadius: 16, padding: 15, marginBottom: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
+    orgName: { fontFamily: Variables.fonts.bold, fontSize: 12, color: colors.primary, marginBottom: 2, textTransform: "uppercase" },
+    subject: { fontFamily: Variables.fonts.bold, fontSize: 16, color: colors.text, marginBottom: 4 },
     status: { fontFamily: Variables.fonts.regular, fontSize: 12 },
-    emptyText: { fontFamily: Variables.fonts.regular, color: Variables.colors.textLight, textAlign: "center", marginTop: 40 },
+    emptyText: { fontFamily: Variables.fonts.regular, color: colors.textLight, textAlign: "center", marginTop: 40 },
 });

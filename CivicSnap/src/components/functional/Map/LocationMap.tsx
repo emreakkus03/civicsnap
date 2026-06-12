@@ -30,7 +30,9 @@ import ReportMarkers from "@components/functional/Report/ReportMarkers";
 import { API } from "@core/networking/api";
 
 // --- Theme styling ---
-import { Variables } from "@/style/theme";
+import { useThemeColors } from "@core/utils/useThemeColors";
+import { Variables } from "@style/theme";
+import { Colors } from "@style/theme";
 
 export default function LocationMap() {
   const [location, setLocation] = useState<Location.LocationObject | null>(
@@ -53,6 +55,9 @@ export default function LocationMap() {
   const mapRef = React.useRef<MapView>(null);
 
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();                                       
+  const styles = createStyles(colors);
+const isDarkMode = colors.background === Colors.dark.background;
 
   const DEFAULT_REGION = {
     latitude: 51.0956,
@@ -237,9 +242,11 @@ export default function LocationMap() {
         />
       )}
       <MapView
+      key={isDarkMode ? "dark-map-force" : "light-map-force"}
         ref={mapRef}
         style={styles.map}
-        userInterfaceStyle="light"
+        userInterfaceStyle={isDarkMode ? "dark" : "light"}
+        customMapStyle={isDarkMode ? darkMapStyle : []}
         provider={
           Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
         }
@@ -286,7 +293,7 @@ export default function LocationMap() {
         style={[styles.locationButton, {  top: insets.top + 10 }]}
         onPress={goToMyLocation}
       >
-        <Ionicons name="locate" size={24} color={Variables.colors.primary} />
+        <Ionicons name="locate" size={24} color={colors.primary} />
       </TouchableOpacity>
       )}
       {hasPanned && (
@@ -331,11 +338,11 @@ export default function LocationMap() {
               onPress={() => setSelectedReport(null)} 
               style={styles.closeButton}
             >
-              <Ionicons name="close" size={24} color={Variables.colors.textLight} />
+              <Ionicons name="close" size={24} color={colors.textLight} />
             </TouchableOpacity>
           </View>
 
-          {/* NIEUW: Toon de foto als deze bestaat (Check of de naam in je DB photo_url of image_url is!) */}
+      
           {selectedReport.photo_url && (
             <Image 
               source={{ uri: selectedReport.photo_url }} 
@@ -372,7 +379,7 @@ export default function LocationMap() {
       />
       {loading && !location && (
         <View style={styles.overlayCenter}>
-          <ActivityIndicator size="large" color={Variables.colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Locatie laden...</Text>
         </View>
       )}
@@ -385,12 +392,31 @@ export default function LocationMap() {
   );
 }
 
-const styles = StyleSheet.create({
+const darkMapStyle = [
+  { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }] },
+  { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#6b9a76" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }] },
+  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }] },
+  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#f3d19c" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] },
+  { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] }
+];
+
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     width: "100%",
     overflow: "hidden",
-    backgroundColor: "#f0f0f0",
+    backgroundColor: colors.background,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
   },
@@ -439,7 +465,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 10,
     backgroundColor: "transparent",
-    shadowColor: Variables.colors.text || "#000",
+    shadowColor: colors.text || "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
@@ -480,12 +506,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: Variables.colors.surface,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 24,
     paddingHorizontal: 20,
-    shadowColor: Variables.colors.text,
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -500,33 +526,33 @@ const styles = StyleSheet.create({
   sheetCategory: {
     fontSize: Variables.textSizes.lg,
     fontFamily: Variables.fonts.bold,
-    color: Variables.colors.text,
+    color: colors.text,
     marginBottom: 4,
   },
   sheetStatus: {
     fontSize: Variables.textSizes.sm,
     fontFamily: Variables.fonts.bold,
-    color: Variables.colors.primary, 
+    color: colors.primary, 
     textTransform: "uppercase",
   },
   closeButton: {
     padding: 4,
-    backgroundColor: Variables.colors.background,
+    backgroundColor: colors.background,
     borderRadius: 20,
   },
   sheetAddress: {
     fontSize: Variables.textSizes.base,
     fontFamily: Variables.fonts.bold,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
   },
   detailButton: {
-    backgroundColor: Variables.colors.primary,
+    backgroundColor: colors.primary,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
   },
   detailButtonText: {
-    color: Variables.colors.textInverse,
+    color: colors.textInverse,
     fontSize: Variables.textSizes.base,
     fontFamily: Variables.fonts.bold,
   },
@@ -553,17 +579,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    // Dit zorgt ervoor dat niet de linkerbovenhoek, maar de PUNT van de pin in het exacte midden staat.
-    // Pas deze getallen aan afhankelijk van de grootte van je afbeelding.
-    marginLeft: -25, // Helft van de width
-    marginTop: -50,  // Volledige height (zodat de onderkant van de pin in het midden prikt)
+    marginLeft: -25,
+    marginTop: -50,  
     zIndex: 10,
   },
   centerPinImage: {
     width: 50,
     height: 50,
     resizeMode: 'contain',
-    // Optioneel: voeg een subtiele schaduw toe voor een 3D effect
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -572,7 +595,7 @@ const styles = StyleSheet.create({
   locationButton: {
     position: "absolute",
     right: 15,
-    backgroundColor: Variables.colors.surface, // Witte achtergrond
+    backgroundColor: colors.surface,
     width: 44,
     height: 44,
     borderRadius: 22,

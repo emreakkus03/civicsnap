@@ -14,10 +14,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     bundleIdentifier: "dev.emre.CivicSnap",
     infoPlist: {
-      NSLocationWhenInUseUsageDescription: "CivicSnap gebruikt je locatie om te laten zien waar je bent op de kaart."
+      NSLocationWhenInUseUsageDescription: "CivicSnap gebruikt je locatie om te laten zien waar je bent op de kaart.",
+      NSCameraUsageDescription: "CivicSnap heeft toegang tot je camera nodig om een foto van het probleem te maken.",
+      NSPhotoLibraryUsageDescription: "CivicSnap heeft toegang tot je galerij nodig om een foto te selecteren."
     },
     config: {
-      googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+      googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY,
     }
   },
   
@@ -31,11 +33,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     predictiveBackGestureEnabled: false,
     permissions: [
       "ACCESS_COARSE_LOCATION",
-      "ACCESS_FINE_LOCATION"
+      "ACCESS_FINE_LOCATION",
+      "CAMERA",
+      "READ_EXTERNAL_STORAGE",
+      "WRITE_EXTERNAL_STORAGE"
     ],
     config: {
       googleMaps: {
-        apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+        apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY,
       }
     },
   },

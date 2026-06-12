@@ -5,7 +5,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context"; 
 
 import { API } from "@core/networking/api"; 
-import { Variables } from "@style/theme"; 
+import { useThemeColors } from "@core/utils/useThemeColors";
+import { Variables } from "@style/theme";
 import ThemedText from "@components/design/Typography/ThemedText"; 
 
 import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider"; 
@@ -34,6 +35,8 @@ export default function AnnouncementBanner({ location_lat, location_long }: Prop
 
   const roundedLat = location_lat ? Math.round(location_lat * 100) / 100 : null;
   const roundedLong = location_long ? Math.round(location_long * 100) / 100 : null;
+              const colors = useThemeColors();                                       
+              const styles = createStyles(colors);
 
   useEffect(() => {
     if (!roundedLat || !roundedLong) {
@@ -121,7 +124,7 @@ export default function AnnouncementBanner({ location_lat, location_long }: Prop
       case "low":
         return "#2A9D8F"; 
       default:
-        return Variables.colors.primary; 
+        return colors.primary; 
     }
   }; 
 
@@ -142,7 +145,7 @@ export default function AnnouncementBanner({ location_lat, location_long }: Prop
             }}
             style={styles.closeButton}
           >
-            <Ionicons name="close" size={20} color={Variables.colors.textLight} />
+            <Ionicons name="close" size={20} color={colors.textLight} />
           </TouchableOpacity>
         </View>
 
@@ -154,15 +157,15 @@ export default function AnnouncementBanner({ location_lat, location_long }: Prop
   ); 
 } 
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   announcementBanner: {
     position: "absolute", 
     left: Variables.sizes.md, 
     right: Variables.sizes.md, 
     zIndex: 100, 
-    backgroundColor: Variables.colors.surface, 
+    backgroundColor: colors.surface, 
     borderRadius: Variables.sizes.sm, 
-    shadowColor: Variables.colors.text, 
+    shadowColor: colors.text, 
     shadowOffset: { width: 0, height: 6 }, 
     shadowOpacity: 0.12, 
     shadowRadius: 10, 
@@ -191,13 +194,13 @@ const styles = StyleSheet.create({
   },
   announcementText: {
     fontSize: Variables.textSizes.sm, 
-    color: Variables.colors.textLight, 
+    color: colors.textLight, 
     lineHeight: 20, 
     fontFamily: Variables.fonts.regular, 
   },
   closeButton: {
     padding: Variables.sizes.xs, 
-    backgroundColor: Variables.colors.background, 
+    backgroundColor: colors.background, 
     borderRadius: 20, 
   },
 });

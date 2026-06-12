@@ -18,7 +18,8 @@ import { useAuthContext } from "@components/functional/Auth/authProvider";
 import { API } from "@core/networking/api";
 import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
 
-import { Variables } from "@/style/theme";
+import { useThemeColors } from "@core/utils/useThemeColors";
+import { Variables } from "@style/theme";
 
 const getLevelTitle = (level: number): string => {
   if (level < 5) return "Scout";
@@ -32,6 +33,9 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { profile } = useAuthContext();
   const { lastUpdate } = useRealtime();
+
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
 
   const [userReports, setUserReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +75,7 @@ export default function ProfileScreen() {
             Query.limit(100)                   
           ]
         );
-        
+
         let myReports = response.documents;
 
         const reportsWithCategories = await Promise.all(
@@ -208,34 +212,31 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView bounces={true} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-  {/* Linkerkant: Berichten */}
-  <TouchableOpacity 
-    onPress={() => router.push("/(app)/chat" as any)} 
-    style={styles.headerIconContainer}
-  >
-    <Ionicons
-      name="chatbubbles-outline"
-      size={26}
-      color={Variables.colors.textLight}
-    />
-    {hasUnreadMessages && <View style={styles.unreadBadge} />}
-  </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => router.push("/(app)/chat" as any)} 
+            style={styles.headerIconContainer}
+          >
+            <Ionicons
+              name="chatbubbles-outline"
+              size={26}
+              color={colors.textLight}
+            />
+            {hasUnreadMessages && <View style={styles.unreadBadge} />}
+          </TouchableOpacity>
 
-  {/* Midden: Titel */}
-  <Text style={styles.headerTitle}>Profiel</Text>
+          <Text style={styles.headerTitle}>Profiel</Text>
 
-  {/* Rechterkant: Settings */}
-  <TouchableOpacity 
-    onPress={() => router.push("/(app)/settings" as any)}
-    style={styles.headerIconContainer}
-  >
-    <Ionicons
-      name="settings-outline"
-      size={26}
-      color={Variables.colors.textLight}
-    />
-  </TouchableOpacity>
-</View>
+          <TouchableOpacity 
+            onPress={() => router.push("/(app)/settings" as any)}
+            style={styles.headerIconContainer}
+          >
+            <Ionicons
+              name="settings-outline"
+              size={26}
+              color={colors.textLight}
+            />
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
@@ -257,12 +258,11 @@ export default function ProfileScreen() {
 
           <Text style={styles.nameText}>{displayName}</Text>
 
-        
           <View style={styles.badgeContainer}>
             <Ionicons
               name="shield-checkmark"
               size={14}
-              color={Variables.colors.primary}
+              color={colors.primary}
             />
             <Text style={styles.badgeText}>
               Lvl {calculatedLevel} • {currentTitle}
@@ -270,7 +270,6 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.levelPointsRow}>
-            {/* Je hebt hier alleen nog de punten nodig, level staat in de badge */}
             <View style={styles.pointsGroup}>
               <Text style={styles.pointsText}>{points}</Text>
               <Image
@@ -340,7 +339,7 @@ export default function ProfileScreen() {
               <Text
                 style={[
                   styles.levelLabelText,
-                  { color: Variables.colors.primary },
+                  { color: colors.primary },
                 ]}
               >
                 Level {calculatedLevel}
@@ -372,7 +371,7 @@ export default function ProfileScreen() {
           {loading ? (
             <ActivityIndicator
               size="small"
-              color={Variables.colors.primary}
+              color={colors.primary}
               style={{ marginTop: 20 }}
             />
           ) : userReports.length === 0 ? (
@@ -386,24 +385,24 @@ export default function ProfileScreen() {
               const isInProgress =
                 report.status === "approved" || report.status === "in_progress";
 
-              let bgColor = "#E3F2FD";
-              let iconColor = "#1976D2";
+              let iconColor = colors.primary;
+              let bgColor = colors.primary + "1A";
               let iconName = "document-text";
               let statusText = "Gemeld";
 
               if (isInvalid) {
-                bgColor = "#FFEBEE";
-                iconColor = "#D32F2F";
+                iconColor = colors.error;
+                bgColor = colors.error + "1A";
                 iconName = "close-circle";
                 statusText = "Afgewezen";
               } else if (isResolved) {
-                bgColor = "#E8F5E9";
                 iconColor = "#388E3C";
+                bgColor = "#388E3C1A";
                 iconName = "checkmark-circle";
                 statusText = "Opgelost";
               } else if (isInProgress) {
-                bgColor = "#FFF3E0";
                 iconColor = "#F57C00";
+                bgColor = "#F57C001A";
                 iconName = "build";
                 statusText = "In behandeling";
               }
@@ -451,7 +450,7 @@ export default function ProfileScreen() {
                   <Ionicons
                     name="chevron-forward"
                     size={20}
-                    color={Variables.colors.textLight}
+                    color={colors.textLight}
                   />
                 </TouchableOpacity>
               );
@@ -463,10 +462,10 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Variables.colors.background || "#F8F9FA",
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -476,16 +475,16 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   headerIconContainer: {
-  width: 40, 
-  alignItems: "center",
-  justifyContent: "center",
-},
+    width: 40, 
+    alignItems: "center",
+    justifyContent: "center",
+  },
   headerTitle: {
     flex: 1, 
-  textAlign: "center",
-  fontFamily: Variables.fonts.bold,
-  fontSize: Variables.textSizes.xl,
-  color: Variables.colors.text,
+    textAlign: "center",
+    fontFamily: Variables.fonts.bold,
+    fontSize: Variables.textSizes.xl,
+    color: colors.text,
   },
   profileSection: {
     alignItems: "center",
@@ -498,31 +497,31 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: "#E0E0E0",
+    backgroundColor: colors.surface,
   },
   editBadge: {
     position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: Variables.colors.primary,
+    backgroundColor: colors.primary,
     width: 28,
     height: 28,
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: Variables.colors.background,
+    borderColor: colors.background,
   },
   nameText: {
     fontFamily: Variables.fonts.bold,
     fontSize: 22,
     marginTop: 15,
-    color: Variables.colors.text,
+    color: colors.text,
   },
   badgeContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Variables.colors.primary + "1A", 
+    backgroundColor: colors.primary + "1A", 
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -532,7 +531,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontFamily: Variables.fonts.bold,
     fontSize: 14,
-    color: Variables.colors.primary,
+    color: colors.primary,
     textTransform: "uppercase",
   },
   levelPointsRow: {
@@ -549,12 +548,12 @@ const styles = StyleSheet.create({
   levelText: {
     fontFamily: Variables.fonts.regular,
     fontSize: 16,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
   },
   pointsText: {
     fontFamily: Variables.fonts.bold,
     fontSize: 18,
-    color: Variables.colors.text,
+    color: colors.text,
   },
   diamondIcon: {
     width: 20,
@@ -570,7 +569,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     alignItems: "center",
@@ -583,14 +582,14 @@ const styles = StyleSheet.create({
   statCardTitle: {
     fontFamily: Variables.fonts.regular,
     fontSize: 13,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
     textAlign: "center",
     marginBottom: 10,
   },
   statCardNumber: {
     fontFamily: Variables.fonts.bold,
     fontSize: 28,
-    color: Variables.colors.text,
+    color: colors.text,
   },
   section: {
     paddingHorizontal: 20,
@@ -600,7 +599,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: Variables.fonts.bold,
     fontSize: 20,
-    color: Variables.colors.text,
+    color: colors.text,
     marginBottom: 15,
   },
 
@@ -610,13 +609,13 @@ const styles = StyleSheet.create({
   progressBarBackground: {
     width: "100%",
     height: 18,
-    backgroundColor: "#E0E0E0",
+    backgroundColor: colors.surface,
     borderRadius: 10,
     position: "relative",
   },
   progressBarFill: {
     height: "100%",
-    backgroundColor: Variables.colors.primary || "#1976D2",
+    backgroundColor: colors.primary,
     borderRadius: 10,
     position: "relative",
   },
@@ -627,11 +626,11 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: Variables.colors.primary || "#1976D2",
+    borderColor: colors.primary,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -642,8 +641,8 @@ const styles = StyleSheet.create({
   pointsNeededText: {
     fontFamily: Variables.fonts.semibold,
     fontSize: 12,
-    color: Variables.colors.primary || "#1976D2",
-    backgroundColor: "#E3F2FD",
+    color: colors.primary,
+    backgroundColor: colors.primary + "1A",
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 12,
@@ -662,13 +661,13 @@ const styles = StyleSheet.create({
   levelLabelText: {
     fontFamily: Variables.fonts.regular,
     fontSize: 12,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
   },
 
   reportCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 15,
     marginBottom: 12,
@@ -692,17 +691,17 @@ const styles = StyleSheet.create({
   reportDate: {
     fontFamily: Variables.fonts.bold,
     fontSize: 15,
-    color: Variables.colors.text,
+    color: colors.text,
   },
   reportAddress: {
     fontFamily: Variables.fonts.regular,
     fontSize: 13,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
     lineHeight: 18,
   },
   emptyText: {
     fontFamily: Variables.fonts.regular,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
     textAlign: "center",
     marginTop: 10,
   },
@@ -714,7 +713,7 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontFamily: Variables.fonts.bold,
-    color: Variables.colors.primary,
+    color: colors.primary,
     fontSize: 14,
     marginBottom: 15,
   },
@@ -730,13 +729,13 @@ const styles = StyleSheet.create({
   },
   unreadBadge: {
     position: 'absolute',
-  top: 0,
-  right: 5,
-  backgroundColor: Variables.colors.error, 
-  width: 10,
-  height: 10,
-  borderRadius: 5,
-  borderWidth: 1.5,
-  borderColor: Variables.colors.background,
+    top: 0,
+    right: 5,
+    backgroundColor: colors.error, 
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: colors.background,
   },
 });

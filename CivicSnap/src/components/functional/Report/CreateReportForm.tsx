@@ -19,7 +19,8 @@ import { API } from "@/core/networking/api";
 import { useAuthContext } from "@components/functional/Auth/authProvider";
 
 // ---- Custom Design Components ---- //
-import { Variables } from "@/style/theme";
+import { useThemeColors } from "@core/utils/useThemeColors";
+import { Variables } from "@style/theme";
 import Button from "@components/design/Button/PrimaryButton";
 import EditButton from "@components/design/Button/EditButton";
 import ThemedText from "@components/design/Typography/ThemedText";
@@ -110,6 +111,9 @@ export default function CreateReportForm({
 
   const [dropdownLayout, setDropdownLayout] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 const dropdownRef = React.useRef<View>(null);
+
+                const colors = useThemeColors();                                       
+                const styles = createStyles(colors);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -551,8 +555,11 @@ setLocalPhotoUri(cleanUri);
             {currentAddress}, {currentZipcode} {currentCity}
           </ThemedText>
           <View style={styles.editButtonWrapper}>
-            <EditButton onPress={() => setLocationModalVisible(true)} />
-          </View>
+  <EditButton 
+    color={colors.textLight} 
+    onPress={() => setLocationModalVisible(true)} 
+  />
+</View>
         </View>
       </View>
 
@@ -579,7 +586,7 @@ setLocalPhotoUri(cleanUri);
   <Ionicons
     name={dropdownOpen ? "chevron-up" : "chevron-down"}
     size={20}
-    color={Variables.colors.textLight}
+    color={colors.textLight}
   />
 </TouchableOpacity>
 
@@ -632,7 +639,7 @@ setLocalPhotoUri(cleanUri);
       <TextInput
         style={styles.textArea}
         placeholder="Typ hier extra info..."
-        placeholderTextColor={Variables.colors.textLight}
+        placeholderTextColor={colors.textLight}
         multiline
         numberOfLines={6}
         value={description}
@@ -671,7 +678,7 @@ setLocalPhotoUri(cleanUri);
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   // --- Photo preview ---
   photoPreviewContainer: {
     width: "100%",
@@ -706,20 +713,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   aiBadgeSuccess: {
-    backgroundColor: Variables.colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     flexDirection: "row",
     alignItems: "center",
-    shadowColor: Variables.colors.text,
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 5,
   },
   aiBadgeText: {
-    color: Variables.colors.textInverse,
+    color: colors.textInverse,
     fontSize: Variables.textSizes.sm - 2,
     fontWeight: "bold",
   },
@@ -735,9 +742,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 30,
-    backgroundColor: Variables.colors.textInverse,
+    backgroundColor: colors.textInverse,
     borderWidth: 1,
-    borderColor: Variables.colors.textLight,
+    borderColor: colors.textLight,
     padding: 5,
     zIndex: 10,
   },
@@ -753,42 +760,32 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 
-  // --- Empty photo ---
   emptyPhotoContainer: {
-    width: "100%",
-    padding: 20,
-    marginBottom: Variables.sizes.lg,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: Variables.colors.primary,
-    borderStyle: "dashed",
-    alignItems: "center",
-    backgroundColor: Variables.colors.background,
-  },
+  width: "100%", padding: 20, marginBottom: Variables.sizes.lg,
+  borderRadius: 12, borderWidth: 2, borderStyle: "dashed", alignItems: "center",
+  borderColor: colors.primary,
+  backgroundColor: colors.surface, 
+},
   emptyPhotoText: {
     marginBottom: 12,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
   },
   photoActionsRow: {
     flexDirection: "row",
     gap: 12,
   },
   photoActionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Variables.colors.textInverse,
-    borderWidth: 1,
-    borderColor: Variables.colors.primary,
-    paddingVertical: 10,
-    paddingHorizontal: Variables.sizes.md,
-    borderRadius: Variables.sizes.sm,
-  },
+  flexDirection: "row", alignItems: "center", borderWidth: 1,
+  paddingVertical: 10, paddingHorizontal: Variables.sizes.md, borderRadius: Variables.sizes.sm,
+  borderColor: colors.primary,
+  backgroundColor: colors.surface,
+},
   icon: {
-    color: Variables.colors.primary,
+    color: colors.primary,
   },
   iconLabel: {
     marginLeft: Variables.sizes.sm,
-    color: Variables.colors.primary,
+    color: colors.primary,
     fontWeight: "bold",
   },
 
@@ -796,7 +793,7 @@ const styles = StyleSheet.create({
   formCard: {
     position: "relative",
     width: "100%",
-    backgroundColor: Variables.colors.background,
+    backgroundColor: colors.surface,
     zIndex: 50,
     top: -40,
     borderTopLeftRadius: 20,
@@ -838,22 +835,22 @@ const styles = StyleSheet.create({
   // --- Dropdown ---
   dropdownSelector: {
     borderWidth: 1,
-    borderColor: Variables.colors.textLight,
+    borderColor: colors.border,   
+  backgroundColor: colors.surface,
     borderRadius: Variables.sizes.sm,
     padding: 14,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: Variables.colors.textInverse,
   },
  dropdownOverlay: {
   flex: 1,
 },
 dropdownList: {
   maxHeight: 220,
-  backgroundColor: Variables.colors.textInverse,
+  borderColor: colors.border,
+  backgroundColor: colors.surface,
   borderWidth: 1,
-  borderColor: Variables.colors.textLight,
   borderRadius: Variables.sizes.sm,
   shadowColor: "#000",
   shadowOffset: { width: 0, height: 2 },
@@ -864,13 +861,15 @@ dropdownList: {
   dropdownItem: {
     padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: Variables.colors.textLight,
+    borderBottomColor: colors.border,
   },
 
   // --- Text area ---
   textArea: {
     borderWidth: 1,
-    borderColor: Variables.colors.textLight,
+    borderColor: colors.border,     
+  backgroundColor: colors.surface, 
+  color: colors.text,
     borderRadius: 12,
     padding: Variables.sizes.md,
     height: 120,
@@ -878,7 +877,6 @@ dropdownList: {
     marginBottom: Variables.sizes.lg,
     fontFamily: Variables.fonts.regular,
     fontSize: Variables.textSizes.base,
-    backgroundColor: Variables.colors.textInverse,
   },
 
   // --- Submit ---

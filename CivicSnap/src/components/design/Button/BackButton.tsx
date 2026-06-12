@@ -1,6 +1,6 @@
 import { TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Variables } from '@style/theme';
+import { useThemeColors } from "@core/utils/useThemeColors";
 
 type Props = {
   color?: string;
@@ -8,6 +8,8 @@ type Props = {
 
 export default function BackButton({ color }: Props) {
     const router = useRouter();
+    const colors = useThemeColors();
+    const styles = createStyles(colors);
 
     return (
         <TouchableOpacity
@@ -16,15 +18,14 @@ export default function BackButton({ color }: Props) {
         >
             <Image 
                 source={require('@assets/icons/Arrow-left-circle.png')}
-                style={[styles.icon, { tintColor: color }]}
+                style={[styles.icon, color ? { tintColor: color } : {}]}
             />
         </TouchableOpacity>
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
-    
     marginBottom: 20, 
     alignSelf: 'flex-start', 
     padding: 5, 
@@ -32,6 +33,6 @@ const styles = StyleSheet.create({
   icon: {
     width: 24,  
     height: 24,
-    tintColor: Variables.colors.text,
+    tintColor: colors.text,
   },
 });

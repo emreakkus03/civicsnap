@@ -2,9 +2,14 @@ import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import BackButton from "@components/design/Button/BackButton";
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 export default function TermsScreen() {
+              const colors = useThemeColors();
+                                  
+              const styles = createStyles(colors);
+
     return (
         <SafeAreaView style={styles.container} edges={["top"]}>
             <View style={styles.header}>
@@ -72,15 +77,15 @@ export default function TermsScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Variables.colors.background },
+const createStyles = (colors: any) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
     header: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
         paddingHorizontal: Variables.sizes.md,
         paddingVertical: Variables.sizes.sm,
-        backgroundColor: Variables.colors.background,
+        backgroundColor: colors.background,
     },
     backButtonWrapper: {
         width: 40,
@@ -92,7 +97,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontFamily: Variables.fonts.bold,
         fontSize: Variables.textSizes.xl,
-        color: Variables.colors.text,
+        color: colors.text,
         flex: 1,
         textAlign: "center",
     },
@@ -102,34 +107,34 @@ const styles = StyleSheet.create({
     lastUpdated: {
         fontFamily: Variables.fonts.regular,
         fontSize: Variables.textSizes.sm,
-        color: Variables.colors.textLight,
+        color: colors.textLight,
         marginBottom: Variables.sizes.md,
     },
     intro: {
         fontFamily: Variables.fonts.regular,
         fontSize: Variables.textSizes.base,
-        color: Variables.colors.text,
+        color: colors.text,
         lineHeight: 22,
         marginBottom: Variables.sizes.md,
     },
     sectionTitle: {
         fontFamily: Variables.fonts.bold,
         fontSize: Variables.textSizes.md,
-        color: Variables.colors.text,
+        color: colors.text,
         marginTop: Variables.sizes.md,
         marginBottom: Variables.sizes.sm,
     },
     paragraph: {
         fontFamily: Variables.fonts.regular,
         fontSize: Variables.textSizes.base,
-        color: Variables.colors.text,
+        color: colors.text,
         lineHeight: 22,
         marginBottom: Variables.sizes.sm,
     },
     bullet: {
         fontFamily: Variables.fonts.regular,
         fontSize: Variables.textSizes.base,
-        color: Variables.colors.text,
+        color: colors.text,
         lineHeight: 22,
         marginBottom: Variables.sizes.sm,
         paddingLeft: Variables.sizes.xs,

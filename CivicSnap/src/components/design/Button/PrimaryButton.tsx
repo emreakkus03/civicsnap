@@ -1,4 +1,5 @@
 import ThemedText from "@components/design/Typography/ThemedText";
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
@@ -21,6 +22,8 @@ export default function Button({
   
   
   const isPrimary = variant === "primary";
+const colors = useThemeColors();                                       
+const styles = createStyles(colors);
 
   return (
     <Pressable
@@ -46,7 +49,7 @@ export default function Button({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   
   base: {
     width: "90%",
@@ -70,14 +73,14 @@ const styles = StyleSheet.create({
 
  
   primary: {
-    backgroundColor: Variables.colors.primary,
+    backgroundColor: colors.primary,
   },
 
   
   secondary: {
-    backgroundColor: Variables.colors.surface, 
+    backgroundColor: colors.surface, 
     borderWidth: 1.5,
-    borderColor: Variables.colors.primary, 
+    borderColor: colors.primary, 
     elevation: 2, 
   }
 });

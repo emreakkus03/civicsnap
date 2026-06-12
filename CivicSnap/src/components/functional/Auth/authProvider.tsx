@@ -5,20 +5,17 @@ import useAppwriteAuth from "./useAppwriteAuth";
 import { LoginBody, RegisterBody } from "@core/modules/auth/api";
 import { UserProfile } from "@core/networking/database.types";
 
-
 type AuthContextType = {
   isLoggedIn: boolean;
   isInitialized: boolean;
   user?: User | null;
   profile?: UserProfile | null;
   auth: Models.User<Models.Preferences> | null; 
-  
-  
   login: (body: LoginBody) => Promise<void>; 
   logout: () => Promise<void>;
   register: (body: RegisterBody) => Promise<void>;
+  setProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
 };
-
 
 const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
@@ -29,6 +26,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: async () => {},
   register: async () => {},
+  setProfile: () => {},
 });
 
 type Props = {
@@ -36,8 +34,17 @@ type Props = {
 };
 
 const AuthProvider = ({ children }: Props) => {
-  
-  const { isLoggedIn, isInitialized, auth, user, profile,logout, register, login } = useAppwriteAuth();
+  const { 
+    isLoggedIn, 
+    isInitialized, 
+    auth, 
+    user, 
+    profile, 
+    logout, 
+    register, 
+    login,
+    setProfile 
+  } = useAppwriteAuth();
 
   return (
     <AuthContext.Provider
@@ -49,15 +56,14 @@ const AuthProvider = ({ children }: Props) => {
         auth,
         login,
         logout,
-        register
+        register,
+        setProfile
       }}
     >
-      
       {isInitialized ? children : null}
     </AuthContext.Provider>
   );
 };
-
 
 export const useAuthContext = () => {
   return useContext(AuthContext);

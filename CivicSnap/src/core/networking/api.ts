@@ -20,6 +20,7 @@ const CONFIG = {
     sendMessageFunctionId: process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_SEND_MESSAGE_ID || '',
     dailySpinFunctionId: process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_DAILY_SPIN_ID || '',
     visionFunctionId: process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_VISION_ID || '',
+    rewardPurchaseFunctionId: process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_REWARD_PURCHASE_ID || '',
 
     google_maps_api_key: Platform.OS === 'ios' 
         ? process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY || ''
@@ -60,5 +61,6 @@ export const API = {
         sendMessageFunctionId: CONFIG.sendMessageFunctionId,
         dailySpinFunctionId: CONFIG.dailySpinFunctionId,
         visionFunctionId: CONFIG.visionFunctionId,
+        rewardPurchaseFunctionId: CONFIG.rewardPurchaseFunctionId,
     }
 };

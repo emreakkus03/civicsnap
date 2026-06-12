@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 interface CouponCardProps {
@@ -9,6 +10,9 @@ interface CouponCardProps {
 }
 
 export default function CouponCard({ coupon, onPress }: CouponCardProps) {
+    const colors = useThemeColors();                                       
+    const styles = createStyles(colors);
+
   return (
     <TouchableOpacity style={styles.couponCard} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.couponImageWrapper}>
@@ -16,7 +20,7 @@ export default function CouponCard({ coupon, onPress }: CouponCardProps) {
           <Image source={{ uri: coupon.reward.image_url }} style={styles.couponImage} />
         ) : (
           <View style={[styles.couponImage, styles.imagePlaceholder]}>
-            <Ionicons name="gift-outline" size={24} color={Variables.colors.textLight} />
+            <Ionicons name="gift-outline" size={24} color={colors.textLight} />
           </View>
         )}
       </View>
@@ -52,11 +56,11 @@ export default function CouponCard({ coupon, onPress }: CouponCardProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   couponCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Variables.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: Variables.sizes.md,
     gap: Variables.sizes.md,
@@ -87,17 +91,17 @@ const styles = StyleSheet.create({
   couponTitle: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.text,
+    color: colors.text,
   },
   couponBusiness: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
   },
   couponValidity: {
     fontFamily: Variables.fonts.bold,
     fontSize: 11,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
   },
   couponStatusBadge: {
     backgroundColor: "#E8F5E9",

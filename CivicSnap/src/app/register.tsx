@@ -19,12 +19,15 @@ import Button from "@components/design/Button/PrimaryButton";
 import BackButton from "@components/design/Button/BackButton";
 import ThemedText from "@components/design/Typography/ThemedText";
 import { useAuthContext } from "@components/functional/Auth/authProvider";
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { register } = useAuthContext();
-
+          const colors = useThemeColors();
+                              
+          const styles = createStyles(colors);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -248,14 +251,14 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 24,
     paddingTop: 60,
   },
   legalLink: {
-    color: Variables.colors.primary || "#0870C4",
+    color: colors.primary || "#0870C4",
     fontFamily: Variables.fonts.semibold || "semibold",
     textDecorationLine: 'underline',
   },
@@ -272,7 +275,7 @@ const styles = StyleSheet.create({
     fontSize: 25,
     fontFamily: Variables.fonts.bold || "bold",
     alignSelf: "center",
-    color: Variables.colors.text || "#000",
+    color: colors.text || "#000",
   },
   backButtonWrapper: {
     position: "absolute",
@@ -305,7 +308,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: Variables.colors.primary || "#0870C4",
+    backgroundColor: colors.primary || "#0870C4",
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -317,7 +320,7 @@ const styles = StyleSheet.create({
   avatarText: {
     marginTop: 12,
     fontSize: Variables.textSizes.md || 18,
-    color: Variables.colors.textLight || "#747373",
+    color: colors.textLight || "#747373",
     fontFamily: Variables.fonts.default || "Medium",
   },
 
@@ -345,12 +348,12 @@ const styles = StyleSheet.create({
   inputText: {
     flex: 1,
     fontSize: Variables.textSizes.base || 16,
-    color: Variables.colors.text || "#000",
+    color: colors.text || "#000",
     height: "100%",
   },
 
   errorText: {
-    color: Variables.colors.error || "#D3465C",
+    color: colors.error || "#D3465C",
     textAlign: "center",
     marginBottom: 10,
   },
@@ -360,12 +363,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     textAlign: "center",
-    color: Variables.colors.textLight || "#747373",
+    color: colors.textLight || "#747373",
     fontSize: Variables.textSizes.sm || 14,
     lineHeight: 20,
   },
   linkText: {
-    color: Variables.colors.primary || "#0870C4",
+    color: colors.primary || "#0870C4",
     fontFamily: Variables.fonts.semibold || "semibold",
     textDecorationLine: "underline",
   },

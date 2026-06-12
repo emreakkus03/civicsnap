@@ -9,6 +9,7 @@ import BackButton from "@components/design/Button/BackButton";
 import ThemedText from "@components/design/Typography/ThemedText";
 import { useAuthContext } from "@components/functional/Auth/authProvider";
 
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 import { sendPasswordRecovery } from "@core/modules/auth/api";
@@ -25,6 +26,10 @@ export default function LoginScreen() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isSendingReset, setIsSendingReset] = useState(false);
+
+      const colors = useThemeColors();
+                          
+      const styles = createStyles(colors);
 
   
   const handleLogin = async () => {
@@ -149,7 +154,7 @@ const handleSendReset = async () => {
             <View style={styles.linksContainer}>
                 <TouchableOpacity onPress={handleForgotPassword} disabled={isSendingReset}>
     {isSendingReset ? (
-        <ActivityIndicator size="small" color={Variables.colors.primary} />
+        <ActivityIndicator size="small" color={colors.primary} />
     ) : (
         <Text style={styles.linkText}>Wachtwoord vergeten?</Text>
     )}
@@ -223,7 +228,7 @@ const handleSendReset = async () => {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 24,
@@ -253,12 +258,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontFamily: Variables.fonts.bold || "bold",
-    color: Variables.colors.text || "#000",
+    color: colors.text || "#000",
     marginBottom: 4,
   },
   subTitle: {
     fontSize: Variables.textSizes.base || 16,
-    color: Variables.colors.textLight ||  "#747373",
+    color: colors.textLight ||  "#747373",
   },
   
 
@@ -269,7 +274,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Variables.colors.background || "#F5F7FA",
+    backgroundColor: colors.background || "#F5F7FA",
     borderWidth: 1,
     borderColor: "#E5E5E5",
     borderRadius: 12,
@@ -281,13 +286,13 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     resizeMode: 'contain',
-    tintColor: Variables.colors.text || "#000",
+    tintColor: colors.text || "#000",
     marginRight: 12,
   },
   inputText: {
     flex: 1,
     fontSize: Variables.textSizes.base || 16,
-    color: Variables.colors.text || "#000",
+    color: colors.text || "#000",
     height: '100%',
   },
 
@@ -301,7 +306,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   linkText: {
-    color: Variables.colors.primary || "#0870C4", 
+    color: colors.primary || "#0870C4", 
     fontFamily: Variables.fonts.default || "medium",
     textDecorationLine: 'underline',
   },
@@ -313,12 +318,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     textAlign: 'center',
-    color: Variables.colors.textLight || "#747373",
+    color: colors.textLight || "#747373",
     fontSize: Variables.textSizes.sm || 14,
     lineHeight: 20,
   },
   legalLink: {
-    color: Variables.colors.primary || "#0870C4",
+    color: colors.primary || "#0870C4",
     fontFamily: Variables.fonts.semibold || "semibold",
     textDecorationLine: 'underline',
   },
@@ -331,7 +336,7 @@ const styles = StyleSheet.create({
     padding: Variables.sizes.lg,
 },
 resetModalCard: {
-    backgroundColor: Variables.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: Variables.sizes.lg,
     width: "100%",
@@ -344,13 +349,13 @@ resetModalCard: {
 resetModalTitle: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.lg,
-    color: Variables.colors.text,
+    color: colors.text,
     marginBottom: Variables.sizes.xs,
 },
 resetModalSubtitle: {
     fontFamily: Variables.fonts.regular,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
     marginBottom: Variables.sizes.md,
     lineHeight: 20,
 },
@@ -363,24 +368,24 @@ resetCancelButton: {
     flex: 1,
     paddingVertical: Variables.sizes.md,
     borderRadius: 12,
-    backgroundColor: Variables.colors.background,
+    backgroundColor: colors.background,
     alignItems: "center",
 },
 resetCancelText: {
     fontFamily: Variables.fonts.semibold,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
 },
 resetConfirmButton: {
     flex: 1,
     paddingVertical: Variables.sizes.md,
     borderRadius: 12,
-    backgroundColor: Variables.colors.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
 },
 resetConfirmText: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.textInverse,
+    color: colors.textInverse,
 },
 });

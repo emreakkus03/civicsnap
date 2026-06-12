@@ -1,4 +1,3 @@
-import { Variables } from "@style/theme"; 
 import {
   Text,
   type TextProps,
@@ -7,6 +6,8 @@ import {
   StyleProp,
 } from "react-native";
 
+import { useThemeColors } from "@core/utils/useThemeColors";
+import { Variables } from "@style/theme";
 
 export type ThemedTextProps = TextProps & {
   
@@ -29,6 +30,8 @@ const ThemedText = ({
   weight = "normal",
   ...rest
 }: ThemedTextProps) => {
+        const colors = useThemeColors();                                       
+        const styles = createStyles(colors);
   return (
     <Text
       style={[
@@ -60,12 +63,12 @@ const ThemedText = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
  
   default: {
     fontSize: Variables.textSizes.base,   
     fontFamily: Variables.fonts.default,   
-    color: Variables.colors.text,         
+    color: colors.text,         
   },
   
   
@@ -87,16 +90,16 @@ const styles = StyleSheet.create({
   
  
   light: {
-    color: Variables.colors.textLight,    
+    color: colors.textLight,    
   },
   inverse: {
-    color: Variables.colors.textInverse,   
+    color: colors.textInverse,   
   },
   blue: {
-    color: Variables.colors.textHighlight,
+    color: colors.textHighlight,
   },
   error: {
-    color: Variables.colors.error,         
+    color: colors.error,         
   },
 
 

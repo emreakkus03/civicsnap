@@ -21,6 +21,7 @@ import { useAuthContext } from "@components/functional/Auth/authProvider";
 import { updatePassword, sendPasswordRecovery } from "@core/modules/auth/api"; 
 
 // ---- Styling ----
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 
@@ -39,6 +40,9 @@ export default function ChangePasswordScreen() {
 
     const [isSaving, setIsSaving] = useState(false);
     const [isSendingReset, setIsSendingReset] = useState(false);
+    const colors = useThemeColors();
+                
+        const styles = createStyles(colors);
 
     
     const handleSave = async () => {
@@ -109,12 +113,12 @@ await sendPasswordRecovery(profile.email, resetUrl);
         <SafeAreaView style={styles.container} edges={["top"]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="close" size={28} color={Variables.colors.text} />
+                    <Ionicons name="close" size={28} color={colors.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Wachtwoord wijzigen</Text>
                 <TouchableOpacity onPress={handleSave} disabled={isSaving}>
                     {isSaving ? (
-                        <ActivityIndicator size="small" color={Variables.colors.primary} />
+                        <ActivityIndicator size="small" color={colors.primary} />
                     ) : (
                         <Text style={styles.saveText}>Klaar</Text>
                     )}
@@ -128,7 +132,7 @@ await sendPasswordRecovery(profile.email, resetUrl);
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
                     
                     <View style={styles.instructionContainer}>
-                        <Ionicons name="lock-closed-outline" size={48} color={Variables.colors.primary} style={styles.icon} />
+                        <Ionicons name="lock-closed-outline" size={48} color={colors.primary} style={styles.icon} />
                         <Text style={styles.instructionText}>
                             Kies een sterk nieuw wachtwoord van minimaal 6 tekens om je account veilig te houden.
                         </Text>
@@ -144,7 +148,7 @@ await sendPasswordRecovery(profile.email, resetUrl);
                                 secureTextEntry={!showOldPassword}
                                 value={oldPassword}
                                 onChangeText={setOldPassword}
-                                placeholderTextColor={Variables.colors.textLight}
+                                placeholderTextColor={colors.textLight}
                             />
                             <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowOldPassword(!showOldPassword)}>
                                  <Ionicons 
@@ -156,7 +160,7 @@ await sendPasswordRecovery(profile.email, resetUrl);
                         </View>
                         <TouchableOpacity style={styles.forgotPasswordContainer} onPress={handleForgotPassword} disabled={isSendingReset}>
                             {isSendingReset ? (
-                                <ActivityIndicator size="small" color={Variables.colors.primary} />
+                                <ActivityIndicator size="small" color={colors.primary} />
                             ) : (
                                 <Text style={styles.forgotPasswordText}>Ik ben mijn wachtwoord vergeten</Text>
                             )}
@@ -173,7 +177,7 @@ await sendPasswordRecovery(profile.email, resetUrl);
                                 secureTextEntry={!showNewPassword}
                                 value={newPassword}
                                 onChangeText={setNewPassword}
-                                placeholderTextColor={Variables.colors.textLight}
+                                placeholderTextColor={colors.textLight}
                             />
                             <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowNewPassword(!showNewPassword)}>
                                  <Ionicons 
@@ -195,7 +199,7 @@ await sendPasswordRecovery(profile.email, resetUrl);
                                 secureTextEntry={!showConfirmPassword}
                                 value={confirmPassword}
                                 onChangeText={setConfirmPassword}
-                                placeholderTextColor={Variables.colors.textLight}
+                                placeholderTextColor={colors.textLight}
                             />
                             <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
                                 <Ionicons 
@@ -213,10 +217,10 @@ await sendPasswordRecovery(profile.email, resetUrl);
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Variables.colors.background,
+        backgroundColor: colors.background,
     },
     header: {
         flexDirection: "row",
@@ -224,19 +228,19 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingHorizontal: Variables.sizes.md,
         paddingVertical: Variables.sizes.md,
-        backgroundColor: Variables.colors.surface,
+        backgroundColor: colors.surface,
         borderBottomWidth: 1,
         borderBottomColor: "#E5E5E5",
     },
     headerTitle: {
         fontFamily: Variables.fonts.bold,
         fontSize: Variables.textSizes.md,
-        color: Variables.colors.text,
+        color: colors.text,
     },
     saveText: {
         fontFamily: Variables.fonts.bold,
         fontSize: Variables.textSizes.base,
-        color: Variables.colors.primary,
+        color: colors.primary,
     },
     content: {
         padding: Variables.sizes.lg,
@@ -252,7 +256,7 @@ const styles = StyleSheet.create({
     instructionText: {
         fontFamily: Variables.fonts.regular,
         fontSize: Variables.textSizes.sm,
-        color: Variables.colors.textLight,
+        color: colors.textLight,
         textAlign: "center",
         paddingHorizontal: Variables.sizes.md,
         lineHeight: 20,
@@ -264,7 +268,7 @@ const styles = StyleSheet.create({
     label: {
         fontFamily: Variables.fonts.semibold,
         fontSize: Variables.textSizes.sm,
-        color: Variables.colors.textLight,
+        color: colors.textLight,
         marginBottom: Variables.sizes.xs,
         marginLeft: 4,
     },
@@ -272,7 +276,7 @@ const styles = StyleSheet.create({
     passwordWrapper: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: Variables.colors.surface,
+        backgroundColor: colors.surface,
         borderRadius: 12,
         borderWidth: 1,
         borderColor: "#E5E5E5",
@@ -284,7 +288,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Variables.sizes.md,
         fontFamily: Variables.fonts.regular,
         fontSize: Variables.textSizes.base,
-        color: Variables.colors.text,
+        color: colors.text,
     },
     eyeIcon: {
         padding: 15,
@@ -297,6 +301,6 @@ const styles = StyleSheet.create({
     forgotPasswordText: {
         fontFamily: Variables.fonts.semibold,
         fontSize: Variables.textSizes.sm,
-        color: Variables.colors.primary,
+        color: colors.primary,
     },
 });

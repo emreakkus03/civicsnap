@@ -20,19 +20,23 @@ import { API } from "@core/networking/api";
 
 import { useAuthContext } from "@components/functional/Auth/authProvider";
 import BackButton from "@components/design/Button/BackButton";
-
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { profile, logout } = useAuthContext();
+  const { profile, logout, setProfile } = useAuthContext();
   const { lastUpdate } = useRealtime();
   const [freshProfile, setFreshProfile] = useState<any>(null);
 
   const [darkMode, setDarkMode] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-const [deleteConfirmText, setDeleteConfirmText] = useState("");
-const CONFIRM_PHRASE = "VERWIJDEREN";
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const CONFIRM_PHRASE = "VERWIJDEREN";
+
+  const colors = useThemeColors();
+                      
+  const styles = createStyles(colors);
 
   useEffect(() => {
     if (!profile?.$id) return;
@@ -44,6 +48,16 @@ const CONFIRM_PHRASE = "VERWIJDEREN";
           profile.$id,
         );
         setFreshProfile(data);
+
+        if (data.preferences) {
+            let currentPrefs = typeof data.preferences === 'string' 
+                ? JSON.parse(data.preferences) 
+                : data.preferences;
+            
+            if (currentPrefs.dark_mode !== undefined) {
+                setDarkMode(currentPrefs.dark_mode);
+            }
+        }
       } catch (e) {
         console.error(e);
       }
@@ -51,7 +65,52 @@ const CONFIRM_PHRASE = "VERWIJDEREN";
     fetchFresh();
   }, [lastUpdate, profile?.$id]);
 
-  // --- Logout handler ---
+  const handleToggleDarkMode = async (val: boolean) => {
+    setDarkMode(val);
+
+    try {
+        let currentPrefs = {};
+        const sourceProfile = freshProfile || profile;
+        
+        if (sourceProfile?.preferences) {
+            currentPrefs = typeof sourceProfile.preferences === 'string'
+                ? JSON.parse(sourceProfile.preferences)
+                : sourceProfile.preferences;
+        }
+
+        const updatedPrefs = {
+            ...currentPrefs,
+            dark_mode: val
+        };
+
+        const prefsString = JSON.stringify(updatedPrefs);
+
+        await API.database.updateDocument(
+            API.config.databaseId,
+            API.config.profilesCollectionId,
+            profile!.$id,
+            { preferences: prefsString }
+        );
+
+        setFreshProfile((prev: any) => ({
+            ...prev,
+            preferences: prefsString
+        }));
+
+        if (setProfile) {
+            setProfile((prev: any) => ({
+                ...prev,
+                preferences: prefsString
+            }));
+        }
+
+    } catch (error) {
+        console.error("Error updating dark mode:", error);
+        Alert.alert("Fout", "Kon voorkeur niet opslaan.");
+        setDarkMode(!val); 
+    }
+  };
+
   const handleLogout = () => {
     Alert.alert("Uitloggen", "Ben je zeker dat je wilt uitloggen?", [
       { text: "Annuleren", style: "cancel" },
@@ -66,7 +125,6 @@ const CONFIRM_PHRASE = "VERWIJDEREN";
     ]);
   };
 
-  // --- Delete account handler ---
   const handleDeleteAccount = () => {
     if(freshProfile?.organization_id && freshProfile.organization_id !== "NULL" ) {
         Alert.alert(
@@ -106,7 +164,6 @@ const CONFIRM_PHRASE = "VERWIJDEREN";
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      {/* --- Header --- */}
       <View style={styles.header}>
         <View style={styles.backButtonWrapper}>
           <BackButton />
@@ -116,7 +173,6 @@ const CONFIRM_PHRASE = "VERWIJDEREN";
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentInsetAdjustmentBehavior="automatic">
-        {/* --- Profile card --- */}
         <View style={styles.profileCard}>
           <Image
             source={
@@ -128,14 +184,12 @@ const CONFIRM_PHRASE = "VERWIJDEREN";
           />
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>
-              {" "}
               {freshProfile?.full_name || profile?.full_name || "Gebruiker"}
             </Text>
             <Text style={styles.profileEmail}>{profile?.email || ""}</Text>
           </View>
         </View>
 
-        {/* --- Account and profile --- */}
         <Text style={styles.sectionTitle}>Account en profiel</Text>
         <View style={styles.sectionCard}>
           <TouchableOpacity
@@ -144,14 +198,13 @@ const CONFIRM_PHRASE = "VERWIJDEREN";
           >
             <Image
               source={require("@assets/icons/User.png")}
-              style={[styles.rowIcon]}
+              style={[styles.rowIcon, { tintColor: colors.textLight }]}
             />
-
             <Text style={styles.rowLabel}>Profiel bewerken</Text>
             <Ionicons
               name="chevron-forward"
               size={18}
-              color={Variables.colors.textLight}
+              color={colors.textLight}
             />
           </TouchableOpacity>
 
@@ -165,64 +218,54 @@ const CONFIRM_PHRASE = "VERWIJDEREN";
           >
             <Image
               source={require("@assets/icons/Lock.png")}
-              style={[styles.rowIcon]}
+              style={[styles.rowIcon, { tintColor: colors.textLight }]}
             />
             <Text style={styles.rowLabel}>Wachtwoord wijzigen</Text>
             <Ionicons
               name="chevron-forward"
               size={18}
-              color={Variables.colors.textLight}
+              color={colors.textLight}
             />
           </TouchableOpacity>
         </View>
 
-        {/* --- App preferences --- */}
         <Text style={styles.sectionTitle}>App voorkeuren</Text>
-        <View style={[styles.sectionCard, { paddingVertical: 0 }]}>
-          <View style={[styles.row, { paddingVertical: 0, height: 54 }]}>
+        <View style={styles.sectionCard}>
+          <View style={styles.row}>
             <Image
               source={require("@assets/icons/Moon.png")}
-              style={[styles.rowIcon]}
+              style={[styles.rowIcon, { tintColor: colors.textLight }]}
             />
             <Text style={styles.rowLabel}>Dark mode</Text>
-           <Switch
-    value={darkMode}
-    onValueChange={(val) => {
-        setDarkMode(val);
-        if (val) {
-            Alert.alert("Binnenkort beschikbaar", "Dark mode komt binnenkort!");
-            setDarkMode(false);
-        }
-    }}
-    trackColor={{ false: "#E0E0E0", true: Variables.colors.primary }}
-    thumbColor="#fff"
-/>
+            <Switch
+              value={darkMode}
+              onValueChange={handleToggleDarkMode}
+              trackColor={{ false: "#E0E0E0", true: colors.primary }}
+              thumbColor="#fff"
+            />
           </View>
         </View>
 
-        {/* --- Other --- */}
         <Text style={styles.sectionTitle}>Overig</Text>
         <View style={styles.sectionCard}>
           <TouchableOpacity style={styles.row} onPress={() => router.push("/(app)/settings/support" as any)}>
             <Image
               source={require("@assets/icons/Help.png")}
-              style={[styles.rowIcon]}
+              style={[styles.rowIcon, { tintColor: colors.textLight }]}
             />
             <Text style={styles.rowLabel}>Hulp & ondersteuning</Text>
             <Ionicons
               name="chevron-forward"
               size={18}
-              color={Variables.colors.textLight}
+              color={colors.textLight}
             />
           </TouchableOpacity>
         </View>
 
-        {/* --- Logout button --- */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutText}>UITLOGGEN</Text>
         </TouchableOpacity>
 
-        {/* --- Delete account --- */}
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={handleDeleteAccount}
@@ -230,58 +273,59 @@ const CONFIRM_PHRASE = "VERWIJDEREN";
           <Text style={styles.deleteText}>Account verwijderen</Text>
         </TouchableOpacity>
       </ScrollView>
+
       <Modal
-    visible={showDeleteModal}
-    transparent
-    animationType="fade"
-    onRequestClose={() => setShowDeleteModal(false)}
->
-    <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Account verwijderen</Text>
-            <Text style={styles.modalDescription}>
-                Dit kan niet ongedaan gemaakt worden. Al je meldingen en punten worden permanent verwijderd.
-            </Text>
-            <Text style={styles.modalInstruction}>
-                Typ <Text style={styles.modalPhrase}>"{CONFIRM_PHRASE}"</Text> om te bevestigen:
-            </Text>
-            <TextInput
-                style={styles.modalInput}
-                value={deleteConfirmText}
-                onChangeText={setDeleteConfirmText}
-                placeholder={CONFIRM_PHRASE}
-                placeholderTextColor={Variables.colors.textLight}
-                autoCapitalize="characters"
-            />
-            <View style={styles.modalButtons}>
-                <TouchableOpacity
-                    style={styles.modalCancelButton}
-                    onPress={() => setShowDeleteModal(false)}
-                >
-                    <Text style={styles.modalCancelText}>Annuleren</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[
-                        styles.modalDeleteButton,
-                        deleteConfirmText !== CONFIRM_PHRASE && styles.modalDeleteButtonDisabled
-                    ]}
-                    onPress={handleConfirmDelete}
-                    disabled={deleteConfirmText !== CONFIRM_PHRASE}
-                >
-                    <Text style={styles.modalDeleteText}>Verwijderen</Text>
-                </TouchableOpacity>
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+                <Text style={styles.modalTitle}>Account verwijderen</Text>
+                <Text style={styles.modalDescription}>
+                    Dit kan niet ongedaan gemaakt worden. Al je meldingen en punten worden permanent verwijderd.
+                </Text>
+                <Text style={styles.modalInstruction}>
+                    Typ <Text style={styles.modalPhrase}>"{CONFIRM_PHRASE}"</Text> om te bevestigen:
+                </Text>
+                <TextInput
+                    style={styles.modalInput}
+                    value={deleteConfirmText}
+                    onChangeText={setDeleteConfirmText}
+                    placeholder={CONFIRM_PHRASE}
+                    placeholderTextColor={colors.textLight}
+                    autoCapitalize="characters"
+                />
+                <View style={styles.modalButtons}>
+                    <TouchableOpacity
+                        style={styles.modalCancelButton}
+                        onPress={() => setShowDeleteModal(false)}
+                    >
+                        <Text style={styles.modalCancelText}>Annuleren</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[
+                            styles.modalDeleteButton,
+                            deleteConfirmText !== CONFIRM_PHRASE && styles.modalDeleteButtonDisabled
+                        ]}
+                        onPress={handleConfirmDelete}
+                        disabled={deleteConfirmText !== CONFIRM_PHRASE}
+                    >
+                        <Text style={styles.modalDeleteText}>Verwijderen</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </View>
-    </View>
-</Modal>
+      </Modal>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Variables.colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -289,7 +333,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: Variables.sizes.md,
     paddingVertical: Variables.sizes.sm,
-    backgroundColor: Variables.colors.background,
+    backgroundColor: colors.background,
   },
   backButton: {
     width: 26,
@@ -297,14 +341,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.xl,
-    color: Variables.colors.text,
+    color: colors.text,
   },
-
-  // --- Profile card ---
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Variables.colors.primary,
+    backgroundColor: colors.primary,
     marginHorizontal: Variables.sizes.md,
     marginTop: Variables.sizes.sm,
     marginBottom: Variables.sizes.lg,
@@ -315,7 +357,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: Variables.colors.surface,
+    backgroundColor: colors.surface,
     marginRight: Variables.sizes.sm + 6,
   },
   profileInfo: {
@@ -324,32 +366,29 @@ const styles = StyleSheet.create({
   profileName: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.md,
-    color: Variables.colors.textInverse,
+    color:  colors.textInverse,
   },
   profileEmail: {
     fontFamily: Variables.fonts.regular,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.textInverse,
+    color: colors.textInverse,
     marginTop: Variables.sizes.xs,
     opacity: 0.8,
   },
-
-  // --- Sections ---
   sectionTitle: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.text,
+    color: colors.text,
     marginHorizontal: Variables.sizes.md,
     marginBottom: Variables.sizes.sm,
     marginTop: Variables.sizes.xs,
   },
   sectionCard: {
-    backgroundColor: Variables.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     marginHorizontal: Variables.sizes.md,
     marginBottom: Variables.sizes.md + 4,
-    paddingVertical: Variables.sizes.xs,
-    shadowColor: Variables.colors.text,
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 4,
@@ -359,7 +398,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Variables.sizes.md,
-    paddingVertical: Variables.sizes.sm + 7,
+    paddingVertical: 18,
   },
   rowIcon: {
     marginRight: Variables.sizes.sm + 6,
@@ -370,17 +409,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Variables.fonts.regular,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.text,
+    color: colors.text,
   },
   divider: {
     height: 1,
-    backgroundColor: Variables.colors.background,
+    backgroundColor: colors.background,
     marginHorizontal: Variables.sizes.md,
   },
-
-  // --- Logout & Delete ---
   logoutButton: {
-    backgroundColor: Variables.colors.error,
+    backgroundColor: colors.error,
     marginHorizontal: Variables.sizes.md,
     borderRadius: 14,
     paddingVertical: Variables.sizes.md,
@@ -391,17 +428,17 @@ const styles = StyleSheet.create({
   logoutText: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.md,
-    color: Variables.colors.textInverse,
+    color: colors.textInverse,
     letterSpacing: 1,
   },
   deleteButton: {
     alignItems: "center",
     paddingBottom: Variables.sizes.md,
-},
+  },
   deleteText: {
     fontFamily: Variables.fonts.semibold,
     fontSize: Variables.textSizes.md,
-    color: Variables.colors.error,
+    color: colors.error,
   },
   backButtonWrapper: {
     top: 15,
@@ -415,76 +452,76 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: Variables.sizes.md,
-},
-modalCard: {
-    backgroundColor: Variables.colors.surface,
+  },
+  modalCard: {
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: Variables.sizes.lg,
     width: "100%",
-},
-modalTitle: {
+  },
+  modalTitle: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.md,
-    color: Variables.colors.text,
+    color: colors.text,
     marginBottom: Variables.sizes.sm,
-},
-modalDescription: {
+  },
+  modalDescription: {
     fontFamily: Variables.fonts.regular,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
     marginBottom: Variables.sizes.md,
     lineHeight: 20,
-},
-modalInstruction: {
+  },
+  modalInstruction: {
     fontFamily: Variables.fonts.semibold,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.text,
+    color: colors.text,
     marginBottom: Variables.sizes.sm,
-},
-modalPhrase: {
+  },
+  modalPhrase: {
     fontFamily: Variables.fonts.bold,
-    color: Variables.colors.error,
-},
-modalInput: {
-    backgroundColor: Variables.colors.background,
+    color: colors.error,
+  },
+  modalInput: {
+    backgroundColor: colors.background,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#E5E5E5",
     padding: Variables.sizes.md,
     fontFamily: Variables.fonts.regular,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.text,
+    color: colors.text,
     marginBottom: Variables.sizes.md,
-},
-modalButtons: {
+  },
+  modalButtons: {
     flexDirection: "row",
     gap: Variables.sizes.sm,
-},
-modalCancelButton: {
+  },
+  modalCancelButton: {
     flex: 1,
-    backgroundColor: Variables.colors.background,
+    backgroundColor: colors.background,
     borderRadius: 12,
     paddingVertical: Variables.sizes.md,
     alignItems: "center",
-},
-modalCancelText: {
+  },
+  modalCancelText: {
     fontFamily: Variables.fonts.semibold,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.text,
-},
-modalDeleteButton: {
+    color: colors.text,
+  },
+  modalDeleteButton: {
     flex: 1,
-    backgroundColor: Variables.colors.error,
+    backgroundColor: colors.error,
     borderRadius: 12,
     paddingVertical: Variables.sizes.md,
     alignItems: "center",
-},
-modalDeleteButtonDisabled: {
+  },
+  modalDeleteButtonDisabled: {
     opacity: 0.4,
-},
-modalDeleteText: {
+  },
+  modalDeleteText: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.textInverse,
-},
+    color: colors.textInverse,
+  },
 });

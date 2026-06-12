@@ -1,5 +1,6 @@
 import ThemedText from '@components/design/Typography/ThemedText';
-import { Variables } from '@style/theme';
+import { useThemeColors } from "@core/utils/useThemeColors";
+import { Variables } from "@style/theme";
 import { Link } from 'expo-router';
 import { StyleSheet, Text } from 'react-native';
 
@@ -8,9 +9,9 @@ type ButtonLinkProps = {
     href: any;
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
     secondaryButton: {
-        borderColor: Variables.colors.primary,
+        borderColor: colors.primary,
         borderWidth: 2,
         paddingVertical: Variables.sizes.md,
         borderRadius: Variables.sizes.md,
@@ -18,12 +19,15 @@ const styles = StyleSheet.create({
         marginBottom: Variables.sizes.lg,
     },
     text: {
-        color: Variables.colors.primary,
+        color: colors.primary,
         textAlign: "center",
     }
 });
 
 const ButtonLink = ( { children, href }: ButtonLinkProps ) => {
+    const colors = useThemeColors();
+    const styles = createStyles(colors);
+
     return (
         <Link style={styles.secondaryButton} href={href}>
             <ThemedText color='blue' type='center'>{children}</ThemedText>

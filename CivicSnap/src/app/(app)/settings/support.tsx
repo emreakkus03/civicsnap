@@ -4,10 +4,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import BackButton from "@components/design/Button/BackButton";
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 export default function SupportScreen() {
     const router = useRouter();
+
+    const colors = useThemeColors();
+                        
+    const styles = createStyles(colors);
 
     return (
         <SafeAreaView style={styles.container} edges={["top"]}>
@@ -26,9 +31,9 @@ export default function SupportScreen() {
                         style={styles.row}
                         onPress={() => router.push("/privacy-policy" as any)}
                     >
-                        <Ionicons name="shield-checkmark-outline" size={24} color={Variables.colors.primary} style={styles.rowIcon} />
+                        <Ionicons name="shield-checkmark-outline" size={24} color={colors.primary} style={styles.rowIcon} />
                         <Text style={styles.rowLabel}>Privacybeleid</Text>
-                        <Ionicons name="chevron-forward" size={18} color={Variables.colors.textLight} />
+                        <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
                     </TouchableOpacity>
 
                     <View style={styles.divider} />
@@ -37,16 +42,16 @@ export default function SupportScreen() {
                         style={styles.row}
                         onPress={() => router.push("/terms" as any)}
                     >
-                        <Ionicons name="document-text-outline" size={24} color={Variables.colors.primary} style={styles.rowIcon} />
+                        <Ionicons name="document-text-outline" size={24} color={colors.primary} style={styles.rowIcon} />
                         <Text style={styles.rowLabel}>Gebruiksvoorwaarden</Text>
-                        <Ionicons name="chevron-forward" size={18} color={Variables.colors.textLight} />
+                        <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
                     </TouchableOpacity>
                 </View>
 
                 <Text style={styles.sectionTitle}>Contact</Text>
                 <View style={styles.sectionCard}>
                     <View style={styles.row}>
-                        <Ionicons name="mail-outline" size={24} color={Variables.colors.primary} style={styles.rowIcon} />
+                        <Ionicons name="mail-outline" size={24} color={colors.primary} style={styles.rowIcon} />
                         <Text style={styles.rowLabel}>support@civicsnap.be</Text>
                     </View>
                 </View>
@@ -55,15 +60,15 @@ export default function SupportScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Variables.colors.background },
+const createStyles = (colors: any) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
     header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: Variables.sizes.md,
     paddingVertical: Variables.sizes.sm,
-    backgroundColor: Variables.colors.background,
+    backgroundColor: colors.background,
 },
 backButtonWrapper: {
     width: 40, 
@@ -75,7 +80,7 @@ backButtonWrapper: {
     headerTitle: {
         fontFamily: Variables.fonts.bold,
         fontSize: Variables.textSizes.xl,
-        color: Variables.colors.text,
+        color: colors.text,
           flex: 1, 
     textAlign: "center", 
     },
@@ -86,12 +91,12 @@ backButtonWrapper: {
     sectionTitle: {
         fontFamily: Variables.fonts.bold,
         fontSize: Variables.textSizes.base,
-        color: Variables.colors.text,
+        color: colors.text,
         marginBottom: Variables.sizes.sm,
         marginLeft: Variables.sizes.xs,
     },
     sectionCard: {
-        backgroundColor: Variables.colors.surface,
+        backgroundColor: colors.surface,
         borderRadius: 16,
         marginBottom: Variables.sizes.lg,
         paddingVertical: Variables.sizes.xs,
@@ -114,11 +119,11 @@ backButtonWrapper: {
         flex: 1,
         fontFamily: Variables.fonts.regular,
         fontSize: Variables.textSizes.base,
-        color: Variables.colors.text,
+        color: colors.text,
     },
     divider: {
         height: 1,
-        backgroundColor: Variables.colors.background,
+        backgroundColor: colors.background,
         marginHorizontal: Variables.sizes.md,
     },
 });

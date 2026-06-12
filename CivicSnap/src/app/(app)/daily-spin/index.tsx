@@ -8,7 +8,8 @@ import * as Notifications from 'expo-notifications';
 
 import { useAuthContext } from "@components/functional/Auth/authProvider";
 import { API } from "@core/networking/api";
-import { Variables } from "@/style/theme";
+import { useThemeColors } from "@core/utils/useThemeColors";
+import { Variables } from "@style/theme";
 import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
 
 const PRIZES = [
@@ -21,7 +22,6 @@ const PRIZES = [
   { label: "5 💎", color: "#31ACE4", text: "#FFF", value: 5 },
   { label: "100 💎", color: "#A24291", text: "#FFF", value: 100 },
 ];
-
 
 const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
   const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
@@ -51,6 +51,9 @@ export default function DailySpinScreen() {
   const [spinning, setSpinning] = useState(false);
   const [hasSpun, setHasSpun] = useState(false);
   const spinValue = useRef(new Animated.Value(0)).current;
+
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
 
   useEffect(() => {
     if (profile?.last_daily_spin) {
@@ -83,20 +86,19 @@ export default function DailySpinScreen() {
       if (result.success) {
         const segmentAngle = 360 / PRIZES.length; 
 
-const targetAngle = 1080 + (360 - (result.wheelIndex * segmentAngle)); 
+        const targetAngle = 1080 + (360 - (result.wheelIndex * segmentAngle)); 
 
-Animated.timing(spinValue, {
-  toValue: targetAngle,
-  duration: 1500, 
-  easing: Easing.out(Easing.cubic), 
-  useNativeDriver: true,
-}).start(async () => {
+        Animated.timing(spinValue, {
+          toValue: targetAngle,
+          duration: 1500, 
+          easing: Easing.out(Easing.cubic), 
+          useNativeDriver: true,
+        }).start(async () => {
           setSpinning(false);
           setHasSpun(true);
           
           const wonPrize = PRIZES[result.wheelIndex];
 
-          
           if (wonPrize.value > 0) {
             Alert.alert("Gefeliciteerd! 🎉", `Je hebt ${wonPrize.value} diamanten gewonnen!`);
             if (triggerUpdate) triggerUpdate(); 
@@ -104,7 +106,6 @@ Animated.timing(spinValue, {
             Alert.alert("Helaas", "Niets gewonnen! Probeer het morgen opnieuw. 😢");
           }
 
-          
           await Notifications.cancelAllScheduledNotificationsAsync(); 
           await Notifications.scheduleNotificationAsync({
             content: {
@@ -134,7 +135,6 @@ Animated.timing(spinValue, {
     outputRange: ["0deg", "3600deg"],
   });
 
-  
   const renderSvgWheel = () => {
     const size = 300;
     const radius = size / 2;
@@ -146,11 +146,9 @@ Animated.timing(spinValue, {
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <G>
           {PRIZES.map((prize, i) => {
-            
             const startAngle = i * anglePerSlice - anglePerSlice / 2;
             const endAngle = startAngle + anglePerSlice;
             const pathData = createPieSlice(cx, cy, radius, startAngle, endAngle);
-            
             
             const textAngle = i * anglePerSlice;
             const textRadius = radius * 0.70; 
@@ -158,9 +156,7 @@ Animated.timing(spinValue, {
 
             return (
               <G key={i}>
-                
                 <Path d={pathData} fill={prize.color} stroke="#FFFFFF" strokeWidth="3" />
-                
                 <SvgText
                   x={x}
                   y={y}
@@ -186,7 +182,7 @@ Animated.timing(spinValue, {
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={{ padding: 5 }}>
-          <Ionicons name="arrow-back" size={24} color={Variables.colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Rad van Fortuin</Text>
         <View style={{ width: 34 }} />
@@ -199,11 +195,8 @@ Animated.timing(spinValue, {
         </Text>
 
         <View style={styles.wheelWrapper}>
-        
-          <Ionicons name="caret-down" size={45} color={Variables.colors.primary} style={styles.pointer} />
-          
+          <Ionicons name="caret-down" size={45} color={colors.primary} style={styles.pointer} />
           <Animated.View style={[styles.wheelContainer, { transform: [{ rotate: spinTransform }] }]}>
-      
              {renderSvgWheel()}
           </Animated.View>
         </View>
@@ -222,17 +215,17 @@ Animated.timing(spinValue, {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Variables.colors.background || "#F8F9FA" },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 15, paddingVertical: 10, backgroundColor: "white" },
-  headerTitle: { fontFamily: Variables.fonts.bold, fontSize: 18, color: Variables.colors.text },
+const createStyles = (colors: any) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 15, paddingVertical: 10, backgroundColor: colors.background },
+  headerTitle: { fontFamily: Variables.fonts.bold, fontSize: 18, color: colors.text },
   content: { flex: 1, alignItems: "center", paddingTop: 40, paddingHorizontal: 20 },
-  title: { fontFamily: Variables.fonts.bold, fontSize: 28, color: Variables.colors.text, marginBottom: 10 },
-  subtitle: { fontFamily: Variables.fonts.regular, fontSize: 15, color: Variables.colors.textLight, textAlign: "center", marginBottom: 50 },
+  title: { fontFamily: Variables.fonts.bold, fontSize: 28, color: colors.text, marginBottom: 10 },
+  subtitle: { fontFamily: Variables.fonts.regular, fontSize: 15, color: colors.textLight, textAlign: "center", marginBottom: 50 },
   wheelWrapper: { position: "relative", alignItems: "center", justifyContent: "center", width: 300, height: 300, marginBottom: 50 },
   pointer: { position: "absolute", top: -25, zIndex: 10 },
   wheelContainer: { width: 300, height: 300, borderRadius: 150, shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 },
-  spinButton: { backgroundColor: Variables.colors.primary, paddingHorizontal: 30, paddingVertical: 18, borderRadius: 30, width: "100%", alignItems: "center", shadowColor: Variables.colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
-  spinButtonDisabled: { backgroundColor: Variables.colors.textLight, shadowOpacity: 0, elevation: 0 },
+  spinButton: { backgroundColor: colors.primary, paddingHorizontal: 30, paddingVertical: 18, borderRadius: 30, width: "100%", alignItems: "center", shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
+  spinButtonDisabled: { backgroundColor: colors.textLight, shadowOpacity: 0, elevation: 0 },
   spinButtonText: { fontFamily: Variables.fonts.bold, fontSize: 16, color: "white" },
 });

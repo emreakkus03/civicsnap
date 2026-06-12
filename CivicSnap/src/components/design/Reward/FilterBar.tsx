@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 const LOCATION_LABELS: Record<string, string> = {
@@ -37,6 +38,8 @@ export default function FilterBar({
   onLocationChange,
   onDropdownToggle,
 }: FilterBarProps) {
+    const colors = useThemeColors();                                       
+    const styles = createStyles(colors);
   return (
     <>
       <ScrollView
@@ -82,7 +85,7 @@ export default function FilterBar({
           <Ionicons
             name={showLocationDropdown ? "chevron-up" : "chevron-down"}
             size={12}
-            color={selectedLocation !== "all" && selectedLocation !== "local" ? Variables.colors.textInverse : Variables.colors.textLight}
+            color={selectedLocation !== "all" && selectedLocation !== "local" ? colors.textInverse : colors.textLight}
           />
         </TouchableOpacity>
 
@@ -116,7 +119,7 @@ export default function FilterBar({
                 {loc.label}
               </Text>
               {selectedLocation === loc.key && (
-                <Ionicons name="checkmark" size={18} color={Variables.colors.primary} />
+                <Ionicons name="checkmark" size={18} color={colors.primary} />
               )}
             </TouchableOpacity>
           ))}
@@ -126,7 +129,7 @@ export default function FilterBar({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   filtersScroll: {
     marginBottom: Variables.sizes.sm,
   },
@@ -139,21 +142,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: Variables.sizes.md,
     paddingVertical: Variables.sizes.xs,
     borderRadius: 20,
-    backgroundColor: Variables.colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: "#E5E5E5",
   },
   filterChipActive: {
-    backgroundColor: Variables.colors.primary,
-    borderColor: Variables.colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   filterChipText: {
     fontFamily: Variables.fonts.semibold,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
   },
   filterChipTextActive: {
-    color: Variables.colors.textInverse,
+    color: colors.textInverse,
   },
   locationChip: {
     flexDirection: "row",
@@ -163,7 +166,7 @@ const styles = StyleSheet.create({
   locationDropdown: {
     marginHorizontal: Variables.sizes.md,
     marginBottom: Variables.sizes.sm,
-    backgroundColor: Variables.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -176,21 +179,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: Variables.sizes.md,
     paddingVertical: Variables.sizes.sm + 2,
     borderBottomWidth: 1,
-    borderBottomColor: Variables.colors.background,
+    borderBottomColor: colors.background,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   locationDropdownItemActive: {
-    backgroundColor: Variables.colors.primary + "15",
+    backgroundColor: colors.primary + "15",
   },
   locationDropdownText: {
     fontFamily: Variables.fonts.regular,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.text,
+    color: colors.text,
   },
   locationDropdownTextActive: {
     fontFamily: Variables.fonts.bold,
-    color: Variables.colors.primary,
+    color: colors.primary,
   },
 });

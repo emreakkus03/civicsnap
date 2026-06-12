@@ -1,11 +1,15 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 import { useRouter } from "expo-router";
 
 export default function BonusBanner() {
   const router = useRouter();
+
+  const colors = useThemeColors();                                       
+  const styles = createStyles(colors);
 
   return (
     <LinearGradient
@@ -33,7 +37,7 @@ export default function BonusBanner() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   bonusBanner: {
     position: "relative",
     flexDirection: "row",
@@ -49,7 +53,7 @@ const styles = StyleSheet.create({
   bonusTitle: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.md,
-    color: Variables.colors.textInverse,
+    color: colors.textInverse,
     marginBottom: Variables.sizes.xs,
   },
   bonusSubtitle: {
@@ -60,7 +64,7 @@ const styles = StyleSheet.create({
     width: 160,
   },
   bonusButton: {
-    backgroundColor: Variables.colors.textInverse,
+    backgroundColor: colors.textInverse,
     paddingHorizontal: Variables.sizes.md,
     paddingVertical: Variables.sizes.xs,
     borderRadius: 20,
@@ -69,7 +73,7 @@ const styles = StyleSheet.create({
   bonusButtonText: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.primary,
+    color: colors.primary,
   },
   wheelImage: {
     position: "absolute",

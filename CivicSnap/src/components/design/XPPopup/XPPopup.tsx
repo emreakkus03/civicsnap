@@ -9,6 +9,7 @@ import {
     Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 interface XPPopupProps {
@@ -46,6 +47,8 @@ export default function XPPopup({ visible, xpGained, totalXp, avatarUrl, onClose
     const animatedOpacity = useRef(new Animated.Value(0)).current;
 
     const { calculatedLevel, progressPercent, pointsNeeded } = calculateLevelInfo(totalXp);
+            const colors = useThemeColors();                                       
+            const styles = createStyles(colors);
 
     useEffect(() => {
         if (visible) {
@@ -86,7 +89,7 @@ export default function XPPopup({ visible, xpGained, totalXp, avatarUrl, onClose
                 <Animated.View style={[styles.card, { transform: [{ scale: animatedScale }], opacity: animatedOpacity }]}>
              
                     <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                        <Ionicons name="close" size={22} color={Variables.colors.textLight} />
+                        <Ionicons name="close" size={22} color={colors.textLight} />
                     </TouchableOpacity>
 
                   
@@ -138,7 +141,7 @@ export default function XPPopup({ visible, xpGained, totalXp, avatarUrl, onClose
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
     overlay: {
         flex: 1,
         backgroundColor: "rgba(0,0,0,0.5)",
@@ -147,7 +150,7 @@ const styles = StyleSheet.create({
         padding: Variables.sizes.lg,
     },
     card: {
-        backgroundColor: Variables.colors.surface,
+        backgroundColor: colors.surface,
         borderRadius: 24,
         padding: Variables.sizes.lg,
         width: "100%",
@@ -177,13 +180,13 @@ const styles = StyleSheet.create({
     title: {
         fontFamily: Variables.fonts.bold,
         fontSize: Variables.textSizes.lg,
-        color: Variables.colors.text,
+        color: colors.text,
         marginBottom: Variables.sizes.xs,
     },
     subtitle: {
         fontFamily: Variables.fonts.regular,
         fontSize: Variables.textSizes.sm,
-        color: Variables.colors.textLight,
+        color: colors.textLight,
         marginBottom: Variables.sizes.md,
     },
     xpBadge: {
@@ -211,12 +214,12 @@ const styles = StyleSheet.create({
     levelText: {
         fontFamily: Variables.fonts.semibold,
         fontSize: Variables.textSizes.sm,
-        color: Variables.colors.textLight,
+        color: colors.textLight,
     },
     pointsNeededText: {
         fontFamily: Variables.fonts.semibold,
         fontSize: 11,
-        color: Variables.colors.primary,
+        color: colors.primary,
         backgroundColor: "#E3F2FD",
         paddingHorizontal: Variables.sizes.sm,
         paddingVertical: 2,
@@ -233,7 +236,7 @@ const styles = StyleSheet.create({
     },
     progressBarFill: {
         height: "100%",
-        backgroundColor: Variables.colors.primary,
+        backgroundColor: colors.primary,
         borderRadius: 10,
         position: "relative",
     },
@@ -248,7 +251,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         borderWidth: 2,
-        borderColor: Variables.colors.primary,
+        borderColor: colors.primary,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
@@ -261,7 +264,7 @@ const styles = StyleSheet.create({
         borderRadius: 14,
     },
     button: {
-        backgroundColor: Variables.colors.primary,
+        backgroundColor: colors.primary,
         borderRadius: 14,
         paddingVertical: Variables.sizes.md,
         paddingHorizontal: Variables.sizes.xl,
@@ -271,7 +274,7 @@ const styles = StyleSheet.create({
     buttonText: {
         fontFamily: Variables.fonts.bold,
         fontSize: Variables.textSizes.base,
-        color: Variables.colors.textInverse,
+        color: colors.textInverse,
         letterSpacing: 1,
     },
 });

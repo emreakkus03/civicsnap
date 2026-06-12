@@ -14,6 +14,7 @@ import Button from "@/components/design/Button/PrimaryButton";
 import ThemedText from "@/components/design/Typography/ThemedText";
 
 //--- Theme Style ---
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 type Props = {
@@ -31,6 +32,8 @@ export default function ReportPopupScreen({
   onGalleryPress,
   onNotePress,
 }: Props) {
+                    const colors = useThemeColors();                                       
+                    const styles = createStyles(colors);
   return (
     <Modal
       animationType="fade"
@@ -80,7 +83,7 @@ export default function ReportPopupScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
@@ -90,7 +93,7 @@ const styles = StyleSheet.create({
   },
   content: {
     width: "100%",
-    backgroundColor: Variables.colors.surface || "white",
+    backgroundColor: colors.surface || "white",
     borderRadius: Variables.sizes.xl,
     padding: Variables.sizes.lg,
     alignItems: "center",

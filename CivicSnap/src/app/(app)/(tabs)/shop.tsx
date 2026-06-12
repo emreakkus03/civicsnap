@@ -18,7 +18,9 @@ import { Query } from 'react-native-appwrite';
 import { useAuthContext } from "@components/functional/Auth/authProvider";
 import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
 import { API } from "@core/networking/api";
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
+
 import { LinearGradient } from "expo-linear-gradient";
 
 import { Functions, ExecutionMethod } from "react-native-appwrite";
@@ -63,6 +65,9 @@ export default function ShopScreen() {
   const [currentOrgId, setCurrentOrgId] = useState<string | null>(null);
  const [currentOrgName, setCurrentOrgName] = useState<string>("Lokaal");
   const [locationLoading, setLocationLoading] = useState(true);
+
+    const colors = useThemeColors();
+    const styles = createStyles(colors);
 
   const locations = Object.entries(LOCATION_LABELS).map(([key, label]) => ({
     key,
@@ -275,7 +280,7 @@ export default function ShopScreen() {
             try {
               const functions = new Functions(API.client);
               const execution = await functions.createExecution(
-                "69a6f7c3000d5bad35f4",
+                API.config.rewardPurchaseFunctionId,
                 JSON.stringify({
                   userId: profile.$id,
                   rewardId: reward.$id,
@@ -386,7 +391,7 @@ export default function ShopScreen() {
           {/* --- Rewards grid --- */}
           {loading ? (
             <ActivityIndicator
-              color={Variables.colors.primary}
+              color={colors.primary}
               style={{ marginTop: 40 }}
             />
           ) : sortedRewards.length === 0 ? (
@@ -422,7 +427,7 @@ export default function ShopScreen() {
               <Ionicons
                 name="ticket-outline"
                 size={64}
-                color={Variables.colors.textLight}
+                color={colors.textLight}
               />
               <Text style={styles.emptyText}>Je hebt nog geen coupons.</Text>
               <Text style={styles.emptySubText}>
@@ -466,10 +471,10 @@ export default function ShopScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Variables.colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -492,14 +497,14 @@ const styles = StyleSheet.create({
   pointsTextLarge: {
     fontFamily: Variables.fonts.extrabold,
     fontSize: Variables.textSizes.xl,
-    color: Variables.colors.textInverse,
+    color: colors.textInverse,
   },
   // --- Tabs ---
   tabsContainer: {
     flexDirection: "row",
-    backgroundColor: Variables.colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Variables.colors.background,
+    borderBottomColor: colors.background,
     borderTopColor: "#000000",
     borderWidth: 1,
     borderTopLeftRadius: 16,
@@ -512,21 +517,16 @@ const styles = StyleSheet.create({
   },
   tabActive: {
     borderBottomWidth: 2,
-    borderBottomColor: Variables.colors.primary,
+    borderBottomColor: colors.primary,
   },
   tabText: {
     fontFamily: Variables.fonts.semibold,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
   },
   tabTextActive: {
-    color: Variables.colors.primary,
+    color: colors.primary,
   },
-
-  
-  
-  
-
   // --- Rewards grid ---
   rewardsGrid: {
     flexDirection: "row",
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
   // --- Empty states ---
   emptyText: {
     fontFamily: Variables.fonts.regular,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
     textAlign: "center",
     marginTop: 40,
   },
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
   emptySubText: {
     fontFamily: Variables.fonts.regular,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
     textAlign: "center",
     paddingHorizontal: Variables.sizes.xl,
   },

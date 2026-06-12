@@ -10,6 +10,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 interface RewardModalProps {
@@ -40,12 +41,14 @@ export default function RewardModal({
   onClose,
   onPurchase,
 }: RewardModalProps) {
+      const colors = useThemeColors();                                       
+      const styles = createStyles(colors);
   return (
     <Modal transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalCard}>
           <TouchableOpacity style={styles.modalClose} onPress={onClose}>
-            <Ionicons name="close" size={24} color={Variables.colors.text} />
+            <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.modalImageWrapper}>
@@ -59,7 +62,7 @@ export default function RewardModal({
                   <Ionicons
                     name="gift-outline"
                     size={48}
-                    color={Variables.colors.textLight}
+                    color={colors.textLight}
                   />
                 </View>
               )}
@@ -138,17 +141,17 @@ export default function RewardModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   section: {
     marginBottom: Variables.sizes.md,
     paddingBottom: Variables.sizes.md,
     borderBottomWidth: 1,
-    borderBottomColor: Variables.colors.background,
+    borderBottomColor: colors.background,
   },
   sectionLabel: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.text,
+    color: colors.text,
     marginBottom: Variables.sizes.xs,
     textTransform: "uppercase",
     letterSpacing: 1,
@@ -159,7 +162,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalCard: {
-    backgroundColor: Variables.colors.surface,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: Variables.sizes.lg,
@@ -189,7 +192,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.lg,
-    color: Variables.colors.text,
+    color: colors.text,
     marginBottom: Variables.sizes.xs,
   },
   modalBusinessRow: {
@@ -205,18 +208,18 @@ const styles = StyleSheet.create({
   modalBusiness: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
   },
   modalDescription: {
     fontFamily: Variables.fonts.regular,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.text,
+    color: colors.text,
     lineHeight: 22,
   },
   modalValidity: {
     fontFamily: Variables.fonts.semibold,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.textLight,
+    color: colors.textLight,
   },
   modalCostRow: {
     flexDirection: "row",
@@ -231,17 +234,17 @@ const styles = StyleSheet.create({
   modalCost: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.md,
-    color: Variables.colors.text,
+    color: colors.text,
   },
   modalInsufficientText: {
     fontFamily: Variables.fonts.semibold,
     fontSize: Variables.textSizes.sm,
-    color: Variables.colors.error,
+    color: colors.error,
     marginBottom: Variables.sizes.md,
     textAlign: "center",
   },
   modalPurchaseButton: {
-    backgroundColor: Variables.colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 14,
     paddingVertical: Variables.sizes.md,
     alignItems: "center",
@@ -252,7 +255,7 @@ const styles = StyleSheet.create({
   modalPurchaseText: {
     fontFamily: Variables.fonts.bold,
     fontSize: Variables.textSizes.base,
-    color: Variables.colors.textInverse,
+    color: colors.textInverse,
     letterSpacing: 1,
   },
 });

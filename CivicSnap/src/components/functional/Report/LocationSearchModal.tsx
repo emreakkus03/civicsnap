@@ -3,6 +3,7 @@ import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplet
 import { Ionicons } from "@expo/vector-icons";
 
 // --- Theme styling ---
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 import ThemedText from "@components/design/Typography/ThemedText";
 
@@ -28,6 +29,10 @@ export default function LocationSearchModal({
   onClose,
   onLocationSelect,
 }: Props) {
+
+  const colors = useThemeColors();                                       
+  const styles = createStyles(colors);
+  
   const handleSelect = (data: any, details: any) => {
     if (!details) {
       return;
@@ -66,7 +71,7 @@ export default function LocationSearchModal({
       <View style={styles.container}>
         <View style={styles.blueHeader}>
           <TouchableOpacity onPress={onClose} style={styles.backButtonWrapper} >
-            <Ionicons name="close" size={20} color={Variables.colors.textInverse} />
+            <Ionicons name="close" size={20} color={colors.textInverse} />
           </TouchableOpacity>
           <ThemedText type="subtitle" color="inverse" style={styles.title}>
             Locatie zoeken
@@ -93,10 +98,11 @@ export default function LocationSearchModal({
               textInput: styles.searchInput,
               listView: styles.searchListView,
               row: styles.searchRow,
+              description: { color: colors.text }
             }}
             textInputProps={{
-  placeholderTextColor: Variables.colors.textLight,
-}}
+              placeholderTextColor: colors.textLight,
+            }}
           />
         </View>
       </View>
@@ -104,16 +110,14 @@ export default function LocationSearchModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Variables.colors.background,
+    backgroundColor: colors.background,
   },
   blueHeader: {
-    backgroundColor: Variables.colors.header,
-    fontFamily: Variables.fonts.bold,
-    fontSize: Variables.textSizes.lg,
-    paddingTop: 35,
+    backgroundColor: colors.header,
+    paddingTop: 60,
     paddingBottom: 60,
     paddingHorizontal: 20,
     flexDirection: "row",
@@ -123,11 +127,10 @@ const styles = StyleSheet.create({
   },
   backButtonWrapper: {
     position: "absolute",
-    color: Variables.colors.textInverse,
-    left: 30,
-    top: 38,
+    left: 20,
+    top: 55, 
     zIndex: 10,
-    transform: [{ scale: 1.7 }],
+    transform: [{ scale: 1.5 }],
     padding: 5,
   },
   title: {
@@ -136,9 +139,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   searchContainer: {
-     position: "relative",
+    position: "relative",
     width: "100%",
-    backgroundColor: Variables.colors.background,
+    backgroundColor: colors.background,
     top: -40,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -150,21 +153,22 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     height: 50,
-    backgroundColor: Variables.colors.textInverse,
+    backgroundColor: colors.surface, 
     borderRadius: Variables.sizes.sm,
     paddingHorizontal: 15,
     fontSize: Variables.textSizes.base,
     borderWidth: 1,
-    borderColor: Variables.colors.textLight,
+    borderColor: colors.border, 
     fontFamily: Variables.fonts.regular,
-    color: Variables.colors.text,
+    color: colors.text,
   } as any,
   searchListView: {
-    backgroundColor: Variables.colors.textInverse,
+    backgroundColor: colors.surface, 
     borderRadius: Variables.sizes.sm,
     marginTop: Variables.sizes.xs,
   },
   searchRow: {
     paddingVertical: 14,
+    backgroundColor: colors.surface, 
   },
 });

@@ -1,12 +1,17 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 import Button from "@components/design/Button/PrimaryButton";
 import ThemedText from "@/components/design/Typography/ThemedText";
 
 export default function WelcomeScreen() {
   const router = useRouter();
+
+                const colors = useThemeColors();
+                                    
+                const styles = createStyles(colors);
 
   return (
     <View style={styles.container}>
@@ -59,10 +64,10 @@ export default function WelcomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: Variables.colors.background, 
+    backgroundColor: colors.background, 
     paddingHorizontal: Variables.sizes.lg, 
     paddingTop: 80, 
     paddingBottom: 50, 
@@ -72,14 +77,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 45, 
-    color: Variables.colors.header || "#274373",  
+    color: colors.header || "#274373",  
     letterSpacing: 1, 
     marginBottom: Variables.sizes.sm,
     textTransform: 'uppercase', 
   },
   subtitle: {
     textAlign: 'center',
-    color: Variables.colors.text || "#000000",
+    color: colors.text || "#000000",
     paddingHorizontal: 20,
     lineHeight: 24, 
   },

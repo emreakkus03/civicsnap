@@ -6,6 +6,7 @@ import BackButton from "@components/design/Button/BackButton";
 
 // ---- Custom Design Components ---- //
 import ThemedText from "@components/design/Typography/ThemedText";
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 // ---- Functional Components ---- //
@@ -22,6 +23,9 @@ export default function CreateReportScreen() {
     const zipcode = params.zipcode as string;
     const photoUri = params.photoUri as string;
     const hasPhoto = params.hasPhoto === "true";
+    const colors = useThemeColors();
+        
+    const styles = createStyles(colors);
 
     return (
     <KeyboardAwareScrollView 
@@ -56,13 +60,13 @@ export default function CreateReportScreen() {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: Variables.colors.background 
+    backgroundColor: colors.background 
   },
   blueHeader: {
-    backgroundColor: Variables.colors.header, 
+    backgroundColor: colors.header, 
     paddingTop: 60,
     paddingBottom: 60,
     paddingHorizontal: 20,

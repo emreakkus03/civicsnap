@@ -1,13 +1,16 @@
 import { TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Variables } from '@style/theme';
+import { useThemeColors } from "@core/utils/useThemeColors";
 
 type Props = {
   onPress: () => void;
+  color?: string;
 };
 
-export default function EditButton({ onPress }: Props) {
+export default function EditButton({ onPress, color }: Props) {
     const router = useRouter();
+    const colors = useThemeColors();
 
     return (
         <TouchableOpacity
@@ -16,6 +19,7 @@ export default function EditButton({ onPress }: Props) {
         >
             <Image 
                 source={require('@assets/icons/Edit-Button.png')}
+                style={{ tintColor: color ? color : colors.textLight }}
             />
         </TouchableOpacity>
     );
@@ -29,5 +33,4 @@ const styles = StyleSheet.create({
     left: 10,
     right: 10,
   },
-  
 });

@@ -7,6 +7,10 @@ import { API } from "@core/networking/api";
 
 export async function registerForPushNotifications(userId: string) {
     if (!Device.isDevice) return;
+    if (Platform.OS === 'android' && Constants.appOwnership === 'expo') {
+    console.log('Push notificaties genegeerd in Android Expo Go om crash te voorkomen.');
+    return null;
+  }
 
      if (Platform.OS === "android") {
         await Notifications.setNotificationChannelAsync("default", {

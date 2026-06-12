@@ -8,7 +8,8 @@ import { useAuthContext } from "@components/functional/Auth/authProvider";
 import { API } from "@core/networking/api";
 import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
 
-import { Variables } from "@/style/theme";
+import { useThemeColors } from "@core/utils/useThemeColors";
+import { Variables } from "@style/theme";
 import BackButton from "@components/design/Button/BackButton";
 import ThemedText from "@components/design/Typography/ThemedText";
 
@@ -25,6 +26,9 @@ export default function MyReportsScreen() {
     const [loadingMore, setLoadingMore] = useState(false);
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(true);
+    const colors = useThemeColors();
+            
+    const styles = createStyles(colors);
 
     const getDateFilter = () => {
         const date = new Date();
@@ -50,7 +54,6 @@ export default function MyReportsScreen() {
                 ]
             );
 
-          
             setHasMore(response.documents.length === PAGE_SIZE);
 
             const reportsWithCategories = await Promise.all(
@@ -76,7 +79,6 @@ export default function MyReportsScreen() {
                 })
             );
 
-           
             setUserReports(prev => replace ? reportsWithCategories : [...prev, ...reportsWithCategories]);
         } catch (error) {
             console.error("Error fetching reports:", error);
@@ -86,12 +88,11 @@ export default function MyReportsScreen() {
         }
     }, [profile?.$id]);
 
-  
-useEffect(() => {
-    setOffset(0);
-    setHasMore(true);
-    fetchReports(0, true);
-}, [profile?.$id]);
+    useEffect(() => {
+        setOffset(0);
+        setHasMore(true);
+        fetchReports(0, true);
+    }, [profile?.$id]);
 
     const handleLoadMore = () => {
         if (loadingMore || !hasMore) return;
@@ -113,20 +114,26 @@ useEffect(() => {
         const isResolved = report.status === "resolved";
         const isInProgress = report.status === "approved" || report.status === "in_progress";
 
-        let bgColor = "#E3F2FD";
-        let iconColor = "#1976D2";
+        let iconColor = colors.primary;
+        let bgColor = colors.primary + "1A";
         let iconName = "document-text";
         let statusText = "Gemeld";
 
         if (isInvalid) {
-            bgColor = "#FFEBEE"; iconColor = "#D32F2F";
-            iconName = "close-circle"; statusText = "Afgewezen";
+            iconColor = colors.error;
+            bgColor = colors.error + "1A";
+            iconName = "close-circle";
+            statusText = "Afgewezen";
         } else if (isResolved) {
-            bgColor = "#E8F5E9"; iconColor = "#388E3C";
-            iconName = "checkmark-circle"; statusText = "Opgelost";
+            iconColor = "#388E3C";
+            bgColor = "#388E3C1A";
+            iconName = "checkmark-circle";
+            statusText = "Opgelost";
         } else if (isInProgress) {
-            bgColor = "#FFF3E0"; iconColor = "#F57C00";
-            iconName = "build"; statusText = "In behandeling";
+            iconColor = "#F57C00";
+            bgColor = "#F57C001A";
+            iconName = "build";
+            statusText = "In behandeling";
         }
 
         return (
@@ -147,13 +154,13 @@ useEffect(() => {
                         {report.address}, {report.zip_code} {report.city}
                     </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={Variables.colors.textLight} />
+                <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
             </TouchableOpacity>
         );
     };
 
     const renderFooter = () => {
-        if (loadingMore) return <ActivityIndicator size="small" color={Variables.colors.primary} style={{ marginVertical: 16 }} />;
+        if (loadingMore) return <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 16 }} />;
         if (!hasMore && userReports.length > 0) return (
             <Text style={styles.endText}>Enkel meldingen van de laatste {MONTHS_BACK} maanden worden getoond.</Text>
         );
@@ -169,7 +176,7 @@ useEffect(() => {
         <View style={styles.container}>
             <View style={styles.blueHeader}>
                 <View style={styles.backButtonWrapper}>
-                    <BackButton color="white" />
+                    <BackButton color={colors.textInverse} />
                 </View>
                 <View style={styles.titleContainer}>
                     <ThemedText type="subtitle" color="inverse" style={styles.title}>
@@ -179,7 +186,7 @@ useEffect(() => {
             </View>
 
             {loading ? (
-                <ActivityIndicator size="large" color={Variables.colors.primary} style={{ marginTop: 40 }} />
+                <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
             ) : (
                 <FlatList
                     data={userReports}
@@ -197,10 +204,13 @@ useEffect(() => {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Variables.colors.background || "#F8F9FA" },
+const createStyles = (colors: any) => StyleSheet.create({
+    container: { 
+        flex: 1, 
+        backgroundColor: colors.background,
+    },
     blueHeader: {
-        backgroundColor: Variables.colors.header || "#2C4365",
+        backgroundColor: colors.header,
         paddingTop: 60, paddingBottom: 40, paddingHorizontal: 20,
         flexDirection: "row", alignItems: "center", justifyContent: "center",
         position: "relative", borderBottomLeftRadius: 16, borderBottomRightRadius: 16,
@@ -209,16 +219,23 @@ const styles = StyleSheet.create({
         position: "absolute", left: 10, zIndex: 10,
         marginTop: 55, transform: [{ scale: 1.5 }], padding: 5,
     },
-    titleContainer: { flex: 1, alignItems: "center", marginHorizontal: 40 },
+    titleContainer: { 
+        flex: 1, 
+        alignItems: "center", 
+        marginHorizontal: 40 
+    },
     title: {
         fontFamily: Variables.fonts.bold,
         fontSize: Variables.textSizes.lg,
-        textAlign: "center", color: "#FFFFFF",
+        textAlign: "center", color: colors.textInverse,
     },
-    listContainer: { padding: 20, paddingBottom: 40 },
+    listContainer: { 
+        padding: 20, 
+        paddingBottom: 40 
+    },
     reportCard: {
         flexDirection: "row", alignItems: "center",
-        backgroundColor: "#FFFFFF", borderRadius: 16,
+        backgroundColor: colors.surface, borderRadius: 16,
         padding: 15, marginBottom: 12,
         shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05, shadowRadius: 5, elevation: 2,
@@ -227,29 +244,42 @@ const styles = StyleSheet.create({
         width: 50, height: 50, borderRadius: 25,
         justifyContent: "center", alignItems: "center", marginRight: 15,
     },
-    reportCardContent: { flex: 1 },
+    reportCardContent: { 
+        flex: 1 
+    },
     reportHeaderRow: {
         flexDirection: "row", justifyContent: "space-between",
         alignItems: "center", marginBottom: 4,
     },
-    reportDate: { fontFamily: Variables.fonts.bold, fontSize: 15, color: Variables.colors.text },
-    statusBadgeText: { fontFamily: Variables.fonts.bold, fontSize: 13 },
+    reportDate: { 
+        fontFamily: Variables.fonts.bold, 
+        fontSize: 15, 
+        color: colors.text 
+    },
+    statusBadgeText: { 
+        fontFamily: Variables.fonts.bold, 
+        fontSize: 13 
+    },
     reportAddress: {
         fontFamily: Variables.fonts.regular, fontSize: 13,
-        color: Variables.colors.textLight, lineHeight: 18,
+        color: colors.textLight, lineHeight: 18,
     },
     emptyText: {
-        fontFamily: Variables.fonts.regular, color: Variables.colors.textLight,
+        fontFamily: Variables.fonts.regular, color: colors.textLight,
         textAlign: "center", marginTop: 40, fontSize: 16,
     },
     loadMoreButton: {
         marginVertical: 16, marginHorizontal: 40,
-        backgroundColor: Variables.colors.primary,
+        backgroundColor: colors.primary,
         borderRadius: 12, paddingVertical: 12, alignItems: "center",
     },
-    loadMoreText: { fontFamily: Variables.fonts.bold, color: "#FFFFFF", fontSize: 15 },
+    loadMoreText: { 
+        fontFamily: Variables.fonts.bold, 
+        color: colors.textInverse, 
+        fontSize: 15 
+    },
     endText: {
-        fontFamily: Variables.fonts.regular, color: Variables.colors.textLight,
+        fontFamily: Variables.fonts.regular, color: colors.textLight,
         textAlign: "center", marginVertical: 16, fontSize: 13,
     },
 });

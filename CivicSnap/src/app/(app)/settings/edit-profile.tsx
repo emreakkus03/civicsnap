@@ -12,6 +12,7 @@ import { API } from "@core/networking/api";
 
 import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
 // ---- Styling ----
+import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
 export default function EditProfileScreen() {
@@ -24,6 +25,10 @@ export default function EditProfileScreen() {
     
     const [isSaving, setIsSaving] = useState(false);
     const [newImageSelected, setNewImageSelected] = useState(false);
+
+    const colors = useThemeColors();
+                    
+            const styles = createStyles(colors);
 
     useEffect(() => {
         if (!profile?.$id) return;
@@ -130,12 +135,12 @@ export default function EditProfileScreen() {
         <SafeAreaView style={styles.container} edges={["top"]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="close" size={28} color={Variables.colors.text} />
+                    <Ionicons name="close" size={28} color={colors.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Profiel bewerken</Text>
                 <TouchableOpacity onPress={handleSave} disabled={isSaving}>
                     {isSaving ? (
-                        <ActivityIndicator size="small" color={Variables.colors.primary} />
+                        <ActivityIndicator size="small" color={colors.primary} />
                     ) : (
                         <Text style={styles.saveText}>Klaar</Text>
                     )}
@@ -171,10 +176,10 @@ export default function EditProfileScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Variables.colors.background,
+        backgroundColor: colors.background,
     },
     header: {
         flexDirection: "row",
@@ -182,19 +187,19 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingHorizontal: Variables.sizes.md,
         paddingVertical: Variables.sizes.md,
-        backgroundColor: Variables.colors.surface,
+        backgroundColor: colors.surface,
         borderBottomWidth: 1,
         borderBottomColor: "#E5E5E5",
     },
     headerTitle: {
         fontFamily: Variables.fonts.bold,
         fontSize: Variables.textSizes.md,
-        color: Variables.colors.text,
+        color: colors.text,
     },
     saveText: {
         fontFamily: Variables.fonts.bold,
         fontSize: Variables.textSizes.base,
-        color: Variables.colors.primary,
+        color: colors.primary,
     },
     content: {
         padding: Variables.sizes.lg,
@@ -208,10 +213,10 @@ const styles = StyleSheet.create({
         width: 120,
         height: 120,
         borderRadius: 60,
-        backgroundColor: Variables.colors.surface,
+        backgroundColor: colors.surface,
         position: "relative",
         elevation: 4,
-        shadowColor: Variables.colors.text,
+        shadowColor: colors.text,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -225,18 +230,18 @@ const styles = StyleSheet.create({
         position: "absolute",
         bottom: 0,
         right: 0,
-        backgroundColor: Variables.colors.primary,
+        backgroundColor: colors.primary,
         width: 36,
         height: 36,
         borderRadius: 18,
         justifyContent: "center",
         alignItems: "center",
         borderWidth: 3,
-        borderColor: Variables.colors.surface,
+        borderColor: colors.surface,
     },
     changePhotoText: {
         marginTop: Variables.sizes.sm,
-        color: Variables.colors.primary,
+        color: colors.primary,
         fontFamily: Variables.fonts.semibold,
         fontSize: Variables.textSizes.sm,
     },
@@ -247,20 +252,20 @@ const styles = StyleSheet.create({
     label: {
         fontFamily: Variables.fonts.semibold,
         fontSize: Variables.textSizes.sm,
-        color: Variables.colors.textLight,
+        color: colors.textLight,
         marginBottom: Variables.sizes.xs,
         marginLeft: 4,
     },
     input: {
         width: "100%",
         height: 56,
-        backgroundColor: Variables.colors.surface,
+        backgroundColor: colors.surface,
         borderRadius: 12,
         paddingHorizontal: Variables.sizes.md,
         borderWidth: 1,
         borderColor: "#E5E5E5",
         fontFamily: Variables.fonts.regular,
         fontSize: Variables.textSizes.base,
-        color: Variables.colors.text,
+        color: colors.text,
     },
 });
