@@ -6,16 +6,20 @@ import { getDeviceId } from "@core/utils/device";
 
 
 
-const filePreparingForUploadingFiles = (fileUri: string, fileName: string) => {
-  const type = fileUri.endsWith('.png') ? 'image/png' : 'image/jpeg';
-
-  return {
-    uri: fileUri,
-    name: fileName,
-    type: type, 
-    size: 0,
-  };
-}
+const getBlobFromUri = async (uri: string) => {
+  return new Promise<any>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function () {
+      resolve(xhr.response);
+    };
+    xhr.onerror = function (e) {
+      reject(new TypeError("Network request failed"));
+    };
+    xhr.responseType = "blob";
+    xhr.open("GET", uri, true);
+    xhr.send(null);
+  });
+};
 
 export type LoginBody ={
     email: string;
@@ -82,11 +86,27 @@ export const register = async ({ email, password, fullname, avatarUri }: Registe
     let avatarUrl = null;
     if (avatarUri) {
       try {
-        const file = filePreparingForUploadingFiles(avatarUri, `avatar_${newAccount.$id}.jpg`);
+        const type = avatarUri.endsWith('.png') ? 'image/png' : 'image/jpeg';
+        const cleanUri = avatarUri.startsWith("file://") ? avatarUri : `file://${avatarUri}`;
+        
+        const fileBlob = await getBlobFromUri(cleanUri);
+
+        Object.defineProperty(fileBlob, 'name', {
+          value: `avatar_${newAccount.$id}.jpg`,
+          configurable: true,
+          enumerable: true,
+        });
+
+        Object.defineProperty(fileBlob, 'type', {
+          value: type,
+          configurable: true,
+          enumerable: true,
+        });
+
         const uploadResponse = await API.storage.createFile(
             API.config.storageBucketId, 
             ID.unique(), 
-            file
+            fileBlob as any
         );
    
         const endpoint = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT;

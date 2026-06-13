@@ -15,6 +15,21 @@ import { useRealtime } from "@core/modules/realtimeProvider/RealtimeProvider";
 import { useThemeColors } from "@core/utils/useThemeColors";
 import { Variables } from "@style/theme";
 
+const getBlobFromUri = async (uri: string) => {
+  return new Promise<any>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function () {
+      resolve(xhr.response);
+    };
+    xhr.onerror = function (e) {
+      reject(new TypeError("Network request failed"));
+    };
+    xhr.responseType = "blob";
+    xhr.open("GET", uri, true);
+    xhr.send(null);
+  });
+};
+
 export default function EditProfileScreen() {
     const router = useRouter();
     const { profile } = useAuthContext();
@@ -79,25 +94,39 @@ export default function EditProfileScreen() {
             if (newImageSelected && avatarUri) {
                 const bucketId = API.config.storageBucketId;
 
-                // Use exactly the same logic as in the register function
                 const type = avatarUri.endsWith(".png") ? "image/png" : "image/jpeg";
-                const file = {
-                    uri: avatarUri,
-                    name: `avatar_${profile.$id}.jpg`,
-                    type: type,
-                    size: 0,
-                } as any;
+                
+                // Zorg voor een schone file:// URI
+                const cleanUri = avatarUri.startsWith("file://")
+                  ? avatarUri
+                  : `file://${avatarUri}`;
 
-                console.log("🚀 Uploading file to bucket:", bucketId);
+                // Haal de Blob op via de helper
+                const fileBlob = await getBlobFromUri(cleanUri);
 
+                // Forceer de naam en het type in de Blob om Appwrite blij te maken
+                Object.defineProperty(fileBlob, 'name', {
+                  value: `avatar_${profile.$id}.jpg`,
+                  configurable: true,
+                  enumerable: true,
+                });
+                
+                Object.defineProperty(fileBlob, 'type', {
+                  value: type,
+                  configurable: true,
+                  enumerable: true,
+                });
+
+                console.log("🚀 Uploading file Blob to bucket:", bucketId);
+
+                // Stuur de gemuteerde Blob naar Appwrite
                 const uploadResponse = await API.storage.createFile(
                     bucketId,
                     ID.unique(),
-                    file
+                    fileBlob as any
                 );
 
                 if (uploadResponse && uploadResponse.$id) {
-                    // Use manual URL construction as in auth.ts
                     const endpoint = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT;
                     const projectId = process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID;
                     const fileId = uploadResponse.$id;
@@ -120,12 +149,12 @@ export default function EditProfileScreen() {
 
             triggerUpdate();
             
-            Alert.alert("Success", "Your profile has been updated!", [
+            Alert.alert("Succes", "Je profiel is succesvol geüpdatet!", [
                 { text: "OK", onPress: () => router.back() }
             ]);
         } catch (error: any) {
             console.error("❌ Save failed:", error);
-            Alert.alert("Error", error.message || "Could not update profile");
+            Alert.alert("Fout", error.message || "Kon profiel niet updaten");
         } finally {
             setIsSaving(false);
         }
