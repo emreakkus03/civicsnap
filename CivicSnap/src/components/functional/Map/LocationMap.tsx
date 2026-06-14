@@ -193,7 +193,7 @@ const isDarkMode = colors.background === Colors.dark.background;
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.7,
+      quality: 0.8,
     });
 
     if (!result.canceled) {
@@ -213,7 +213,7 @@ const isDarkMode = colors.background === Colors.dark.background;
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.7,
+      quality: 0.8,
     });
 
     if (!result.canceled) {

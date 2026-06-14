@@ -7,9 +7,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
-    Modal,        
-  FlatList, 
-  Platform  
+  Modal,
+  FlatList,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -34,6 +34,8 @@ import { File, Paths } from "expo-file-system";
 
 import { Image } from "expo-image";
 
+import * as ImageManipulator from "expo-image-manipulator";
+
 type Props = {
   latitude: number;
   longitude: number;
@@ -43,7 +45,6 @@ type Props = {
   photoUri?: string;
   hasPhoto: boolean;
 };
-
 
 const getBlobFromUri = async (uri: string) => {
   return new Promise<any>((resolve, reject) => {
@@ -109,11 +110,16 @@ export default function CreateReportForm({
   const [xpGained, setXpGained] = useState(0);
   const [newTotalXp, setNewTotalXp] = useState(0);
 
-  const [dropdownLayout, setDropdownLayout] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-const dropdownRef = React.useRef<View>(null);
+  const [dropdownLayout, setDropdownLayout] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const dropdownRef = React.useRef<View>(null);
 
-                const colors = useThemeColors();                                       
-                const styles = createStyles(colors);
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -143,11 +149,21 @@ const dropdownRef = React.useRef<View>(null);
       if (photoUri && categories.length > 0 && !hasAnalyzedInitial) {
         setHasAnalyzedInitial(true);
         try {
-          const file = new File(photoUri);
-          const base64 = await file.base64();
-          await analyzeImageWithAI(base64);
+          const manipResult = await ImageManipulator.manipulateAsync(
+            photoUri,
+            [{ resize: { width: 500 } }],
+            {
+              compress: 0.3,
+              format: ImageManipulator.SaveFormat.JPEG,
+              base64: true,
+            },
+          );
+
+          if (manipResult.base64) {
+            await analyzeImageWithAI(manipResult.base64);
+          }
         } catch (error) {
-          console.log("Error analyzing initial photo:", error);
+          console.log(error);
         }
       }
     };
@@ -193,20 +209,24 @@ const dropdownRef = React.useRef<View>(null);
       const execution = await API.functions.createExecution(
         API.config.visionFunctionId,
         JSON.stringify({ base64: base64String }),
-        false,   
-        '/',     
-        ExecutionMethod.POST,  
-        { 'Content-Type': 'application/json' } 
+        false,
+        "/",
+        ExecutionMethod.POST,
+        { "Content-Type": "application/json" },
       );
 
       if (execution.responseStatusCode !== 200) {
-         console.error("Server Execution Error:", execution.responseBody);
-         throw new Error("Backend AI analyse faalde.");
+        console.error("Server Execution Error:", execution.responseBody);
+        throw new Error("Backend AI analyse faalde.");
       }
 
       const data = JSON.parse(execution.responseBody);
 
-      if (data.success && data.responses && data.responses[0].labelAnnotations) {
+      if (
+        data.success &&
+        data.responses &&
+        data.responses[0].labelAnnotations
+      ) {
         const annotations = data.responses[0].labelAnnotations;
 
         const rawLabels = annotations.map((annotation: any) =>
@@ -237,7 +257,7 @@ const dropdownRef = React.useRef<View>(null);
           console.log("Geen bijpassende categorie gevonden in de database.");
         }
       } else {
-         console.log("Geen labels gevonden of analyse mislukt:", data.error);
+        console.log("Geen labels gevonden of analyse mislukt:", data.error);
       }
     } catch (error) {
       console.error("AI Analyse error:", error);
@@ -246,15 +266,15 @@ const dropdownRef = React.useRef<View>(null);
     }
   };
 
-const pickImage = async (useCamera: boolean) => {
+  const pickImage = async (useCamera: boolean) => {
     let result;
 
     const options: ImagePicker.ImagePickerOptions = {
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.7,
-      base64: true,
+      quality: 0.8,
+      base64: false,
     };
 
     if (useCamera) {
@@ -282,31 +302,33 @@ const pickImage = async (useCamera: boolean) => {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const originalUri = result.assets[0].uri;
-      const base64Data = result.assets[0].base64;
-
       const newFileName = `photo_${Date.now()}.jpg`;
       const source = new File(originalUri);
       const destination = new File(Paths.cache, newFileName);
 
       try {
         await source.copy(destination);
-// Ensure plain file:// URI without double slashes
-const cleanUri = destination.uri.startsWith("file://")
-  ? destination.uri
-  : `file://${destination.uri}`;
-setLocalPhotoUri(cleanUri);
+        const cleanUri = destination.uri.startsWith("file://")
+          ? destination.uri
+          : `file://${destination.uri}`;
+        
+        setLocalPhotoUri(cleanUri);
         setImageKey((prev) => prev + 1);
 
-        if (base64Data) {
-          await analyzeImageWithAI(base64Data);
+        const manipResult = await ImageManipulator.manipulateAsync(
+          cleanUri,
+          [{ resize: { width: 500 } }],
+          { compress: 0.3, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        );
+
+        if (manipResult.base64) {
+          await analyzeImageWithAI(manipResult.base64);
         }
       } catch (e) {
-        console.error("Error copying file:", e);
+        console.error(e);
         setLocalPhotoUri(originalUri);
         setImageKey((prev) => prev + 1);
       }
-    } else {
-      console.log("Selection canceled or no assets returned:");
     }
   };
 
@@ -325,11 +347,13 @@ setLocalPhotoUri(cleanUri);
     }
     setLoading(true);
     try {
-     let uploadedPhotoUri = "";
+      let uploadedPhotoUri = "";
       if (localPhotoUri) {
         try {
-          const type = localPhotoUri.endsWith(".png") ? "image/png" : "image/jpeg";
-          
+          const type = localPhotoUri.endsWith(".png")
+            ? "image/png"
+            : "image/jpeg";
+
           const cleanUri = localPhotoUri.startsWith("file://")
             ? localPhotoUri
             : `file://${localPhotoUri}`;
@@ -338,13 +362,13 @@ setLocalPhotoUri(cleanUri);
           const fileBlob = await getBlobFromUri(cleanUri);
 
           // Forceer de naam en het type in de Blob, omzeil de 'read-only' error!
-          Object.defineProperty(fileBlob, 'name', {
+          Object.defineProperty(fileBlob, "name", {
             value: `report_${Date.now()}.jpg`,
             configurable: true,
             enumerable: true,
           });
-          
-          Object.defineProperty(fileBlob, 'type', {
+
+          Object.defineProperty(fileBlob, "type", {
             value: type,
             configurable: true,
             enumerable: true,
@@ -354,7 +378,7 @@ setLocalPhotoUri(cleanUri);
           const uploaded = await API.storage.createFile(
             API.config.storageBucketId,
             ID.unique(),
-            fileBlob as any
+            fileBlob as any,
           );
 
           if (!uploaded || !uploaded.$id) {
@@ -369,7 +393,7 @@ setLocalPhotoUri(cleanUri);
           uploadedPhotoUri = `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
         } catch (uploadError) {
           console.error("--- DETAILED APPWRITE UPLOAD ERROR ---", uploadError);
-          
+
           Alert.alert(
             "Upload failed",
             "The photo could not be processed. Please try again.",
@@ -395,7 +419,9 @@ setLocalPhotoUri(cleanUri);
         } else {
           Alert.alert(
             "Dit gemeente wordt nog niet ondersteund",
-            `Helaas werkt ${currentCity || "deze gemeente"} nog niet samen met CivicSnap. Je kunt hier nog geen melding maken.`,
+            `Helaas werkt ${
+              currentCity || "deze gemeente"
+            } nog niet samen met CivicSnap. Je kunt hier nog geen melding maken.`,
           );
           setLoading(false);
           return;
@@ -555,85 +581,85 @@ setLocalPhotoUri(cleanUri);
             {currentAddress}, {currentZipcode} {currentCity}
           </ThemedText>
           <View style={styles.editButtonWrapper}>
-  <EditButton 
-    color={colors.textLight} 
-    onPress={() => setLocationModalVisible(true)} 
-  />
-</View>
+            <EditButton
+              color={colors.textLight}
+              onPress={() => setLocationModalVisible(true)}
+            />
+          </View>
         </View>
       </View>
 
       <View style={[styles.inputGroup, styles.categoryGroup]}>
         <ThemedText style={styles.categoryLabel}>Categorie</ThemedText>
         <TouchableOpacity
-  ref={dropdownRef}
-  style={styles.dropdownSelector}
-  onPress={() => {
-    if (!dropdownOpen) {
-      dropdownRef.current?.measureInWindow((x, y, width, height) => {
-        setDropdownLayout({ x, y, width, height });
-        setDropdownOpen(true);
-      });
-    } else {
-      setDropdownOpen(false);
-    }
-  }}
-  activeOpacity={0.7}
->
-  <ThemedText>
-    {selectedCategory ? selectedCategory.name : "Laden..."}
-  </ThemedText>
-  <Ionicons
-    name={dropdownOpen ? "chevron-up" : "chevron-down"}
-    size={20}
-    color={colors.textLight}
-  />
-</TouchableOpacity>
+          ref={dropdownRef}
+          style={styles.dropdownSelector}
+          onPress={() => {
+            if (!dropdownOpen) {
+              dropdownRef.current?.measureInWindow((x, y, width, height) => {
+                setDropdownLayout({ x, y, width, height });
+                setDropdownOpen(true);
+              });
+            } else {
+              setDropdownOpen(false);
+            }
+          }}
+          activeOpacity={0.7}
+        >
+          <ThemedText>
+            {selectedCategory ? selectedCategory.name : "Laden..."}
+          </ThemedText>
+          <Ionicons
+            name={dropdownOpen ? "chevron-up" : "chevron-down"}
+            size={20}
+            color={colors.textLight}
+          />
+        </TouchableOpacity>
 
-   <Modal
-  visible={dropdownOpen}
-  transparent
-  animationType="none"
-  onRequestClose={() => setDropdownOpen(false)}
->
-  <TouchableOpacity
-    style={styles.dropdownOverlay}
-    activeOpacity={1}
-    onPress={() => setDropdownOpen(false)}
-  >
-    {dropdownLayout && (
-      <View
-        style={[
-          styles.dropdownList,
-          {
-            position: "absolute",
-            top: dropdownLayout.y + dropdownLayout.height,
-            left: dropdownLayout.x,
-            width: dropdownLayout.width,
-          },
-        ]}
-      >
-        <FlatList
-          data={categories}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item: cat }) => (
-            <TouchableOpacity
-              style={styles.dropdownItem}
-              onPress={() => {
-                setSelectedCategory(cat);
-                setDropdownOpen(false);
-                setAiDetectedLabel(null);
-                setAiConfidence(0);
-              }}
-            >
-              <ThemedText>{cat.name}</ThemedText>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
-    )}
-  </TouchableOpacity>
-</Modal>
+        <Modal
+          visible={dropdownOpen}
+          transparent
+          animationType="none"
+          onRequestClose={() => setDropdownOpen(false)}
+        >
+          <TouchableOpacity
+            style={styles.dropdownOverlay}
+            activeOpacity={1}
+            onPress={() => setDropdownOpen(false)}
+          >
+            {dropdownLayout && (
+              <View
+                style={[
+                  styles.dropdownList,
+                  {
+                    position: "absolute",
+                    top: dropdownLayout.y + dropdownLayout.height,
+                    left: dropdownLayout.x,
+                    width: dropdownLayout.width,
+                  },
+                ]}
+              >
+                <FlatList
+                  data={categories}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item: cat }) => (
+                    <TouchableOpacity
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setSelectedCategory(cat);
+                        setDropdownOpen(false);
+                        setAiDetectedLabel(null);
+                        setAiConfidence(0);
+                      }}
+                    >
+                      <ThemedText>{cat.name}</ThemedText>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            )}
+          </TouchableOpacity>
+        </Modal>
       </View>
 
       <TextInput
@@ -678,209 +704,219 @@ setLocalPhotoUri(cleanUri);
   );
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
-  // --- Photo preview ---
-  photoPreviewContainer: {
-    width: "100%",
-    height: 200,
-    marginBottom: Variables.sizes.lg,
-    borderRadius: 12,
-    overflow: "visible",
-  },
-  photoPreviewImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: 12,
-  },
+const createStyles = (colors: any) =>
+  StyleSheet.create({
+    // --- Photo preview ---
+    photoPreviewContainer: {
+      width: "100%",
+      height: 200,
+      marginBottom: Variables.sizes.lg,
+      borderRadius: 12,
+      overflow: "visible",
+    },
+    photoPreviewImage: {
+      width: "100%",
+      height: 200,
+      borderRadius: 12,
+    },
 
-  // --- AI badges ---
-  aiBadgeAnalyzing: {
-    position: "absolute",
-    bottom: 15,
-    left: 15,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  aiBadgeCenterWrapper: {
-    position: "absolute",
-    bottom: 15,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
-  aiBadgeSuccess: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    shadowColor: colors.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  aiBadgeText: {
-    color: colors.textInverse,
-    fontSize: Variables.textSizes.sm - 2,
-    fontWeight: "bold",
-  },
-  aiBadgeIcon: {
-    marginRight: 6,
-  },
+    // --- AI badges ---
+    aiBadgeAnalyzing: {
+      position: "absolute",
+      bottom: 15,
+      left: 15,
+      backgroundColor: "rgba(0,0,0,0.6)",
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    aiBadgeCenterWrapper: {
+      position: "absolute",
+      bottom: 15,
+      left: 0,
+      right: 0,
+      alignItems: "center",
+    },
+    aiBadgeSuccess: {
+      backgroundColor: colors.primary,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+      flexDirection: "row",
+      alignItems: "center",
+      shadowColor: colors.text,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 3,
+      elevation: 5,
+    },
+    aiBadgeText: {
+      color: colors.textInverse,
+      fontSize: Variables.textSizes.sm - 2,
+      fontWeight: "bold",
+    },
+    aiBadgeIcon: {
+      marginRight: 6,
+    },
 
-  // --- Delete button ---
-  deleteButtonTouchable: {
-    position: "absolute",
-    top: -15,
-    right: 0,
-    width: 40,
-    height: 40,
-    borderRadius: 30,
-    backgroundColor: colors.textInverse,
-    borderWidth: 1,
-    borderColor: colors.textLight,
-    padding: 5,
-    zIndex: 10,
-  },
-  deleteButtonImage: {
-    position: "absolute",
-    width: 25,
-    height: 25,
-    top: 0,
-    right: 0,
-    marginRight: 7,
-    marginTop: 7,
-    borderRadius: 30,
-    zIndex: 10,
-  },
+    // --- Delete button ---
+    deleteButtonTouchable: {
+      position: "absolute",
+      top: -15,
+      right: 0,
+      width: 40,
+      height: 40,
+      borderRadius: 30,
+      backgroundColor: colors.textInverse,
+      borderWidth: 1,
+      borderColor: colors.textLight,
+      padding: 5,
+      zIndex: 10,
+    },
+    deleteButtonImage: {
+      position: "absolute",
+      width: 25,
+      height: 25,
+      top: 0,
+      right: 0,
+      marginRight: 7,
+      marginTop: 7,
+      borderRadius: 30,
+      zIndex: 10,
+    },
 
-  emptyPhotoContainer: {
-  width: "100%", padding: 20, marginBottom: Variables.sizes.lg,
-  borderRadius: 12, borderWidth: 2, borderStyle: "dashed", alignItems: "center",
-  borderColor: colors.primary,
-  backgroundColor: colors.surface, 
-},
-  emptyPhotoText: {
-    marginBottom: 12,
-    color: colors.textLight,
-  },
-  photoActionsRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  photoActionButton: {
-  flexDirection: "row", alignItems: "center", borderWidth: 1,
-  paddingVertical: 10, paddingHorizontal: Variables.sizes.md, borderRadius: Variables.sizes.sm,
-  borderColor: colors.primary,
-  backgroundColor: colors.surface,
-},
-  icon: {
-    color: colors.primary,
-  },
-  iconLabel: {
-    marginLeft: Variables.sizes.sm,
-    color: colors.primary,
-    fontWeight: "bold",
-  },
+    emptyPhotoContainer: {
+      width: "100%",
+      padding: 20,
+      marginBottom: Variables.sizes.lg,
+      borderRadius: 12,
+      borderWidth: 2,
+      borderStyle: "dashed",
+      alignItems: "center",
+      borderColor: colors.primary,
+      backgroundColor: colors.surface,
+    },
+    emptyPhotoText: {
+      marginBottom: 12,
+      color: colors.textLight,
+    },
+    photoActionsRow: {
+      flexDirection: "row",
+      gap: 12,
+    },
+    photoActionButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      borderWidth: 1,
+      paddingVertical: 10,
+      paddingHorizontal: Variables.sizes.md,
+      borderRadius: Variables.sizes.sm,
+      borderColor: colors.primary,
+      backgroundColor: colors.surface,
+    },
+    icon: {
+      color: colors.primary,
+    },
+    iconLabel: {
+      marginLeft: Variables.sizes.sm,
+      color: colors.primary,
+      fontWeight: "bold",
+    },
 
-  // --- Form card ---
-  formCard: {
-    position: "relative",
-    width: "100%",
-    backgroundColor: colors.surface,
-    zIndex: 50,
-    top: -40,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderRadius: 20,
-    padding: Variables.sizes.lg,
-    marginBottom: 40,
-  },
+    // --- Form card ---
+    formCard: {
+      position: "relative",
+      width: "100%",
+      backgroundColor: colors.surface,
+      zIndex: 50,
+      top: -40,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      borderRadius: 20,
+      padding: Variables.sizes.lg,
+      marginBottom: 40,
+    },
 
-  // --- Inputs ---
-  inputGroup: {
-    marginBottom: Variables.sizes.lg,
-  },
-  categoryGroup: {
-    zIndex: 10,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "98%",
-  },
-  editButtonWrapper: {
-    top: -10,
-  },
-  locationLabel: {
-    fontFamily: Variables.fonts.semibold,
-    fontSize: Variables.textSizes.md,
-  },
-  locationInfo: {
-    flex: 1,
-    marginLeft: Variables.sizes.xs,
-  },
-  categoryLabel: {
-    marginBottom: Variables.sizes.sm,
-    fontFamily: Variables.fonts.semibold,
-    fontSize: Variables.textSizes.md,
-  },
+    // --- Inputs ---
+    inputGroup: {
+      marginBottom: Variables.sizes.lg,
+    },
+    categoryGroup: {
+      zIndex: 10,
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      width: "98%",
+    },
+    editButtonWrapper: {
+      top: -10,
+    },
+    locationLabel: {
+      fontFamily: Variables.fonts.semibold,
+      fontSize: Variables.textSizes.md,
+    },
+    locationInfo: {
+      flex: 1,
+      marginLeft: Variables.sizes.xs,
+    },
+    categoryLabel: {
+      marginBottom: Variables.sizes.sm,
+      fontFamily: Variables.fonts.semibold,
+      fontSize: Variables.textSizes.md,
+    },
 
-  // --- Dropdown ---
-  dropdownSelector: {
-    borderWidth: 1,
-    borderColor: colors.border,   
-  backgroundColor: colors.surface,
-    borderRadius: Variables.sizes.sm,
-    padding: 14,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
- dropdownOverlay: {
-  flex: 1,
-},
-dropdownList: {
-  maxHeight: 220,
-  borderColor: colors.border,
-  backgroundColor: colors.surface,
-  borderWidth: 1,
-  borderRadius: Variables.sizes.sm,
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.15,
-  shadowRadius: 4,
-  elevation: 8,
-},
-  dropdownItem: {
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
+    // --- Dropdown ---
+    dropdownSelector: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      borderRadius: Variables.sizes.sm,
+      padding: 14,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    dropdownOverlay: {
+      flex: 1,
+    },
+    dropdownList: {
+      maxHeight: 220,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderRadius: Variables.sizes.sm,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 4,
+      elevation: 8,
+    },
+    dropdownItem: {
+      padding: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
 
-  // --- Text area ---
-  textArea: {
-    borderWidth: 1,
-    borderColor: colors.border,     
-  backgroundColor: colors.surface, 
-  color: colors.text,
-    borderRadius: 12,
-    padding: Variables.sizes.md,
-    height: 120,
-    textAlignVertical: "top",
-    marginBottom: Variables.sizes.lg,
-    fontFamily: Variables.fonts.regular,
-    fontSize: Variables.textSizes.base,
-  },
+    // --- Text area ---
+    textArea: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      color: colors.text,
+      borderRadius: 12,
+      padding: Variables.sizes.md,
+      height: 120,
+      textAlignVertical: "top",
+      marginBottom: Variables.sizes.lg,
+      fontFamily: Variables.fonts.regular,
+      fontSize: Variables.textSizes.base,
+    },
 
-  // --- Submit ---
-  submitButton: {
-    width: "100%",
-  },
-});
+    // --- Submit ---
+    submitButton: {
+      width: "100%",
+    },
+  });

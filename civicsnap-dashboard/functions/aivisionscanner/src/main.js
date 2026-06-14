@@ -1,4 +1,9 @@
 export default async ({ req, res, log, error }) => {
+  if (req.headers['x-appwrite-trigger'] === 'schedule') {
+    log('Ping received.');
+    return res.json({ success: true, message: 'Pong' }, 200);
+  }
+
   if (!process.env.GOOGLE_VISION_API_KEY) {
     error('Configuration Error: Missing GOOGLE_VISION_API_KEY environment variable.');
     return res.json({ success: false, error: 'Server configuration error' }, 500);
