@@ -8,7 +8,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: "civicsnap",
-  userInterfaceStyle: "automatic",
+  userInterfaceStyle: "light",
   
   ios: {
     supportsTablet: true,
@@ -31,6 +31,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     package: "dev.emre.CivicSnap",
     googleServicesFile: process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
     predictiveBackGestureEnabled: false,
+    allowBackup: false,
     permissions: [
       "ACCESS_COARSE_LOCATION",
       "ACCESS_FINE_LOCATION",
@@ -78,11 +79,18 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
             "color": "#274373"
         }
     ],
-    // Toegevoegd voor SDK 56 compatibiliteit
     "expo-font",
     "expo-image",
     "expo-status-bar",
-    "expo-web-browser"
+    "expo-web-browser",
+    [
+      "expo-build-properties",
+      {
+        "android": {
+          "minSdkVersion": 29
+        }
+      }
+    ]
   ],
   
   experiments: {
