@@ -21,7 +21,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data: https:; connect-src 'self' https://fra.cloud.appwrite.io/v1 wss://fra.cloud.appwrite.io/v1;"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data: https:; connect-src 'self' https://fra.cloud.appwrite.io wss://fra.cloud.appwrite.io;"
         }
       ]
     }
